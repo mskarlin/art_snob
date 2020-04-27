@@ -19,8 +19,8 @@ class DataStoreInterface(object):
         """
         return {r: result[r] for r in return_keys if r in result}
 
-    def query(self, kind: str, n_records: int=500, query_filters: List[Tuple[str]]=None, filter_keys: List[str]=None,
-              cursor: Any = None):
+    def query(self, kind: str, n_records: int=500, query_filters: List[Tuple[str, str, str]]=None,
+              filter_keys: List[str]=None, cursor: Any = None):
         """Query records in a kind, with optional filters and keys
 
         Args:
