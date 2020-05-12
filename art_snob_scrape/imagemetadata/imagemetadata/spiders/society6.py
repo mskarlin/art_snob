@@ -44,8 +44,6 @@ class Society6Scraper(scrapy.spiders.SitemapSpider):
 
     def sitemap_filter(self, entries):
 
-        # todo: see what the entry object is, and if this is even necessary...
-
         dsi = DataStoreInterface(self.settings.get('GCS_PROJECT'))
         seen_urls = get_previous_urls(dsi, self.settings.get('DATASTORE_KIND'))
 
