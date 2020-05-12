@@ -6,6 +6,13 @@ we don't already have a large repository of artwork at our fingertips, we'll loo
 artwork among some popular sources.
 
 ### todo:
-* set up pipeline w. datastore attachement
-* set up deployment via docker
-* test
+* set up datastore call inside spider to shrink the number of things crawled
+* set up docker image
+* set up logging on the cloud 
+* set up cloud func to launch an VM image template
+* set up travis or GH actions file to do CI/CD
+    - run tests
+    - build image(s)
+    - update/build out cloud funcs/VM templates/crons from config files
+
+* test(s)

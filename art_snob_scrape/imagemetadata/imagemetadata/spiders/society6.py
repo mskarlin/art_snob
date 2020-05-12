@@ -1,7 +1,30 @@
 import scrapy
 import json
+import logging
+import sys
+import google.cloud.logging
+from google.cloud.logging.handlers import CloudLoggingHandler, setup_logging
+
+sys.path.append('../')
+sys.path.append('../../')
+from utilities.datastore_helpers import DataStoreInterface
 from imagemetadata.items import ArtSnobItem
 from scrapy.shell import inspect_response
+
+
+def get_previous_urls(dsi, kind):
+    """Query DSI via multiple pages for existing page_urls"""
+    cursor = None
+    seen_pages = []
+
+    while True:
+        logging.info('Querying page of dsi results...')
+        items, cursor = dsi.query(kind, n_records=1000, filter_keys=['page_url'], cursor=cursor)
+        seen_pages += [v['page_url'] for v in items.values()]
+        if cursor is None:
+            break
+
+    return set(seen_pages)
 
 
 class Society6Scraper(scrapy.spiders.SitemapSpider):
@@ -9,6 +32,29 @@ class Society6Scraper(scrapy.spiders.SitemapSpider):
 
     sitemap_urls = ["https://society6.com/sitemap/product/prints/prints_1.xml",
                     "https://society6.com/sitemap/product/prints/prints_2.xml"]
+
+    def __init__(self, *args, **kwargs):
+        # set up cloud logging for the spider
+        client = google.cloud.logging.Client()
+        handler = CloudLoggingHandler(client)
+        logging.getLogger().setLevel(logging.INFO)  # defaults to WARN
+        setup_logging(handler)
+
+        super().__init__(*args, **kwargs)
+
+    def sitemap_filter(self, entries):
+
+        # todo: see what the entry object is, and if this is even necessary...
+
+        dsi = DataStoreInterface(self.settings.get('GCS_PROJECT'))
+        seen_urls = get_previous_urls(dsi, self.settings.get('DATASTORE_KIND'))
+
+        for entry in entries:
+            if entry['loc'] in seen_urls:
+                logging.info(f'SKIPPING {entry["loc"]}, already present in database')
+                continue
+            else:
+                yield entry
 
     def parse(self, response):
 
@@ -29,8 +75,6 @@ class Society6Scraper(scrapy.spiders.SitemapSpider):
         json_start = script_raw.find('{')
         json_end = script_raw[::-1].find('}')
 
-        inspect_response(response, self)
-
         try:
             script_json = json.loads(script_raw[json_start:-json_end])
 
@@ -41,7 +85,7 @@ class Society6Scraper(scrapy.spiders.SitemapSpider):
         except:
             standard_tags = []
 
-        yield ArtSnobItem(image_urls=image,
+        yield ArtSnobItem(image_urls=[image],
                           page_url=response.url,
                           name=name,
                           description=description,

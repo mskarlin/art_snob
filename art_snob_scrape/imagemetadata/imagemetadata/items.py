@@ -25,3 +25,4 @@ class ArtSnobItem(scrapy.Item):
     sizes = scrapy.Field()
     artist = scrapy.Field()
     standard_tags = scrapy.Field()
+    checksum = scrapy.Field()

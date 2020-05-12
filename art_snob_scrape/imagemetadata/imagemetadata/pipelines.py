@@ -78,7 +78,20 @@ class ArtworkPipeline:
     def close_spider(self, spider):
         pass
 
+    @staticmethod
+    def flatten_path(items):
+
+        img = items.get('images')
+
+        if img:
+            items.update({'images': img[0].get('path')})
+            items.update({'checksum': img[0].get('checksum')})
+
+        return items
+
     def process_item(self, item, spider):
+
+        item = self.flatten_path(item)
 
         # check if this item already lives in our database
         items, page = self.dsi.query(self.kind,
