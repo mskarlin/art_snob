@@ -8,8 +8,9 @@ artwork among some popular sources.
 ### todo:
 * set up docker image (set up for use w service account in cloud) 
 * set up cloud func to launch an VM image template
-* set up travis or GH actions file to do CI/CD
+* set up GH actions file to do CI/CD
     - run tests
+    - set up secrets transfer
     - build image(s)
     - update/build out cloud funcs/VM templates/crons from config files
 

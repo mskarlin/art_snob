@@ -1,5 +1,12 @@
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
+import sys
+sys.path.append('../')
+sys.path.append('../../')
+
+from utilities.credentials import set_application_default_credentials
+
+set_application_default_credentials()
 
 process = CrawlerProcess(get_project_settings())
 
