@@ -20,7 +20,7 @@ jobs:
     - name: Publish to Registry
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        name: art_snob_scrape/repository
+        name: artsnob-1/repository
         username: ${{ steps.gcloud.outputs.username }}
         password: ${{ steps.gcloud.outputs.password }}
         registry: gcr.io
