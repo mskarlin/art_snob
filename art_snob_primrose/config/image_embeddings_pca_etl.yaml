@@ -1,0 +1,39 @@
+metadata: {}
+implementation_config:
+
+  reader_config:
+
+#    read_gcs_locations:
+#      class: DataStoreReader
+#      project: artsnob-1
+#      kind: scraped-image-data
+#      filter_keys:
+#        - images
+#      destinations:
+#        - flatten_lists
+#
+#    flatten_lists:
+#      class: ListFlattener
+#      key: reader_data
+#      key_to_flatten: images
+#      key_to_write: gcs_filenames
+#      destinations:
+#        - gcs_image_reader
+
+    gcs_image_reader:
+      class: AioGcsReader
+      bucket: artsnob-image-scrape
+      gcs_objects:
+        - full/fffeba855ccc4bdfcc249c04b9e9e9f115d00ac6.jpg
+        - full/fffc288ff36537eacec09470fe3e29a62b390bfc.jpg
+        - full/fff68d045c90292b1c11995b8070c8be94b4223d.jpg
+      destinations:
+        - embeddings
+      #upstream_pull_key:
+      #  - gcs_filenames
+
+  pipeline_config:
+    embeddings:
+      class: TfhubEmbedder
+      module_url: https://tfhub.dev/google/imagenet/inception_resnet_v2/feature_vector/1
+      key: reader_data
