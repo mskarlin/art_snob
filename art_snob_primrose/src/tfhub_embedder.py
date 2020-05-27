@@ -2,6 +2,8 @@
 
 NOTES:
     works with tf < 2.0 API only
+    This could be a transformer, but since serialization is already covered via the tf-hub API we don't
+    need to write this object to memory. For now we can leave it as it's own node.
 
 Author(s):
     Mike Skarlinski (michael.skarlinski@gmail.com)

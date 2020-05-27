@@ -11,6 +11,7 @@ import sys
 import logging
 import warnings
 
+sys.path.append('../')
 sys.path.append('../../')
 
 from utilities.datastore_helpers import DataStoreInterface
@@ -33,6 +34,7 @@ class DataStoreReader(AbstractReader):
             query_filters (List[(str, str, str)...]): (optional) query filters by entity attribute, ex.:
                     [['trait', '=', 'true']]
             filter_keys (List[str]): list of top-level keys to keep
+            max_records (int): (optional) for testing limit the max records returned
 
         Returns:
             set of necessary keys for the DataStoreReader object
@@ -66,12 +68,17 @@ class DataStoreReader(AbstractReader):
 
             records, cursor = dsi.query(kind=self.node_config.get('kind'),
                                         n_records=self.node_config.get('n_records_per_query', 500),
-                                        query_filters=self.node_config.get('query_filters', 500),
+                                        query_filters=self.node_config.get('query_filters'),
                                         filter_keys=self.node_config.get('filter_keys'),
                                         cursor=cursor
                                         )
 
             all_records.update(records)
+
+            if self.node_config.get('max_records'):
+                if len(all_records) >= self.node_config.get('max_records'):
+                    logging.info(f'Stopping query at {len(all_records)} records')
+                    break
 
         logging.info(f'Read down {len(all_records)} records from kind: {self.node_config.get("kind")}')
 

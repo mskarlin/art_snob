@@ -3,37 +3,91 @@ implementation_config:
 
   reader_config:
 
-#    read_gcs_locations:
-#      class: DataStoreReader
-#      project: artsnob-1
-#      kind: scraped-image-data
-#      filter_keys:
-#        - images
-#      destinations:
-#        - flatten_lists
-#
-#    flatten_lists:
-#      class: ListFlattener
-#      key: reader_data
-#      key_to_flatten: images
-#      key_to_write: gcs_filenames
-#      destinations:
-#        - gcs_image_reader
+    read_gcs_locations:
+      class: DataStoreReader
+      project: artsnob-1
+      kind: scraped-image-data
+      max_records: 500
+      filter_keys:
+        - images
+      destinations:
+        - flatten_lists
+
+    flatten_lists:
+      class: ListFlattener
+      key: reader_data
+      key_to_flatten: images
+      key_to_write: gcs_filenames
+      destinations:
+        - gcs_image_reader
+        - annoy_transformer
+        - datastore_writer
 
     gcs_image_reader:
       class: AioGcsReader
       bucket: artsnob-image-scrape
-      gcs_objects:
-        - full/fffeba855ccc4bdfcc249c04b9e9e9f115d00ac6.jpg
-        - full/fffc288ff36537eacec09470fe3e29a62b390bfc.jpg
-        - full/fff68d045c90292b1c11995b8070c8be94b4223d.jpg
+#      gcs_objects:
+#        - full/fffeba855ccc4bdfcc249c04b9e9e9f115d00ac6.jpg
+#        - full/fffc288ff36537eacec09470fe3e29a62b390bfc.jpg
+#        - full/fff68d045c90292b1c11995b8070c8be94b4223d.jpg
       destinations:
         - embeddings
-      #upstream_pull_key:
-      #  - gcs_filenames
+      upstream_pull_key: gcs_filenames
 
   pipeline_config:
     embeddings:
       class: TfhubEmbedder
       module_url: https://tfhub.dev/google/imagenet/inception_resnet_v2/feature_vector/1
       key: reader_data
+      destinations:
+        - umap_reduction
+
+    umap_reduction:
+      class: UmapPipeline
+      is_training: True
+      umap_params:
+        n_neighbors: 15
+        min_dist: 0.1
+        n_components: 100
+        metric: manhattan
+      destinations:
+        - annoy_transformer
+        - gcs_writer
+        - entity_formatter
+
+    annoy_transformer:
+      class: AnnoyPipeline
+      is_training: True
+      vector_length: 100
+      metric: angular
+      num_trees: 100
+      n_neighbors: 100
+      name_list_key:
+        - key_list
+      destinations:
+        - entity_formatter
+
+    entity_formatter:
+      class: EntityFormatter
+      property_keys:
+        - index_data
+        - umap_data
+      destinations:
+        - datastore_writer
+
+  writer_config:
+    gcs_writer:
+      class: GcsDillWriter
+      bucket_name: artsnob-dataflow
+      gcs_project: artsnob-1
+
+    datastore_writer:
+      class: DatastoreWriter
+      kind_name: test-small-embed
+      gcs_project: artsnob-1
+      key: entities
+      ids_key: key_list
+      exclude_from_indexes:
+        - index_data
+        - umap_data
+

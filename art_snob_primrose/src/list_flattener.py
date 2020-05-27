@@ -35,7 +35,7 @@ class ListFlattener(AbstractNode):
         return {'key', 'key_to_flatten', 'key_to_write'}
 
     def run(self, data_object):
-        """Transform dict into list of keys
+        """Transform dict into list of keys, also store the keys in a separate object for future use
 
         Args:
             data_object: DataObject instance
@@ -52,9 +52,11 @@ class ListFlattener(AbstractNode):
         to_flatten = data_object.get_filtered_upstream_data(self.instance_name, self.node_config.get('key'))
         to_flatten = to_flatten.get(self.node_config.get('key'))
 
-        flattened_list = [tf.get(self.node_config['key_to_flatten']) for tf in to_flatten]
+        flattened_list = [to_flatten.get(tf).get(self.node_config['key_to_flatten']) for tf in to_flatten]
+        key_list = [tf for tf in to_flatten]
 
         data_object.add(self, flattened_list, key=self.node_config.get('key_to_write', 'flat_list'))
+        data_object.add(self, key_list, key='key_list')
 
         terminate = False
 
