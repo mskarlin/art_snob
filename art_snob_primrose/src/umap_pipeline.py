@@ -3,7 +3,10 @@ from primrose.base.transformer_sequence import TransformerSequence
 import uuid
 
 from src.umap_transformer import UmapTransformer
+from sklearn.decomposition import PCA
+from primrose.transformers.sklearn_preprocessing_transformer import SklearnPreprocessingTransformer
 
+# todo: figure out the params for this...
 
 class UmapPipeline(AbstractPipeline):
 
@@ -19,14 +22,16 @@ class UmapPipeline(AbstractPipeline):
             set of necessary keys for the ListFlattener object
 
         """
-        return {'umap_params'}
+        return {}#{'umap_params'}
 
     def init_pipeline(self):
         """Initialize the pipeline if no pipeline object is found in the upstream data objects
         Returns:
             TransformerSequence
         """
-        return TransformerSequence([UmapTransformer(**self.node_config['umap_params'])])
+
+        # return TransformerSequence([UmapTransformer(**self.node_config['umap_params'])])
+        return TransformerSequence([SklearnPreprocessingTransformer(PCA(self.node_config.get('n_components', 100)), columns=None)])
 
     def fit_transform(self, data_object):
         """Dimensional reduction of data and training of Umap

@@ -3,6 +3,7 @@
 '''
 import argparse
 import logging
+import os
 import warnings
 
 ######################################
@@ -37,7 +38,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_loc',
                         help='Location of the configuration file',
-                        required=True)
+                        required=False)
     parser.add_argument('--is_dry_run',
                         help='do a dry run of the DAG which will validatre config and log which nodes would be run',
                         default=False,
@@ -54,7 +55,9 @@ def main():
 
     logging.basicConfig(format='%(asctime)s %(levelname)s %(filename)s %(funcName)s: %(message)s', level=logging.INFO)
 
-    configuration = Configuration(config_location=args.config_loc)
+    config_file = os.environ.get("CONFIG") if os.environ.get("CONFIG") else args.config_loc
+
+    configuration = Configuration(config_location=config_file)
 
     DagRunner(configuration).run(dry_run=args.is_dry_run)
 

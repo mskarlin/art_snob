@@ -74,7 +74,7 @@ class DatastoreWriter(AbstractWriter):
                 logging.warning(f"No key data found in upstream node: {self.node_config.get('ids_key')}")
 
         logging.info(f"Writing {len(data_to_write)} records to datastore kind {kind}")
-        import ipdb; ipdb.set_trace()
+
         dsi.update(data_to_write,
                    kind,
                    exclude_from_indexes=self.node_config.get('exclude_from_indexes'),
