@@ -51,6 +51,7 @@ implementation_config:
       class: DatastoreWriter
       kind_name: test-small-full-embed
       gcs_project: artsnob-1
+      project: artsnob-1
       key: entities
       ids_key: key_list
       exclude_from_indexes:

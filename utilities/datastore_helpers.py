@@ -58,7 +58,6 @@ class DataStoreInterface(object):
             if query_iterator.next_page_token else None)
 
         if filter_keys:
-
             return {q.id: self.results_filter(q, filter_keys) for q in page}, next_cursor
 
         else:
