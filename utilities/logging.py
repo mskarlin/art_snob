@@ -64,7 +64,7 @@ def setup_logging(
         structured_fields=["name", "filename", "funcName"],
         local_fmt="%(levelname)s:%(name)s:%(message)s",
         log_level=logging.INFO,
-        redirect_stdout=True,
+        redirect_stdout=False,
         project=None
 ):
     """Sets up root logger with given log_fmt and logging level. Also redirects stdout to logger.

@@ -53,7 +53,7 @@ class EntityFormatter(AbstractNode):
 
             data_object.add(self, id_data, key='id_list')
 
-        combined_objects = None
+        combined_objects = []
 
         for key in self.node_config['property_keys']:
 
@@ -61,15 +61,12 @@ class EntityFormatter(AbstractNode):
 
             if candidate.get(key) is not None:
 
-                if combined_objects is None:
-                    combined_objects = [{}] * len(candidate.get(key))
-
                 for i, item in enumerate(candidate.get(key)):
 
                     if isinstance(item, np.ndarray):
                         item = item.tolist()
-
-                    combined_objects[i].update({key: item})
+                    # this will only work for one property_keys value -- it will overwrite for more...
+                    combined_objects.append({key: item.copy()})
 
         data_object.add(self, combined_objects, key='entities')
 

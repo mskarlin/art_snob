@@ -64,7 +64,7 @@ class DataStoreReader(AbstractReader):
 
         logging.info(f'Starting datastore read from kind: {self.node_config.get("kind")}')
 
-        while cursor is None:
+        while True:
 
             records, cursor = dsi.query(kind=self.node_config.get('kind'),
                                         n_records=self.node_config.get('n_records_per_query', 500),
@@ -76,9 +76,11 @@ class DataStoreReader(AbstractReader):
             all_records.update(records)
 
             if self.node_config.get('max_records'):
-                if len(all_records) >= self.node_config.get('max_records'):
+                if len(all_records) >= self.node_config.get('max_records') or cursor is None:
                     logging.info(f'Stopping query at {len(all_records)} records')
                     break
+            elif cursor is None:
+                break
 
         logging.info(f'Read down {len(all_records)} records from kind: {self.node_config.get("kind")}')
 
