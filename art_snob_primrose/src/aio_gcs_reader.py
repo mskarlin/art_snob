@@ -52,7 +52,8 @@ class AioGcsReader(AbstractReader):
 
         async with Session() as session:
             storage = Storage(session=session)
-            results = [await storage.download(self.node_config.get('bucket'), obj_name) for obj_name in object_names]
+            results = await asyncio.gather(
+                *[storage.download(self.node_config.get('bucket'), obj_name) for obj_name in object_names])
 
         return results
 

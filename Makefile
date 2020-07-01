@@ -20,4 +20,4 @@ submit-ai-job:
 		--master-image-uri $(CONTAINERLOC)$(PRIMROSENAME) \
 		--region $(REGION) \
 		--scale-tier CUSTOM \
-		-- python run_primrose.py --config_loc config/image_embeddings_etl.yaml --use_stackdriver_logging True --project artsnob-1
+		-- python run_primrose.py --config_loc config/image_embeddings_etl.yaml --use_stackdriver_logging False --project artsnob-1
