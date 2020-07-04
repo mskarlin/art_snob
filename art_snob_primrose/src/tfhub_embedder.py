@@ -15,10 +15,9 @@ Author(s):
 import sys
 import logging
 import warnings
-import tensorflow.compat.v1 as tf
+import numpy as np
+import tensorflow as tf
 
-# make tf2 compatible with tf1
-tf.disable_eager_execution()
 import tensorflow_hub as hub
 
 sys.path.append('../../')
@@ -44,17 +43,28 @@ class TfhubEmbedder(AbstractNode):
 
     def tf_embedder(self, image_data):
         """Create a tf graph to get embeddings from a pre-trained module"""
-        module = hub.Module(self.node_config['module_url'])
-        image_size = hub.get_expected_image_size(module)
+
+        hub_url = self.node_config['module_url']
+        m = hub.KerasLayer(hub_url)
+        module_spec = hub.load_module_spec(hub_url)
+        height, width = hub.get_expected_image_size(module_spec)
 
         def image_decoder(image):
             decoded_image = tf.image.decode_jpeg(image, channels=3)
-            img_final = tf.image.resize_images(decoded_image, image_size)
+            img_final = tf.image.resize(decoded_image, [height, width])
             return img_final / 255.0
 
-        formatted_images = tf.map_fn(image_decoder, image_data, back_prop=False, dtype=tf.float32)
+        dataset = tf.data.Dataset.from_tensor_slices(image_data)
 
-        return module(formatted_images)
+        mdataset = dataset.map(image_decoder).batch(self.node_config.get('batch_size', 3))
+
+        final_output = []
+
+        for i, bdata in enumerate(mdataset):
+            logging.info(f'Process batch {i} with size: {bdata.shape}')
+            final_output.append(m(bdata))
+
+        return tf.concat(final_output, 0)
 
     def run(self, data_object):
         """Embeddings for each image in the data_object
@@ -73,14 +83,10 @@ class TfhubEmbedder(AbstractNode):
 
         image_data = data_object.get_filtered_upstream_data(self.instance_name, self.node_config.get('key'))
         image_data = image_data.get(self.node_config.get('key'))
-        embeddings_graph = self.tf_embedder(tf.convert_to_tensor(image_data))
 
-        # after creating the graph, we can actually run the ebeddings to get usable objects
-        sess = tf.Session()
+        embeddings = self.tf_embedder(image_data)
 
-        with sess.as_default():
-            sess.run(tf.global_variables_initializer())
-            embeddings = sess.run(embeddings_graph)
+        embeddings = embeddings.numpy().squeeze()
 
         data_object.add(self, embeddings, key='embeddings')
 

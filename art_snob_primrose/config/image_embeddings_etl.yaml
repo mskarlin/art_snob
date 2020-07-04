@@ -49,7 +49,7 @@ implementation_config:
 
     datastore_writer:
       class: DatastoreWriter
-      kind_name: small-images-full-embed
+      kind_name: 07032020-images-full-embed
       gcs_project: artsnob-1
       project: artsnob-1
       key: entities

@@ -13,8 +13,11 @@ import logging
 sys.path.append('../../')
 
 import asyncio
+import backoff
+import itertools
 from gcloud.aio.storage import Storage
 from aiohttp import ClientSession as Session
+from aiohttp import ClientTimeout
 from primrose.base.reader import AbstractReader
 
 
@@ -48,12 +51,23 @@ class AioGcsReader(AbstractReader):
 
         return gso
 
-    async def download_objects(self, object_names):
+    @backoff.on_exception(
+        backoff.expo,
+        (asyncio.TimeoutError, ),
+        max_tries=5,
+        max_time=3600,
+    )
+    async def storage_download(self, storage, bucket, obj):
+        return await storage.download(bucket, obj)
 
-        async with Session() as session:
+    async def download_objects(self, object_names):
+        timeout = ClientTimeout(total=3600, connect=None, sock_connect=None, sock_read=None)
+        async with Session(timeout=timeout) as session:
             storage = Storage(session=session)
             results = await asyncio.gather(
-                *[storage.download(self.node_config.get('bucket'), obj_name) for obj_name in object_names])
+                *[self.storage_download(storage, self.node_config.get('bucket'), obj_name) for obj_name in object_names]
+                # *[storage.download(self.node_config.get('bucket'), obj_name) for obj_name in object_names]
+            )
 
         return results
 
@@ -76,11 +90,24 @@ class AioGcsReader(AbstractReader):
 
         logging.info(f'Asyncronously gathering {len(object_names)} from GCS.')
 
-        objects = asyncio.run(self.download_objects(object_names))
+        async_calls_per_second = int(self.node_config.get("rate_per_second", 1000))
+        chunks = len(object_names) // async_calls_per_second + 1
+
+        gcs_items = []
+
+        for chunk in range(chunks):
+
+            item_slice = itertools.islice(
+                object_names, async_calls_per_second * chunk, async_calls_per_second * (chunk + 1),
+            )
+
+            objects = asyncio.run(self.download_objects(item_slice))
+
+            gcs_items += objects
 
         logging.info(f'Objects downloaded into bytestrings.')
 
-        data_object.add(self, objects, key=AioGcsReader.DATA_KEY)
+        data_object.add(self, gcs_items, key=AioGcsReader.DATA_KEY)
 
         terminate = False
 

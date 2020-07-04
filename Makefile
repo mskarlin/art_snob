@@ -16,7 +16,7 @@ build-primrose:
 
 submit-ai-job:
 	gcloud ai-platform jobs submit training $(JOBNAME) \
-		--master-machine-type n1-standard-8 \
+		--master-machine-type n1-standard-32 \
 		--master-image-uri $(CONTAINERLOC)$(PRIMROSENAME) \
 		--region $(REGION) \
 		--scale-tier CUSTOM \
