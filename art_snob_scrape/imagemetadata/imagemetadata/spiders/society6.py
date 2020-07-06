@@ -10,6 +10,7 @@ sys.path.append('../../')
 from utilities.datastore_helpers import DataStoreInterface
 from imagemetadata.items import ArtSnobItem
 from scrapy.shell import inspect_response
+from scrapy.exceptions import CloseSpider
 
 
 def get_previous_urls(dsi, kind):
@@ -53,6 +54,9 @@ class Society6Scraper(scrapy.spiders.SitemapSpider):
                 continue
             else:
                 yield entry
+        else:
+            # if we finish everything, and don't yield any items, let's clsoe the spider
+            raise StopIteration()
 
     def parse(self, response):
 

@@ -65,8 +65,11 @@ class EntityFormatter(AbstractNode):
 
                     if isinstance(item, np.ndarray):
                         item = item.tolist()
-                    # this will only work for one property_keys value -- it will overwrite for more...
-                    combined_objects.append({key: item.copy()})
+
+                    if len(combined_objects) <= i:
+                        combined_objects.append({key: item})
+                    else:
+                        combined_objects[i].update({key: item})
 
         data_object.add(self, combined_objects, key='entities')
 
