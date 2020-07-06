@@ -48,7 +48,7 @@ class Society6Scraper(scrapy.spiders.SitemapSpider):
         seen_urls = get_previous_urls(dsi, self.settings.get('DATASTORE_KIND'))
 
         for entry in entries:
-            if entry['loc'] in seen_urls:
+            if entry['loc'].split('#')[0] in seen_urls:
                 logging.info(f'SKIPPING {entry["loc"]}, already present in database')
                 continue
             else:
