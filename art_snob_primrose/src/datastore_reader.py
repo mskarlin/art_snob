@@ -5,20 +5,21 @@ Author(s):
 
 """
 
-#todo: PR for this in primrose repo
+# todo: PR for this in primrose repo
 
 import sys
 import logging
 import warnings
+from typing import Dict, List
 
 sys.path.append('../')
 sys.path.append('../../')
 
 from utilities.datastore_helpers import DataStoreInterface
-from primrose.base.reader import AbstractReader
+from src.auto_node import AutoNode
 
 
-class DataStoreReader(AbstractReader):
+class DataStoreReader(AutoNode):
     """Read a selection of records from one or more GCP Datastore kinds"""
 
     DATA_KEY = 'reader_data'
@@ -42,50 +43,48 @@ class DataStoreReader(AbstractReader):
         """
         return {'project', 'kind'}
 
-    def run(self, data_object):
+    def execute(self, project: str, kind: str, n_records_per_query: int = 500,
+                query_filters: List = None, filter_keys: List = None, max_records: int = None) -> Dict:
         """Read datastore object(s) from remote datastore queries
 
         Args:
-            data_object: DataObject instance
+            project: GCS project name
+            kind: datastore entity kind
+            n_records_per_query: number of records to be pulled per batch
+            query_filters: list of Tuples of strings for filtering ( see DataStoreInterface for syntax)
+            filter_keys: list of keys to be filtered for
+            max_records: limit on the total records returned
 
         Returns:
-            (tuple): tuple containing:
-
-                data_object (DataObject): instance of DataObject
-
-                terminate (bool): terminate the DAG?
+            (Dict): entity data keyed to the entity key
 
         """
 
-        dsi = DataStoreInterface(project=self.node_config.get('project'))
+        dsi = DataStoreInterface(project=project)
 
         cursor = None
         all_records = {}
 
-        logging.info(f'Starting datastore read from kind: {self.node_config.get("kind")}')
+        logging.info(f'Starting datastore read from kind: {kind}')
 
         while True:
 
-            records, cursor = dsi.query(kind=self.node_config.get('kind'),
-                                        n_records=self.node_config.get('n_records_per_query', 500),
-                                        query_filters=self.node_config.get('query_filters'),
-                                        filter_keys=self.node_config.get('filter_keys'),
+            records, cursor = dsi.query(kind=kind,
+                                        n_records=n_records_per_query,
+                                        query_filters=query_filters,
+                                        filter_keys=filter_keys,
                                         cursor=cursor
                                         )
 
             all_records.update(records)
 
-            if self.node_config.get('max_records'):
-                if len(all_records) >= self.node_config.get('max_records') or cursor is None:
+            if max_records:
+                if len(all_records) >= max_records or cursor is None:
                     logging.info(f'Stopping query at {len(all_records)} records')
                     break
             elif cursor is None:
                 break
 
-        logging.info(f'Read down {len(all_records)} records from kind: {self.node_config.get("kind")}')
+        logging.info(f'Read down {len(all_records)} records from kind: {kind}')
 
-        data_object.add(self, all_records, key=DataStoreReader.DATA_KEY)
-
-        terminate = False
-
-        return data_object, terminate
+        return {DataStoreReader.DATA_KEY: all_records}

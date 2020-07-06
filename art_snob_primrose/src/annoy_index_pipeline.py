@@ -1,97 +1,97 @@
-from primrose.base.pipeline import AbstractPipeline, PipelineModeType
+from typing import Dict, List, Tuple
+import pandas as pd
+import numpy as np
+import annoy
+from src.pipeline import AutoAbstractPipeline, PipelineModeType
 from primrose.base.transformer_sequence import TransformerSequence
+from src.auto_node import TypeCheckBeforeNone
+
 import uuid
 
 from src.annoy_transformer import AnnoyTransformer
 
 
-class AnnoyPipeline(AbstractPipeline):
+class AnnoyPipeline(AutoAbstractPipeline):
 
     @staticmethod
     def necessary_config(node_config):
         """Returns the necessary configuration keys for the ListFlattener object
 
         Args:
-            vector_length (int): size of vectors being indexed
             metric (str): (optional) metric space used in index: angular, euclidean, manhattan, hamming, or dot
             num_trees (int): (optional) number of trees used in index build, more = more accurate and slower
-            name_list_key (List[str]): (optional) upstream keys used to construct the unique names
-                the list of structures must be the same lenghth, then they will be zipped and concatenated to make
-                the new names to be indexed
             n_neighbors (int): (optional) how many neighbors should be included with each entry
-
+            vector_column_names: List of names to be extracted from the dataframe, len will be the num dimensions
+            name_column (optional) : column with the names to be used for each datapoint, otherwise
+                the neighbors will be returned as index numbers
 
         Returns:
-            set of necessary keys for the ListFlattener object
+            set of necessary keys for the AnnoyPipeline object
 
         """
-        return {'vector_length'}
+        return {}
 
-    def init_pipeline(self):
+    def init_pipeline(self, data: np.ndarray, metric: str = 'angular', num_trees: int = 100):
         """Initialize the pipeline if no pipeline object is found in the upstream data objects
+
+        Args:
+            vector_length: length of input vectors to build into an index
+            metric: (see annoy docs) metric to use in index space
+            num_trees: integer number of trees to use when building index, more is slower but more accurate
+
         Returns:
-            TransformerSequence
+            None, sets transformer_sequence
+
         """
-        return TransformerSequence([AnnoyTransformer(vector_length=self.node_config['vector_length'],
-                                                     metric=self.node_config.get('metric', 'angular'),
-                                                     num_trees=self.node_config.get('num_trees', 100)
-                                                     )])
+        self.transformer_sequence = TransformerSequence(
+            [AnnoyTransformer(vector_length=data.shape[1],
+                              metric=metric,
+                              num_trees=num_trees
+                              )])
 
-    def get_data(self, data_object):
-        # todo: these keys are too hard-coded, works for this example, but needs to be made more flexible
-        data = data_object.get_filtered_upstream_data(self.instance_name,
-                                                      self.node_config.get('data_key', 'umap_data'))
-        vectors = data.get('umap_data')
+    def format_data(self, data: np.ndarray, vector_column_names: List) -> List[Tuple[str, List]]:
 
-        names = []
-
-        for name in self.node_config.get('name_list_key', ['name_data']):
-            names.append([str(d) for d in data_object.get_filtered_upstream_data(self.instance_name, name).get(name)])
-
-        if names:
-            names = ['|'.join(nz) for nz in zip(*names)]
+        vectors = [d.tolist() for d in data]
 
         # now zip names with the data
-        return [a for a in zip(names, vectors)]
+        return [a for a in zip(vector_column_names, vectors)]
 
-    def fit_transform(self, data_object):
-        """Nearest neighbors for each vector using an annoy index
+    def fit(self, data: np.ndarray, key_list: List) -> Dict:
+        """Add data into an annoy index object for rapid access
+
         Args:
-            data_object (DataObject): instance of DataObject
+            data : dataframe with all relevant index data and/or names
+            vector_column_names: List of feature column names to include in index
+            name_column: str column for the name
+
         Returns:
-            data_object (DataObject): instance of DataObject
+            Dict with the required gcs schema that reutrns
         """
 
-        data = self.get_data(data_object)
+        data = self.format_data(data, key_list)
 
-        data = self.execute_pipeline(data, PipelineModeType.FIT_TRANSFORM)
+        _ = self.execute_pipeline(data, PipelineModeType.FIT)
 
-        # break out back into list
-        data = [d for d in data.values()]
+        # return the built index in GCS schema
 
-        data_object.add(self, data, key='index_data', overwrite=False)
-        data_object.add(self, {'object': self.transformer_sequence,
-                         'object_name': f"annoy-index-{uuid.uuid1()}.dill"},
-                        key='transfomer',
-                        overwrite=False)
+        build_index = {'annoy_index':
+                       {'object': self.transformer_sequence,
+                        'object_name': f"annoy-index-{uuid.uuid1()}.dill"}}
 
-        return data_object
+        return build_index
 
-    def transform(self, data_object):
+    def transform(self, key_list: List) -> Dict:
         """Nearest neighbors for each vector using a pre-trained annoy-index
+
         Args:
-            data_object (DataObject): instance of DataObject
+            data: dataframe to extract names from
+            name_column: column name to pull name data
+            annoy_index: AnnoyIndex object to re-use if saved
+
         Returns:
             data_object (DataObject): instance of DataObject
         """
 
-        data = self.get_data(data_object)
+        neighbors = self.execute_pipeline(key_list, PipelineModeType.TRANSFORM)
 
-        data = self.execute_pipeline(data, PipelineModeType.TRANSFORM)
-
-        # break out back into list
-        data = [d for d in data.values()]
-
-        data_object.add(self, data, key='index_data', overwrite=False)
-
-        return data_object
+        return {'neighbors': neighbors}

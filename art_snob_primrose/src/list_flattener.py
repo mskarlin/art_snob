@@ -8,15 +8,17 @@ Author(s):
 #todo: PR for this in primrose repo
 
 import sys
+from typing import Dict
 import logging
 import warnings
 
 sys.path.append('../../')
 
-from primrose.base.node import AbstractNode
+# from primrose.base.node import AbstractNode
+from src.auto_node import AutoNode
 
 
-class ListFlattener(AbstractNode):
+class ListFlattener(AutoNode):
     """Take a dict and extract out keys into a list"""
 
     @staticmethod
@@ -32,9 +34,9 @@ class ListFlattener(AbstractNode):
             set of necessary keys for the ListFlattener object
 
         """
-        return {'key', 'key_to_flatten', 'key_to_write'}
+        return {'key_to_flatten'}
 
-    def run(self, data_object):
+    def execute(self, dict_to_flatten: Dict, key_to_flatten: str)->Dict:
         """Transform dict into list of keys, also store the keys in a separate object for future use
 
         Args:
@@ -49,15 +51,8 @@ class ListFlattener(AbstractNode):
 
         """
 
-        to_flatten = data_object.get_filtered_upstream_data(self.instance_name, self.node_config.get('key'))
-        to_flatten = to_flatten.get(self.node_config.get('key'))
+        flattened_list = [dict_to_flatten.get(tf).get(key_to_flatten) for tf in dict_to_flatten]
+        key_list = [tf for tf in dict_to_flatten]
 
-        flattened_list = [to_flatten.get(tf).get(self.node_config['key_to_flatten']) for tf in to_flatten]
-        key_list = [tf for tf in to_flatten]
-
-        data_object.add(self, flattened_list, key=self.node_config.get('key_to_write', 'flat_list'))
-        data_object.add(self, key_list, key='key_list')
-
-        terminate = False
-
-        return data_object, terminate
+        return {'flat_list': flattened_list,
+                'key_list': key_list}

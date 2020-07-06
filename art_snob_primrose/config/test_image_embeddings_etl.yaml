@@ -7,8 +7,8 @@ implementation_config:
       class: DataStoreReader
       project: artsnob-1
       kind: scraped-image-data
-#      max_records: 10
-#      n_records_per_query: 10
+      max_records: 10
+      n_records_per_query: 10
       filter_keys:
         - images
       destinations:
@@ -48,7 +48,7 @@ implementation_config:
 
     datastore_writer:
       class: DatastoreWriter
-      kind_name: 07062020-images-full-embed
+      kind_name: test-07062020-images-full-embed
       gcs_project: artsnob-1
       project: artsnob-1
       key: entities

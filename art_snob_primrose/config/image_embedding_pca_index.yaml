@@ -6,41 +6,42 @@ implementation_config:
     read_gcs_locations:
       class: DataStoreReader
       project: artsnob-1
-      kind: scraped-image-data
-#      max_records: 10
-#      n_records_per_query: 10
-      filter_keys:
-        - images
+      kind: 07032020-images-full-embed
       destinations:
         - flatten_lists
 
     flatten_lists:
       class: ListFlattener
       key: reader_data
-      key_to_flatten: images
+      key_to_flatten: embeddings
+      key_to_write: data
       destinations:
-        - gcs_image_reader
+        - umap_reduction
+        - annoy_transformer
         - datastore_writer
 
-    gcs_image_reader:
-      class: AioGcsReader
-      bucket: artsnob-image-scrape
+    umap_reduction:
+      class: UmapPipeline
+      is_training: True
+      n_components: 100
       destinations:
-        - embeddings
-      upstream_pull_key: flat_list
+        - annoy_transformer
+        - entity_formatter
 
-  pipeline_config:
-    embeddings:
-      class: TfhubEmbedder
-      module_url: https://tfhub.dev/google/imagenet/inception_resnet_v2/feature_vector/1
-      key: reader_data
+    annoy_transformer:
+      class: AnnoyPipeline
+      is_training: True
+      metric: angular
+      num_trees: 2500
+      n_neighbors: 100
       destinations:
         - entity_formatter
 
     entity_formatter:
       class: EntityFormatter
       property_keys:
-        - embeddings
+        - umap_data
+        - neighbors
       destinations:
         - datastore_writer
 
@@ -48,11 +49,11 @@ implementation_config:
 
     datastore_writer:
       class: DatastoreWriter
-      kind_name: 07062020-images-full-embed
+      kind_name: 07062020-pca-nn
       gcs_project: artsnob-1
-      project: artsnob-1
       key: entities
+      project: artsnob-1
       ids_key: key_list
       exclude_from_indexes:
-        - embeddings
-
+        - index_data
+        - umap_data

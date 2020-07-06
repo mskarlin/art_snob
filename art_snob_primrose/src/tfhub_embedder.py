@@ -56,7 +56,7 @@ class TfhubEmbedder(AbstractNode):
 
         dataset = tf.data.Dataset.from_tensor_slices(image_data)
 
-        mdataset = dataset.map(image_decoder).batch(self.node_config.get('batch_size', 3))
+        mdataset = dataset.map(image_decoder).batch(self.node_config.get('batch_size', 1000))
 
         final_output = []
 
