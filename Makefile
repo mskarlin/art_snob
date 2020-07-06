@@ -14,7 +14,7 @@ build-primrose:
 	docker tag $(PRIMROSENAME) $(CONTAINERLOC)$(PRIMROSENAME)
 	docker push $(CONTAINERLOC)$(PRIMROSENAME)
 
-submit-ai-job:
+submit-embed-job:
 	gcloud ai-platform jobs submit training $(JOBNAME) \
 		--master-machine-type n1-standard-32 \
 		--master-image-uri $(CONTAINERLOC)$(PRIMROSENAME) \
@@ -29,3 +29,10 @@ submit-neighbor-job:
 		--region $(REGION) \
 		--scale-tier CUSTOM \
 		-- python run_primrose.py --config_loc config/image_embedding_pca_index.yaml --use_stackdriver_logging False --project artsnob-1
+
+submit-scrape-job:
+	gcloud ai-platform jobs submit training $(JOBNAME) \
+		--master-machine-type n1-standard-4 \
+		--master-image-uri gcr.io/artsnob-1/scraper \
+		--region $(REGION) \
+		--scale-tier CUSTOM

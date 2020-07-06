@@ -60,7 +60,7 @@ class StreamToLogger(object):
 
 
 def setup_logging(
-        use_stackdriver,
+        use_stackdriver=False,
         structured_fields=["name", "filename", "funcName"],
         local_fmt="%(levelname)s:%(name)s:%(message)s",
         log_level=logging.INFO,
