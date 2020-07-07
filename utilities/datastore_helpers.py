@@ -20,7 +20,7 @@ class DataStoreInterface(object):
         return {r: result[r] for r in return_keys if r in result}
 
     def query(self, kind: str, n_records: int=500, query_filters: List[Tuple[str, str, str]]=None,
-              filter_keys: List[str]=None, cursor: Any = None):
+              filter_keys: List[str]=None, cursor: Any = None, keys_only: bool=False):
         """Query records in a kind, with optional filters and keys
 
         Args:
@@ -30,6 +30,7 @@ class DataStoreInterface(object):
             and value... ex: [('keyname', '=', 'thekeyiwant')]
             filter_keys (List[str]): (optional) list of keys you'd like filtered before returning
             cursor (Any): cursor to continue queries between large sets of returned values
+            keys_only (bool): return only the keys? saving some bandwidth
 
         Returns:
             (dict) keyed to the record_id and filtered via the inputs, (cursor) next page cursor
@@ -47,6 +48,9 @@ class DataStoreInterface(object):
 
                 query.add_filter(query_filter[0], query_filter[1], query_filter[2])
 
+        if filter_keys:
+            query.projection = filter_keys
+
         query_iterator = query.fetch(limit=n_records, start_cursor=cursor)
         page = next(query_iterator.pages)
         next_cursor = (
@@ -54,7 +58,6 @@ class DataStoreInterface(object):
             if query_iterator.next_page_token else None)
 
         if filter_keys:
-
             return {q.id: self.results_filter(q, filter_keys) for q in page}, next_cursor
 
         else:
@@ -100,7 +103,7 @@ class DataStoreInterface(object):
         Args:
             data_list (List[dict]): list of records and key-value pairs to update
             kind (str): valid datastore kind name
-            exclude_from_indexes (tuple[str]): list of keys to exclude from indexing
+            exclude_from_indexes (tuple[str]): tuple of keys to exclude from indexing
             ids (List[Any]): list of ids that will be written, if None then default to Nones
 
         Returns:

@@ -95,8 +95,7 @@ class ArtworkPipeline:
 
         # check if this item already lives in our database
         items, page = self.dsi.query(self.kind,
-                                     query_filters=[('page_url', '=', str(item['page_url']))],
-                                     filter_keys=["standard_tags"])
+                                     query_filters=[('page_url', '=', str(item['page_url']))])
 
         if len(items) > 0:
             raise DropItem(f"Item {item['page_url']} already in database...")

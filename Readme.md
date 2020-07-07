@@ -6,12 +6,24 @@ we don't already have a large repository of artwork at our fingertips, we'll loo
 artwork among some popular sources.
 
 ### todo:
-* set up docker image (set up for use w service account in cloud) 
-* set up cloud func to launch an VM image template
+
 * set up GH actions file to do CI/CD
     - run tests
-    - set up secrets transfer
     - build image(s)
-    - update/build out cloud funcs/VM templates/crons from config files
+    - updates scraping crons from file
 
-* test(s)
+* auto_node capability to take in arbitrary types, pre-defined with combiner methods 
+    - ex: All upstream lists with 10 elements (can define a type-check method in the type stub)
+
+* model launcher for classifiers
+
+* aio for datastore queries
+
+* new live search capabilities
+
+* CDN for images / queries
+
+* New multi-feed (explore vs. exploit) with embedded content row based UI
+
+* refactor JS to best standards...
+

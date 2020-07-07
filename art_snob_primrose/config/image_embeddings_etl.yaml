@@ -1,0 +1,58 @@
+metadata: {}
+implementation_config:
+
+  reader_config:
+
+    read_gcs_locations:
+      class: DataStoreReader
+      project: artsnob-1
+      kind: scraped-image-data
+#      max_records: 10
+#      n_records_per_query: 10
+      filter_keys:
+        - images
+      destinations:
+        - flatten_lists
+
+    flatten_lists:
+      class: ListFlattener
+      key: reader_data
+      key_to_flatten: images
+      destinations:
+        - gcs_image_reader
+        - datastore_writer
+
+    gcs_image_reader:
+      class: AioGcsReader
+      bucket: artsnob-image-scrape
+      destinations:
+        - embeddings
+      upstream_pull_key: flat_list
+
+  pipeline_config:
+    embeddings:
+      class: TfhubEmbedder
+      module_url: https://tfhub.dev/google/imagenet/inception_resnet_v2/feature_vector/1
+      key: reader_data
+      destinations:
+        - entity_formatter
+
+    entity_formatter:
+      class: EntityFormatter
+      property_keys:
+        - embeddings
+      destinations:
+        - datastore_writer
+
+  writer_config:
+
+    datastore_writer:
+      class: DatastoreWriter
+      kind_name: 07062020-images-full-embed
+      gcs_project: artsnob-1
+      project: artsnob-1
+      key: entities
+      ids_key: key_list
+      exclude_from_indexes:
+        - embeddings
+

@@ -10,6 +10,7 @@ sys.path.append('../../')
 from utilities.datastore_helpers import DataStoreInterface
 from imagemetadata.items import ArtSnobItem
 from scrapy.shell import inspect_response
+from scrapy.exceptions import CloseSpider
 
 
 def get_previous_urls(dsi, kind):
@@ -48,11 +49,14 @@ class Society6Scraper(scrapy.spiders.SitemapSpider):
         seen_urls = get_previous_urls(dsi, self.settings.get('DATASTORE_KIND'))
 
         for entry in entries:
-            if entry['loc'] in seen_urls:
+            if entry['loc'].split('#')[0] in seen_urls:
                 logging.info(f'SKIPPING {entry["loc"]}, already present in database')
                 continue
             else:
                 yield entry
+        else:
+            # if we finish everything, and don't yield any items, let's clsoe the spider
+            raise StopIteration()
 
     def parse(self, response):
 
