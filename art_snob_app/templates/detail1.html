@@ -1,0 +1,279 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<link rel="icon" href="{{ url_for('static', filename='artsnoblogo1.png') }}">
+		<title>{{ description['title'] }}</title>
+		<meta name="description=" content="Art Snob's recommended works: {{ description['description'] }}"/>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase.js"></script>
+		<script>
+		  // Initialize Firebase
+		  var config = {
+		    apiKey: "AIzaSyAJZDnY9R8-bJxnlC8aSJfzmYGzyNOVC6Y",
+		    authDomain: "artsnob-1.firebaseapp.com",
+		    databaseURL: "https://artsnob-1.firebaseio.com",
+		    projectId: "artsnob-1",
+		    storageBucket: "artsnob-1.appspot.com",
+		    messagingSenderId: "208670012614"
+		  };
+		  firebase.initializeApp(config);
+		</script>
+		<script src="https://cdn.firebase.com/libs/firebaseui/2.6.2/firebaseui.js"></script>
+		<link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/2.6.2/firebaseui.css">
+		<script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/jquery-ui-1.12.1.custom/jquery-ui.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/jquery.cookie.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/skel.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/util.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/imagesloaded.pkgd.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/firebase.js') }}"></script>
+	</head>
+
+	    <div class="wrapper">
+
+
+		<!-- sidebar -->
+		<nav class="nav-main">
+			<div class="nav-top">
+				<div class="right-side">
+				<a onclick=openNavBar() class="caps_text">CLOSE</a>
+				<a onclick=openNavBar() class="close_x"><img src="{{ url_for('static', filename='black-x-icon.png') }}" id="close_menu"></a>
+				</div>
+			</div>
+
+		<div class="nav-body one">
+			<div class="left-side">
+				<a href="/profile" class="link_text show">MY FAVORITES</a>
+			</div>
+		</div>
+
+		<div class="nav-body two">
+			<div class="left-side">
+				<a onclick=loginWindow() class="link_text show" id="menu-log-in">LOG IN</a>
+				<a onclick=loginSignOut() class="link_text" id="menu-log-out">LOG OUT</a>
+			</div>
+		</div>
+
+		<div class="nav-body three">
+			<div class="left-side">
+				<a href="/blog-1" class="link_text show">BLOG</a>
+			</div>
+		</div>
+
+		<div class="nav-body four">
+			<div class="left-side">
+				<div class="visit_links">
+				VISIT US:
+				<a href="https://www.instagram.com/artsnobnyc/" class="icon fa-instagram"><span class="label">Instagram</span></a>
+				</div>
+			</div>
+		</div>
+
+		</nav>
+
+		<!-- Header -->
+	    <header id="header">
+				<div class="inner">
+
+					<div class="menubar{{ hidden }}">
+
+						<div class='title_holder{{ hidden }}'>
+							<!--<a href="index.html"><h1 class="smalltitle{{ hidden }}">Art Snob</h1></a>-->
+							<div class="ham_holder">
+
+							<a onclick=openNavBar()>
+									<div class="ham_menu"></div>
+									<div class="ham_menu"></div>
+									<div class="ham_menu"></div>
+							</a>
+
+							</div>
+
+							<a onclick=openNavBar() class="navbarlink">
+							<div class="menu_desc">MENU</div>
+							</a>
+
+						</div>
+
+						<div class="inline_search hidden">
+							<form class="searchform" method="POST">
+							<input type="text" id="search-text"
+								   placeholder="SEARCH FOR ART"
+								   data-placeholder="SEARCH FOR ART (FUN, BEACH, RED, RAINBOW...)"
+								   data-placeholder-mobile="SEARCH FOR ART"
+								   class="search-input"
+								   name="search"
+								   value="">
+								<div class="search_item_list" id="search_autocomplete"></div>
+							</form>
+						</div>
+
+						<div class="search_holder{{ hidden }}">
+							<a href="/index0">
+							<h1 class="smalltitle{{ hidden }}">Art Snob</h1>
+							</a>
+						</div>
+
+						<div class="signup_holder{{ hidden }}">
+							<a onclick=searchBar()><img src="{{ url_for('static', filename='black-search-500.png') }}" id="search_icon"></a>
+							<!--<a class="registration{{ hidden }}" href="/profile">My Favorites</a>-->
+							{% if header_class != 'class=hide' %}
+							<span class="tutorial favorite_popuptext" id="favorites_popup">Click on My Favorites to see what you’ve liked so far.<br> <input type="button" class="next tutorialbutton" id="tut_2" onclick=endTutorial(this) value="Got it!" /></span>
+							{% endif %}
+							<a href="/profile">
+							<div class="favorite_button">
+								<div class="favorite_text">MY FAVORITES</div>
+							</div>
+							</a>
+
+
+						</div>
+
+					</div>
+
+
+					{% if onboarding == true %}
+
+					<div class="infobar tutorial" id="infobar_tutorial">
+
+                    <div class="feed_return_index feed" id="welcome">Like four works to get recommended art
+					</div>
+
+				</div>
+
+
+
+					<div class="infobar progress" id="progess_bar">
+
+                    <div class="feed_return_index one" id="one_progress">1
+					</div>
+					<div class="feed_return_index two" id="two_progress">2
+					</div>
+					<div class="feed_return_index three" id="three_progress">3
+					</div>
+					<div class="feed_return_index four" id="four_progress">4
+					</div>
+
+				</div>
+
+				{% else %}
+
+					<div class="infobar">
+						<a href="/index0">
+						<div class="feed_return feed">BACK TO FEED</div>
+						</a>
+						<a onclick=externalLink("{{ description['link'] }}")>
+						<div class="feed_return purchase">PURCHASE NOW</div>
+						</a>
+						<a href="#similar-art">
+						<div class="feed_return similar">SIMILAR ART</div>
+						</a>
+					</div>
+
+				{% endif %}
+
+
+
+				</div>
+			</header>
+
+		<!-- Main -->
+			<div id="preview">
+
+                <div class="login_content", id="login_popup">
+
+								<div class='close_login_popup'>
+							     <a onclick=cancelWindow()><img src="{{ url_for('static', filename='icon-delete.png') }}"></a>
+								</div>
+
+								<h1 class="login_content_heading">Art Snob Login</h1>
+								<h2 class='login_content_login_explainer'>Sign up or login to save recommendations</h2>
+								<div class='login_content_google-login-links' id="firebaseui-auth-container"></div>
+								<div class="login_content_cancel_button_holder">
+
+									<input type="button" class="login_content_cancel_button" onclick=cancelWindow() value="Cancel" />
+
+								</div>
+							</div>
+
+
+
+				<div class="inner">
+					<div class="image fit">
+						<div id="centered_image">
+						<img src="{{ image_url }}" alt="" />
+						<img class='image fit like detail {{ image_url }}' src="{{ url_for('static', filename='heart.png' if image_url in liked_images else 'heart_soft.png') }}" alt="" onclick=likeImage(this) />
+						</div>
+						</div>
+					</div>
+					<div class="content">
+						<header>
+							<h2>{{ description['title'] }}</h2>
+						</header>
+						<p>Tags: {% for tag in tags %}
+							<a href="/tags{{ tag }}">{{ tag }}</a>
+							{% endfor %}
+						</p>
+						<p>{{ description['description'] }}</p>
+						<p>Starting at: {{ description['price'] }}</p>
+						<p>Available Sizes: {{ description['sizes'] }}</p>
+
+						<a href="{{ description['link'] }}" id="cj_generated_link"></a>
+                        <p><input type="button" class="purchase buybutton" id="{{ description['link'] }}" onclick=externalLink("{{ description['link'] }}") value="Buy on {{ description['domain'] }}" /></p>
+
+                        <p style="font-style: italic;">Art Snob partners with online galleries and art sellers to find great personalized recommendations. We receive compensation when you buy something from one of our partners. </p>
+					</div>
+
+				</div>
+
+                <div class="subtitles" id="similar-art">
+				    <h3>Browse similar items:</h3>
+                </div>
+
+				<div class=horizontalscroll>
+					{% for image in similar_images %}
+								<div class="horizontalimage">
+									<a href="/detail{{ image[0].split('full/')[-1][:-4] }}"><img src="{{ image[0] }}" alt="" /></a>
+									<img class='horizontalimage fit like {{ image[0] }}' src="{{ url_for('static', filename='heart.png' if image[0] in liked_images else 'heart_soft.png') }}" alt="" onclick=likeImage(this) />
+								</div>
+					{% endfor %}	
+				</div>
+
+                <div class="subtitles">
+				    <h3>Similar items under $100:</h3>
+                </div>
+
+				<div class=horizontalscroll>
+					{% for image in under_100_images %}
+								<div class="horizontalimage">
+									<a href="/detail{{ image[0].split('full/')[-1][:-4] }}"><img src="{{ image[0] }}" alt="" /></a>
+									<img class='horizontalimage fit like {{ image[0] }}' src="{{ url_for('static', filename='heart.png' if image[0] in liked_images else 'heart_soft.png') }}" alt="" onclick=likeImage(this) />
+								</div>
+					{% endfor %}	
+				</div>
+
+		<!-- Footer -->
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="{{ url_for('static', filename='js/util.js') }}"></script>
+			<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+			<script src="//www.anrdoezrs.net/am/8975929/include/allCj/generate/onLoad/impressions/page/am.js"></script>
+            <script type="text/javascript">
+                var vglnk = {key: '05701e56c525ccdba2122f469d734f5b'};
+                (function(d, t) {
+                    var s = d.createElement(t);
+                        s.type = 'text/javascript';
+                        s.async = true;
+                        s.src = '//cdn.viglink.com/api/vglnk.js';
+                    var r = d.getElementsByTagName(t)[0];
+                        r.parentNode.insertBefore(s, r);
+                }(document, 'script'));
+            </script>
+
+	</body>
+</html>

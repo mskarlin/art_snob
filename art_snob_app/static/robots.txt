@@ -1,0 +1,8 @@
+User-agent: Googlebot
+Disallow: /tos
+Disallow: /autocomplete
+Disallow: /tags*
+Disallow: /logexternal
+Disallow: /like
+Diallow: /onboarded
+Sitemap: https://www.artsnob.io/sitemap.txt

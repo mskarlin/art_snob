@@ -1,13 +1,46 @@
 from google.cloud import datastore
+from gcloud.aio.datastore import Datastore as aio_datastore
+from gcloud.aio.datastore import PropertyFilter, Filter, PropertyFilterOperator, CompositeFilter, \
+    CompositeFilterOperator, Query, Value
+from aiohttp import ClientSession as Session
+from aiohttp import ClientTimeout
+import random
 from typing import List, Union, Any, Tuple
+import asyncio
 
 import os
 
 
 class DataStoreInterface(object):
     """Simplify operations to datastore"""
+
+    prop_query_translation = {'=': PropertyFilterOperator.EQUAL,
+                              '>': PropertyFilterOperator.GREATER_THAN,
+                              '<': PropertyFilterOperator.LESS_THAN,
+                              '>=': PropertyFilterOperator.GREATER_THAN_OR_EQUAL,
+                              '<=': PropertyFilterOperator.LESS_THAN_OR_EQUAL}
+
     def __init__(self, project=''):
+        self.project = project
         self.ds = datastore.Client(project=os.environ.get('GOOGLE_PROJECT_ID', project))
+
+    def random_selection(self, kind: str, min: int, max: int, n_items: int = 1):
+        """Pull a random index from a numeric index"""
+        items = []
+
+        for i in range(n_items):
+            rand = random.randrange(min, max)
+
+            item = self.query(kind=kind,
+                              n_records=1,
+                              query_filters=[('Key', '>', self.ds.key(kind, rand))],
+                              key_filter=True,
+                              tolist=True,
+                              )[0][0]
+
+            items.append(item)
+
+        return items
 
     @staticmethod
     def results_filter(result: Any, return_keys: List[str]) -> dict:
@@ -19,8 +52,81 @@ class DataStoreInterface(object):
         """
         return {r: result[r] for r in return_keys if r in result}
 
-    def query(self, kind: str, n_records: int=500, query_filters: List[Tuple[str, str, str]]=None,
-              filter_keys: List[str]=None, cursor: Any = None, keys_only: bool=False):
+    @staticmethod
+    def maybetolist(kvdict, single_key=None, tolist=False):
+        if tolist:
+            if single_key:
+                return [v[single_key] for v in kvdict.values()]
+            else:
+                return [v for v in kvdict.values()]
+        else:
+            return kvdict
+
+    @staticmethod
+    def parse_single_datastore_properties(properties):
+
+        parsed_property = {}
+
+        for p, val in properties.items():
+            if hasattr(val, 'items'):
+                val = [v.value for v in val.items]
+            parsed_property[p] = val
+
+        return parsed_property
+
+    def extract_entities(self, results):
+        entities = []
+        for query_result in results:
+            entities += [self.parse_single_datastore_properties(result.entity.properties) for result in
+                         query_result.entity_results]
+
+        return entities
+
+    def async_queries(self, kinds: List[str], query_filters: List[List[Tuple[str, str, str]]], limit=None):
+        import time
+        start = time.time()
+        objects = asyncio.run(self.async_query_set(kinds, query_filters, limit))
+        end = time.time()
+        print(f'JUST QUERY: {end-start}')
+
+        return self.extract_entities(objects)
+
+    async def async_query_set(self, kinds, query_filters, limit):
+        results = await asyncio.gather(*[self.async_query(kind, query, limit) for kind, query in zip(kinds, query_filters)])
+        return results
+
+    async def async_query(self, kind: str, query_filters: List[Tuple[str, str, str]] = None, limit=None):
+
+        property_filters = []
+
+        if query_filters:
+
+            for query_filter in query_filters:
+
+                if len(query_filter) != 3:
+                    raise Exception('query_filters must be tuples of len 3.')
+
+                property_filters.append(PropertyFilter(query_filter[0],
+                                                       self.prop_query_translation[query_filter[1]],
+                                                       Value(query_filter[2])))
+        if len(property_filters) == 1:
+            filters = Filter(property_filters[0])
+
+        else:
+            filters = CompositeFilter(CompositeFilterOperator.AND, property_filters)
+
+        timeout = ClientTimeout(total=3600, connect=None, sock_connect=None, sock_read=None)
+        query = Query(kind=kind, query_filter=filters, limit=limit)
+
+        async with aio_datastore(project=os.environ.get('GOOGLE_PROJECT_ID', self.project)) as ads:
+            async with Session(timeout=timeout) as s:
+                results = await ads.runQuery(query, session=s)
+
+        return results
+
+    def query(self, kind: str, n_records: int = 500, query_filters: List[Tuple[str, str, str]] = None,
+              filter_keys: List[str] = None, cursor: Any = None, keys_only: bool = False, tolist: bool = False,
+              key_filter: bool = False):
         """Query records in a kind, with optional filters and keys
 
         Args:
@@ -31,6 +137,8 @@ class DataStoreInterface(object):
             filter_keys (List[str]): (optional) list of keys you'd like filtered before returning
             cursor (Any): cursor to continue queries between large sets of returned values
             keys_only (bool): return only the keys? saving some bandwidth
+            tolist (bool): transform the results into a list?
+            key_filter (bool): use a keyfilter rather than a property based query filter
 
         Returns:
             (dict) keyed to the record_id and filtered via the inputs, (cursor) next page cursor
@@ -46,10 +154,17 @@ class DataStoreInterface(object):
                 if len(query_filter) != 3:
                     raise Exception('query_filters must be tuples of len 3.')
 
-                query.add_filter(query_filter[0], query_filter[1], query_filter[2])
+                if key_filter and query_filter[0] == "Key":
+                    query.key_filter(query_filter[2], query_filter[1])
+                else:
+                    query.add_filter(query_filter[0], query_filter[1], query_filter[2])
 
-        if filter_keys:
+        # can't do a projection if you're using a property filter
+        if filter_keys and not query_filters:
             query.projection = filter_keys
+
+        if keys_only:
+            query.keys_only()
 
         query_iterator = query.fetch(limit=n_records, start_cursor=cursor)
         page = next(query_iterator.pages)
@@ -58,13 +173,18 @@ class DataStoreInterface(object):
             if query_iterator.next_page_token else None)
 
         if filter_keys:
-            return {q.id: self.results_filter(q, filter_keys) for q in page}, next_cursor
+
+            # if there's a single filter key, let's return that as a list
+            single_key = filter_keys[0] if len(filter_keys) == 1 else None
+
+            return self.maybetolist({q.id: self.results_filter(q, filter_keys) for q in page},
+                                    single_key, tolist), next_cursor
 
         else:
 
-            return {q.id: q for q in page}, next_cursor
+            return self.maybetolist({q.id: q for q in page}, None, tolist), next_cursor
 
-    def read(self, ids: List[Union[int, str]], kind: str, filter_keys: List[str]=None, sorted_list: bool=False):
+    def read(self, ids: List[Union[int, str]], kind: str, filter_keys: List[str] = None, sorted_list: bool = False):
         """read filtered values from a list of ids within a particular datastore kind
 
         Args:
@@ -97,7 +217,7 @@ class DataStoreInterface(object):
 
             return results
 
-    def update(self, data_list: List[dict], kind: str, exclude_from_indexes: Tuple[str]=None, ids: List[Any]=None):
+    def update(self, data_list: List[dict], kind: str, exclude_from_indexes: Tuple[str] = None, ids: List[Any] = None):
         """Update datastore kind keys with values in data_list
 
         Args:

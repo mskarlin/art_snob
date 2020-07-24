@@ -36,6 +36,7 @@ class DataStoreReader(AutoNode):
                     [['trait', '=', 'true']]
             filter_keys (List[str]): list of top-level keys to keep
             max_records (int): (optional) for testing limit the max records returned
+            keys_only (bool): return just the key values or not
 
         Returns:
             set of necessary keys for the DataStoreReader object
@@ -44,7 +45,8 @@ class DataStoreReader(AutoNode):
         return {'project', 'kind'}
 
     def execute(self, project: str, kind: str, n_records_per_query: int = 500,
-                query_filters: List = None, filter_keys: List = None, max_records: int = None) -> Dict:
+                query_filters: List = None, filter_keys: List = None, max_records: int = None,
+                keys_only: bool = False) -> Dict:
         """Read datastore object(s) from remote datastore queries
 
         Args:
@@ -54,6 +56,7 @@ class DataStoreReader(AutoNode):
             query_filters: list of Tuples of strings for filtering ( see DataStoreInterface for syntax)
             filter_keys: list of keys to be filtered for
             max_records: limit on the total records returned
+            keys_only: bool
 
         Returns:
             (Dict): entity data keyed to the entity key
@@ -73,7 +76,8 @@ class DataStoreReader(AutoNode):
                                         n_records=n_records_per_query,
                                         query_filters=query_filters,
                                         filter_keys=filter_keys,
-                                        cursor=cursor
+                                        cursor=cursor,
+                                        keys_only=keys_only
                                         )
 
             all_records.update(records)
