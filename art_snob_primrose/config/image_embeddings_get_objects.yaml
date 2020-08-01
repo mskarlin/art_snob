@@ -7,8 +7,6 @@ implementation_config:
       class: DataStoreReader
       project: artsnob-1
       kind: 07032020-images-full-embed
-      max_records: 100
-      n_records_per_query: 100
       destinations:
         - flatten_lists
 
@@ -20,7 +18,6 @@ implementation_config:
       destinations:
         - umap_reduction
         - annoy_transformer
-        - datastore_writer
 
     umap_reduction:
       class: UmapPipeline
@@ -28,39 +25,18 @@ implementation_config:
       n_components: 100
       destinations:
         - annoy_transformer
-        - entity_formatter
         - gcs_writer
 
     annoy_transformer:
       class: AnnoyPipeline
       is_training: True
       metric: angular
-      num_trees: 2500
-      n_neighbors: 100
+      num_trees: 500
+      n_neighbors: 2
       destinations:
-        - entity_formatter
         - annoy_uploader
 
-    entity_formatter:
-      class: EntityFormatter
-      property_keys:
-        - umap_data
-        - neighbors
-      destinations:
-        - datastore_writer
-
   writer_config:
-
-    datastore_writer:
-      class: DatastoreWriter
-      kind_name: test-07062020-pca-nn
-      gcs_project: artsnob-1
-      key: entities
-      project: artsnob-1
-      ids_key: key_list
-      exclude_from_indexes:
-        - index_data
-        - umap_data
 
     gcs_writer:
       class: GcsDillWriter
@@ -69,7 +45,7 @@ implementation_config:
 
     annoy_uploader:
       class: AnnoyUploader
-      gcs_location: gs://artsnob-models/annoy/07312020/index.ann
+      gcs_location: gs://artsnob-models/annoy/07312020/small_index.ann
       destinations:
         - tranformer_writer
 

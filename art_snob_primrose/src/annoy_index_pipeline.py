@@ -74,9 +74,7 @@ class AnnoyPipeline(AutoAbstractPipeline):
 
         # return the built index in GCS schema
 
-        build_index = {'annoy_index':
-                       {'object': self.transformer_sequence,
-                        'object_name': f"annoy-index-{uuid.uuid1()}.dill"}}
+        build_index = {'annoy_index': self.transformer_sequence}
 
         return build_index
 

@@ -62,6 +62,11 @@ class PersonalizedArt():
 
         tags = self.tags(similar_art)
 
+        # how the fuck can we do this sorting?? should we just use SQL?
+        # then the we can move the calculations onto the db...
+        # get tag random selection... maybe
+        # for that matter a way to optimize might be to take a key-only query
+
         for tag in tags[:n_carousals]:
             recommended[f'tag:{tag}'] = self.data.search(tag)
 

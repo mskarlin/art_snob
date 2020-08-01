@@ -83,12 +83,7 @@ class DataStoreInterface(object):
         return entities
 
     def async_queries(self, kinds: List[str], query_filters: List[List[Tuple[str, str, str]]], limit=None):
-        import time
-        start = time.time()
         objects = asyncio.run(self.async_query_set(kinds, query_filters, limit))
-        end = time.time()
-        print(f'JUST QUERY: {end-start}')
-
         return self.extract_entities(objects)
 
     async def async_query_set(self, kinds, query_filters, limit):
