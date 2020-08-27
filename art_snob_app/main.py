@@ -85,6 +85,7 @@ def write_session_likes_to_db(user, liked_images):
     di.update_multi(images_to_write, 'action_stream')
 
 
+
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index<page>', methods=['GET', 'POST'])
 def index(page=0, noshow=''):

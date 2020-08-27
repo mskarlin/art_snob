@@ -1,0 +1,151 @@
+/* .App {
+  text-align: center;
+  height: 100vh;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 24px;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+.Background-box {
+  width: 70vw;
+  height: auto;
+  display: flex;
+}
+
+.Background-image {
+  display: inline-block;
+}
+
+.Background-image img {
+  width: 100%;
+  height: auto;
+
+}
+
+.image-sidebar {
+width: 20vw;
+min-width: 100px;
+background: #1d1d1d;
+color: #adadad;
+height: 100%;
+text-align: left;
+transition: width, left, right, 0.3s;
+position: relative;
+z-index: 111;
+display: flex;
+} */
+
+/* 
+########################
+Start of Framer elements
+########################
+*/
+
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Italiana&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+.welcome-to {
+  width: 110px;
+  height: 40px;
+  overflow: hidden;
+  font-family: "Noto Sans JP", sans-serif;
+  color: #FFFFFF;
+  font-size: 20px;
+  letter-spacing: 0px;
+  line-height: 1.2;
+  font-weight: 400;
+  font-style: normal;
+  vertical-align: text-bottom;
+}
+
+.magic-lattice-art {
+  width: 200px;
+  height: 40px;
+  overflow: hidden;
+  font-family: "Italiana", serif;
+  color: #FFFFFF;
+  font-size: 24px;
+  letter-spacing: 0px;
+  line-height: 1.2;
+  font-weight: 400;
+  font-style: normal;
+  vertical-align: text-bottom;
+  margin-bottom: 2px;
+  margin-left: 4px;
+}
+
+.centerline {
+  width: 327px;
+  height: 50px;
+  overflow: hidden;
+  font-family: "Noto Sans JP", sans-serif;
+  color: #FFFFFF;
+  font-size: 20px;
+  letter-spacing: 0px;
+  line-height: 1.2;
+  font-weight: 400;
+  font-style: normal;
+  text-align: left;
+}
+
+.cookiesnote {
+  width: 327px;
+  height: 50px;
+  overflow: hidden;
+  font-family: "Noto Sans JP", sans-serif;
+  color: #FFFFFF;
+  font-size: 13px;
+  letter-spacing: 0px;
+  line-height: 1.2;
+  font-weight: 300;
+  font-style: normal;
+  text-align: left;
+}
+
+.magic-lattice-header {
+  width: 150px;
+  height: 43px;
+  overflow: hidden;
+  font-family: "Italiana", serif;
+  color: #000000;
+  font-size: 24px;
+  letter-spacing: 0px;
+  line-height: 43px;
+  font-weight: 900;
+  font-style: normal;
+  text-align: center;
+}
+
+.material-icons.md-36 { 
+  font-size: 36px; 
+  color: #888; 
+}

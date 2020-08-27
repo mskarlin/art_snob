@@ -1,0 +1,7 @@
+*/__pycache__
+*.pyc
+.vscode/
+notebooks/.ipynb_checkpoints
+*.index
+*.idea
+*.xml
