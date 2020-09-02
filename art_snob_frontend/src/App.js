@@ -1,131 +1,177 @@
-import React, { useState } from 'react';
+import React, { useState,  useEffect, useReducer, useRef, useCallback } from 'react';
 // import logo from './logo.svg';
+import { v4 as uuidv4 } from 'uuid';
 import living_room from './living_room.jpg';
 import './sidebar.scss';
 import './App.css';
-import { makeStyles } from '@material-ui/core/styles';
-import GridList from '@material-ui/core/GridList';
-import GridListTile from '@material-ui/core/GridListTile';
-import GridListTileBar from '@material-ui/core/GridListTileBar';
-import ListSubheader from '@material-ui/core/ListSubheader';
-import IconButton from '@material-ui/core/IconButton';
-import InfoIcon from '@material-ui/icons/Info';
-import Sidebar from "react-sidebar";
-import { Frame, Stack } from "framer";
+import { useFetch, useInfiniteScroll } from './feedHooks'
+import { Frame, Stack, addPropertyControls } from "framer";
+import {Rooms} from "./artComponents"
 
-import { random, floor } from 'mathjs';
-
-const useStyles = makeStyles((theme) => ({
-  root: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-    overflow: 'hidden',
-    backgroundColor: theme.palette.background.paper,
-  },
-  gridList: {
-    width: "200px",
-    height: "auto",
-  },
-  icon: {
-    color: 'rgba(255, 255, 255, 0.54)',
-  },
-}));
-
-// set up for testing
-function createTiles(base, times) {
-  let tiles = [];
-	for(let i = 0; i < times; i++) {
-    let newbase = JSON.parse(JSON.stringify(base))
-    newbase.cols = floor(random(1, 4))
-    newbase.key = i
-    console.log(newbase)
-  	tiles.push(newbase)
-  }
-  return tiles;
-}
-
-
-let base = {
-  img: "https://storage.googleapis.com/artsnob-image-scrape/full/0031187292e628b88309d96256259be4d49ebed8.jpg",
-  key: 0,
-  title: 'Image',
-  author: 'author',
-  cols: 1,
-}
-
-// const tileData = createTiles(base, 5)
-
-// function ImageGridList() {
-//   const classes = useStyles();
-
-//   return (
-//     <div className={classes.root}>
-//       <GridList cellHeight={180} cols={1} className={classes.gridList}>
-//         <GridListTile key="Subheader" cols={1} style={{ height: 'auto' }}>
-//           <ListSubheader component="div">December</ListSubheader>
-//         </GridListTile>
-//         {tileData.map((tile) => (
-//           <GridListTile key={tile.key}>
-//             <img src={tile.img} alt={tile.title} cols={1} />
-//             <GridListTileBar
-//               title={tile.title}
-//               subtitle={<span>by: {tile.author}</span>}
-//               actionIcon={
-//                 <IconButton aria-label={`info about ${tile.title}`} className={classes.icon}>
-//                   <InfoIcon />
-//                 </IconButton>
-//               }
-//             />
-//           </GridListTile>
-//         ))}
-//       </GridList>
-//     </div>
-//   );
-// }
 
 function App() {
   const [landingState, setLandingState] = useState({"open": true});
-  
-  var mainPage = {
-    width: "100vw",
-    height: "100vh",
-    overflow: "hidden",
-    backgroundColor: "#ffffff"
+  const [loadMore, setLoadMore] = useState(false);
+  const imgReducer = (state, action) => {
+    switch (action.type) {
+      case 'STACK_IMAGES':
+        return { ...state, images: state.images.concat(action.images) }
+      case 'FETCHING_IMAGES':
+        return { ...state, fetching: action.fetching }
+      default:
+        return state;
+    }
+  }
+  const [imgData, imgDispatch] = useReducer(imgReducer,{ images:[], fetching: true})
+
+  // starting state for entire thing...
+  const initArtState = {'rooms': [{
+    name: "My First Room", 
+    id: uuidv4(),
+    room_type: "blank",
+    art:[{id:1, size: 'l_large', artId: null},
+        {id:2, size: 'xsmall', artId: null},
+        {id:3, size: 'xsmall', artId: null}], // usually starts out null
+    arrangement: {rows: [1, {cols: [2,3]}]}, // usually starts out null
+    arrangementSize: 3 // usually starts out 0
+  },
+  {
+    name: "My Second Room", 
+    id: uuidv4(),
+    room_type: "blank",
+    art:[{id:1, size: 'medium', artId: null},
+         {id:2, size: 'medium', artId: null},
+         {id:3, size: 'medium', artId: null}], // usually starts out null
+    arrangement: {rows: [1, 2, 3]}, // usually starts out null
+    arrangementSize: 3 // usually starts out 0
   }
 
-  if (landingState.open) {
-  return (
-    <div className="App">
-      <main>
-          <Frame style={mainPage}>
-          <LandingPage landingState={landingState} setLandingState={setLandingState}></LandingPage>
-          <MainHeader></MainHeader>
-          </Frame>
-      </main>
-    </div>
-  )
+]}
+
+  const artReducer = (state, action) => {
+    // TODO: delete rooms 
+    switch(action.types){
+      case 'ADD_ROOM':
+        return {...state, rooms: state.rooms.concat(action.room)}
+      case 'ADD_ARRANGEMENT':
+        // filter for arrangement in the room equal to action.id
+        return state.rooms.map((room, _) => {
+          const {id} = room
+          if (id == action.id) {
+            // TODO: add validation that the art exists for this
+            if ('additionalArt' in action.arrangementSize) {
+              return {...room, 
+                arrangement: action.arrangement, 
+                art: room.art.concat(action.additionalArt)}
+            }
+            else {
+            return {...room, arrangement: action.arrangement}
+          }
+          }
+          else{
+            return room
+          }
+        })
+      case 'ADD_ROOMTYPE':
+        return state.rooms.map((room, _) => {
+          const {id} = room
+          if (id == action.id) {
+            return {...room, room_type: action.room_type}
+          }
+          else{
+            return room
+          }
+        })
+      case 'ADD_ART':
+        return state.rooms.map((room, _) => {
+          const {id} = room
+          if (id == action.roomId) {
+              const updatedArtwork = room.art.map((_,work) => {
+              if (work.id == action.roomArtId) {
+                return {...work, artId: action.ArtId}
+              }
+              else {
+                return work
+              }
+
+            }
+            )
+            return {...room, art: updatedArtwork}
+          }
+          else{
+            return room
+          }
+        })
+      case 'ADD_NAME':
+        return state.rooms.map((room, _) => {
+          const {id} = room
+          if (id == action.id) {
+            return {...room, name: action.name}
+          }
+          else {
+            return room
+          }
+
+        }
+        ) 
+      default:
+        return state;
+    }
   }
+
+  const [artData, artDispatch] = useReducer(artReducer, initArtState)
+
+  let feedBoundaryRef = useRef(null);
+  useFetch(loadMore, imgDispatch, setLoadMore);
+  useInfiniteScroll(feedBoundaryRef, setLoadMore);
+
   return (
     <div className="App">
       <main>
           <LandingPage landingState={landingState} setLandingState={setLandingState}></LandingPage>
-          <MainHeader></MainHeader>
+          <div style={{"position": "fixed", "top": 0}}>
+            <MainHeader></MainHeader>
+            <div className='art-feed'>
+              <div className='carousal-spacing main-feed' style={{'width': imgData.images.length*126+15+'px'}}>
+                {imgData.images.map((image, index) => {
+                  const { artist, images } = image
+                  return (
+                    <div key={index} className='imgholder'>
+                          <img
+                            alt={artist}
+                            data-src={images}
+                            className="imgholder img"
+                            src={images}
+                          />
+                    </div>
+                  )
+                })}
+                {imgData.fetching && (
+                <div className='loadingbox'>
+                  <p>...</p>
+                </div>
+                  )}
+                  <div id='feed-boundary' style={{ border: '1px solid black' }} ref={feedBoundaryRef}></div>
+              </div>
+            </div>
+          </div>
+          <Rooms rooms={artData.rooms} artData={imgData['images']}></Rooms>
       </main>
     </div>
   )
 
 }
-
 
 
 function LandingPage(props) {
 
   var landingModalOver = {
-    width: "100vw",
-    height: "100vh",
+    width: "100%",
+    height: "100%",
     overflow: "hidden",
     backgroundColor: "rgba(33, 37, 41, 0.98)",
+    top: 0,
+    zIndex: 1
   }
   
   function loadLandingPage() {
@@ -169,7 +215,7 @@ return (
         <Stack style={welcomeMessage}>
           <div style={firstLine}>
             <div className="welcome-to">Welcome to  </div>
-            <div className="magic-lattice-art">Magic Lattice Art</div>
+            <div className="magic-lattice-art">Deco</div>
           </div>
           <div className="centerline">The room-centric art finder to complete your home.</div>
           <div className="cookiesnote">Note that we use cookies to store your info between sessions.</div>
@@ -210,13 +256,11 @@ function MainHeader() {
   return (
     <div style={header}>
       <div style={headerStack}>
-      <div className="magic-lattice-header">Domistyle</div>
+      <div className="deco-header">Deco</div>
       <span className="material-icons md-36">menu</span>
       </div>
     </div>
   )
 }
-
-
 
 export default App;

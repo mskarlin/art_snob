@@ -39,12 +39,12 @@ class RandomSelections(AutoNode):
 
         Args:
             datastore_keys (Dict): all ds keys as dict keys keyed to entities
-            N: how many random subsets you'd like
-            n_cutoff: how many within each subset you'd like to keep
+            N: how many random subsets you like
+            n_cutoff: how many within each subset you like to keep
 
         Returns:
             (Dict): shuffled data with selection keys (used to select the lists down from DS)
-
+        
         """
 
         logging.info(f'Shuffling for {N} iterations with key list of length: {len(datastore_keys)}')
