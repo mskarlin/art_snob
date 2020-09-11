@@ -43,6 +43,8 @@ def feed(seed_likes=[], session_id=None):
 
     return work_list
 
-@app.post('/art/')
-def art(art_id: List[int]):
-    return dsi.read(art_id, data.INFO_KIND)
+@app.get('/art/{art_id}')
+def art(art_id: int):
+    work = dsi.read([art_id], data.INFO_KIND, sorted_list=True)[0]
+    work['images'] = f"https://storage.googleapis.com/artsnob-image-scrape/{work['images']}"
+    return work

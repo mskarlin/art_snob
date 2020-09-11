@@ -1,11 +1,16 @@
-import React, { useState,  useEffect, useReducer, useRef, useCallback } from 'react';
+import React, { useState,  useEffect, useReducer, useRef, useCallback, useMemo } from 'react';
 import {round} from 'mathjs';
 import { addPropertyControls } from 'framer';
+import { v4 as uuidv4 } from 'uuid';
+
 
 function ArtWork(props) {
     const PPI = props.PPI ? props.PPI : 3.0
     const margin = props.margin ? props.margin: round(1.5*PPI) + "px"
-  
+    // are these needed??? or should state be lifted
+    const [artImage, setArtImage] = useState(props.artImage);
+    const [artId, setArtId] = useState(props.artId)
+
     // art size, including frames (~1 inch either way)
     const artSize = {'p_xsmall': [12*PPI, 14*PPI], 'l_xsmall': [14*PPI, 12*PPI],
                 'xsmall': [14*PPI, 14*PPI], 'p_small': [17*PPI, 23*PPI], 'l_small': [23*PPI, 17*PPI],
@@ -24,23 +29,32 @@ function ArtWork(props) {
                         'l_large': '$150-200'
   }
   
-    const frame = {
+    let frame = {
           boxSizing: "border-box",
           width: round(artSize[props.size][0])+'px',
           height: round(artSize[props.size][1])+'px',
           overflow: "hidden",
           backgroundColor: "#F8F9FA",
-          border: "3px dashed #222",
-          margin: margin
+          border: round(1*PPI) + "px"+" dashed #222",
+          margin: margin,
+          padding: round(2*PPI) + "px"
         }
-
-    if (props.artData){
-        frame = {... frame, backgroundImage: "url(" +props.artData.images + ")",
-                            backgroundSize: "cover",
-                            backgroundRepeat: "no-repeat",
-                            backgroundPosition: "center",}
-    }
+    
+    let imagePaper = {width: "100%",
+                        height: "100%"
+                        }
+    
+    if (artImage) {
+        frame = {...frame,
+                border: round(1*PPI) + "px"+" solid #222"}
         
+        imagePaper = {...imagePaper,
+            backgroundImage: "url(" + artImage + ")",
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center"}
+    }
+            
     const priceFrame = {
           width: round(artSize[props.size][0])+'px',
           height: round(artSize[props.size][1])+'px',
@@ -57,6 +71,7 @@ function ArtWork(props) {
     
     return (
         <div style={frame}>
+            <div style={imagePaper}>
         {(props.showprice)
             ? <div style={priceFrame}>
                 {artSize[props.size][0]/props.PPI+'" x '+artSize[props.size][1]/props.PPI+'"'}
@@ -65,50 +80,52 @@ function ArtWork(props) {
             : ''
         }
         </div>
+        </div>
       )
   }
   
-function recursiveArrange(arrangement, art, ppi, artData){
+function recursiveArrange(arrangement, art, ppi, id){
     // recursively extract the row arrangement
     const artArray = [];
     // TODO need to add keys to the subelements here 
     for (const property in arrangement) {
         if (typeof(arrangement[property]) === "number"){
-
-            const artworkData = artData.filter(work => (work.id == art[arrangement[property]-1].artId))
-        
-            artArray.push(<ArtWork size={art[arrangement[property]-1].size} PPI={ppi} artData={artworkData[0]}> </ArtWork>)
+            artArray.push(<ArtWork key={id+(arrangement[property]-1).toString()}
+                                   size={art[arrangement[property]-1].size} 
+                                   PPI={ppi} 
+                                   artId={art[arrangement[property]-1].artId}
+                                   artImage={art[arrangement[property]-1].images}> </ArtWork>)
             continue
         }
         
         switch(property){
             case 'rows':  
-                return (<div className='arrangement-row'>
+                return (<div className='arrangement-row' key={id}>
                     {recursiveArrange(arrangement[property],
                      art,
                      ppi,
-                     artData)}
+                     id)}
                 </div>)
             case 'cols':
-                return (<div className='arrangement-col'>
+                return (<div className='arrangement-col' key={id}>
                     {recursiveArrange(arrangement[property], 
                     art,
                     ppi,
-                    artData)}
+                    id)}
                 </div>)
             default:
-                artArray.push((recursiveArrange(arrangement[property], art, ppi, artData)))
+                artArray.push((recursiveArrange(arrangement[property], art, ppi, id)))
         }   
     }
     return artArray
   }
 
-  // TODO: make above function a callback
-
   
   function ArtArrangement(props) {
   // get the arrangement from the props data structure
   // at the root, each node name is the size to dictate the node
+  // deal with the side effect of querying art data
+
 
   const arrangementStyle = {
     width: "100%",
@@ -117,12 +134,13 @@ function recursiveArrange(arrangement, art, ppi, artData){
     alignItems: "center",
     justifyContent: "center"
   }
+
   return (
-  <div style={arrangementStyle}>{recursiveArrange(props.arrangement, props.art, props.ppi, props.artData)}</div>
+  <div style={arrangementStyle}>{recursiveArrange(props.arrangement, props.art, props.ppi, props.id)}</div>
   )
   }
   
-  
+
   function RoomView(props){
 
     const ref = useRef(null);
@@ -134,7 +152,8 @@ function recursiveArrange(arrangement, art, ppi, artData){
     }, [ref.current]);
 
     //TODO: include key for each PPI across each image
-    const PPI = {'living_room': (2486.0/104.0 * (dimensions.width / 3991.0))}
+    const ZOOM = 1.5
+    const PPI = {'living_room': (2486.0/104.0 * (dimensions.width / 3991.0) * ZOOM)}
     //TODO: set up centerline margins for each room...
     const centerLineMargins = {'living_room': "75px"}
 
@@ -153,7 +172,7 @@ function recursiveArrange(arrangement, art, ppi, artData){
     return (
       <div className="roomview">
         <div ref={ref} style={roomBackground}>
-        <ArtArrangement arrangement={props.arrangement} art={props.art} ppi={PPI['living_room']} artData={props.artData}/>
+        <ArtArrangement arrangement={props.arrangement} art={props.art} ppi={PPI['living_room']} id={props.id}/>
         </div>
       </div>
     )
@@ -181,9 +200,9 @@ function recursiveArrange(arrangement, art, ppi, artData){
     <div className="room-main">
         <div className="room-feed">
         {props.rooms.map((room, _) => {
-                return (<div className="room" id={room.id}>
+                return (<div className="room" id={room.id} key={room.id}>
                         <RoomDescription name={room.name} artNumFilled={0} artNumTotal={room.arrangementSize}></RoomDescription>
-                        <RoomView roomBackground={ process.env.PUBLIC_URL + '/livingroom_noart.png' } arrangement={room.arrangement} art={room.art} artData={props.artData}></RoomView>
+                        <RoomView roomBackground={ process.env.PUBLIC_URL + '/livingroom_noart.png' } arrangement={room.arrangement} art={room.art} id={room.id}></RoomView>
                         </div>)
                 })
         }

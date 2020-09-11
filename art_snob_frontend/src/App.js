@@ -8,6 +8,19 @@ import { useFetch, useInfiniteScroll } from './feedHooks'
 import { Frame, Stack, addPropertyControls } from "framer";
 import {Rooms} from "./artComponents"
 
+// gets data from an API and uses a dispatch/reducer to set the art
+// TODO: need a new dispatch function for adding art info for a single work
+const useArtData = (artId, dispatch) => {
+
+  useEffect(() => {
+      if (artId){
+          fetch('/art/'+artId)
+          .then(response => response.json())
+          .then(data => dispatch({...data, artId: artId, types: 'ADD_ART'}));
+      }
+      }, [artId, dispatch]);
+
+}
 
 function App() {
   const [landingState, setLandingState] = useState({"open": true});
@@ -23,13 +36,45 @@ function App() {
     }
   }
   const [imgData, imgDispatch] = useReducer(imgReducer,{ images:[], fetching: true})
+  // TODO: use an effect to fetch and a reducer to modify art objects
+  // these objects will keep the active art data in memory
+  // they can be pulled from the ArtState as well
+  // as the "focus" works if something is clicked
+
 
   // starting state for entire thing...
   const initArtState = {'rooms': [{
     name: "My First Room", 
     id: uuidv4(),
     room_type: "blank",
-    art:[{id:1, size: 'l_large', artId: null},
+    art:[{id:1, size: 'medium', artId: 4926422927802368,
+         name: "Food, Don't Waste It - WWI Poster, 1917 Art Print",
+         sizes: "X-Small 8\" X 10\"| | |$22.99|Small 13\" X 17\"| | |$27.99|Medium 17\" X 22\"| | |$34.99|Large 21\" X 28\"| | |$42.99",
+         standard_tags:  [
+          "Graphic-design",
+          "Food",
+          "Frugal",
+          "Kitchen",
+          "Decor",
+          "Wwi",
+          "Print",
+          "Art",
+          "Poster",
+          "Propaganda",
+          "Typography",
+          "Cheap",
+          "Nutrition",
+          "Lithograph",
+          "Economics",
+          "Retro",
+          "Vintage",
+          "Cooking",
+          "Baking",
+          "Homemaker"
+        ],
+        images: "https://storage.googleapis.com/artsnob-image-scrape/full/1a223e13db1bc1e049606c7a61d512cadb343fb7.jpg",
+        page_url: "https://society6.com/product/food-dont-waste-it-wwi-poster-1917_print"
+      },
         {id:2, size: 'xsmall', artId: null},
         {id:3, size: 'xsmall', artId: null}], // usually starts out null
     arrangement: {rows: [1, {cols: [2,3]}]}, // usually starts out null
@@ -50,7 +95,7 @@ function App() {
 
   const artReducer = (state, action) => {
     // TODO: delete rooms 
-    switch(action.types){
+    switch(action.type){
       case 'ADD_ROOM':
         return {...state, rooms: state.rooms.concat(action.room)}
       case 'ADD_ARRANGEMENT':
@@ -88,7 +133,13 @@ function App() {
           if (id == action.roomId) {
               const updatedArtwork = room.art.map((_,work) => {
               if (work.id == action.roomArtId) {
-                return {...work, artId: action.ArtId}
+                return {...work, 
+                          artId: action.ArtId,
+                          page_url: action.page_url,
+                          standard_tags: action.standard_tags,
+                          name: action.name,
+                          sizes: action.sizes
+                        }
               }
               else {
                 return work
@@ -155,7 +206,7 @@ function App() {
               </div>
             </div>
           </div>
-          <Rooms rooms={artData.rooms} artData={imgData['images']}></Rooms>
+          <Rooms rooms={artData.rooms}></Rooms>
       </main>
     </div>
   )
@@ -164,7 +215,9 @@ function App() {
 
 
 function LandingPage(props) {
-
+  // NOTE THIS IS BEING CALLED MANY TIMES SO FOR EACH IMAGE LOAD OF THE ABOVE..
+  // THIS IS RE-RUN SO WE NEED AN EFFECT AT THE HIGHER LEVEL!!!
+  console.log("I AM LOADING LOADING LOADING ")
   var landingModalOver = {
     width: "100%",
     height: "100%",
