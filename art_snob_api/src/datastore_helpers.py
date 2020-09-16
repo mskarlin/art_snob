@@ -92,21 +92,25 @@ class FriendlyDataStore():
 
         return unique_art
 
-    def search(self, query):
+    def search(self, query, get_cursor=False, start_cursor=None):
         """Get all search results based on tags"""
         queries = query.lower().split(' ')
 
         search_results = []
 
         for q in queries:
-            results = self.dsi.query(kind=self.INFO_KIND,
+            results, cursor = self.dsi.query(kind=self.INFO_KIND,
                                      query_filters=[('standard_tags', '=', q.capitalize())],
                                      n_records=25,
+                                     cursor=start_cursor,
                                      tolist=True
-                                     )[0]
+                                     )
             search_results += results
 
-        return search_results
+        if not get_cursor:
+            return search_results
+        else:
+            return search_results, cursor
 
     def random(self, kind=None, seed=814, n_items=1):
 

@@ -19,6 +19,31 @@ export const useFetch = (loadMore, dispatch, setLoadMore) => {
     }, [dispatch, loadMore, setLoadMore])
 }
 
+export const useMultiFetch = (loadMore, dispatch, setLoadMore, endpoints) => {
+  useEffect(() => {
+      endpoints.forEach( endpoint => {
+      dispatch({ endpoint: endpoint, type: 'FETCHING_IMAGES', fetching: true })
+      fetch(endpoint)
+      .then(data => data.json())
+      .then(images => {
+          dispatch({ endpoint: endpoint, type: 'STACK_IMAGES', images: images.art, cursor: images.cursor })     
+          dispatch({ endpoint: endpoint, type: 'FETCHING_IMAGES', fetching: false })
+          // loop through setLoadMore only where needed
+          setLoadMore(Object.fromEntries( Object.keys(loadMore).map( x => 
+            (x == endpoint)?[x, false]:[x, loadMore[x]]
+            )))
+      })
+      .catch(e => {
+          // handle error
+          dispatch({ endpoint: endpoint, type: 'FETCHING_IMAGES', fetching: false })
+          setLoadMore(Object.fromEntries( Object.keys(loadMore).map( x => 
+            (x == endpoint)?[x, false]:[x, loadMore[x]]
+            )))
+          return e
+      })})
+  }, [...endpoints, loadMore, dispatch, setLoadMore])
+}
+
 export const useInfiniteScroll = (scrollRef, dispatch) => {
 // we use a callback here so that it's not constantly re-creating
 // callbacks are basically memoized func calls, so when 

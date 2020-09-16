@@ -1,8 +1,16 @@
-import React, { useState,  useEffect, useReducer, useRef, useCallback, useMemo } from 'react';
+import React, { useState,  useEffect, useRef } from 'react';
 import {round} from 'mathjs';
-import { addPropertyControls } from 'framer';
-import { v4 as uuidv4 } from 'uuid';
 
+export const useArtData = (artId, dispatch) => {
+  useEffect(() => {
+      if (artId){
+          fetch('/art/'+artId)
+          .then(response => response.json())
+          .then(data => dispatch({...data, artId: artId, types: 'ADD_ART'}));
+      }
+      }, [artId, dispatch]);
+
+}
 
 function ArtWork(props) {
     const PPI = props.PPI ? props.PPI : 3.0
@@ -196,9 +204,10 @@ function recursiveArrange(arrangement, art, ppi, id){
   
   
   export function Rooms(props) {
+    const blurring = props.artDetailShow ? {WebkitFilter: "blur(8px)", filter: "blur(8px)"} : {}
     return(
     <div className="room-main">
-        <div className="room-feed">
+        <div className="room-feed" style={blurring}>
         {props.rooms.map((room, _) => {
                 return (<div className="room" id={room.id} key={room.id}>
                         <RoomDescription name={room.name} artNumFilled={0} artNumTotal={room.arrangementSize}></RoomDescription>

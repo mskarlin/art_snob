@@ -7,24 +7,19 @@ import './App.css';
 import { useFetch, useInfiniteScroll } from './feedHooks'
 import { Frame, Stack, addPropertyControls } from "framer";
 import {Rooms} from "./artComponents"
+import {ArtDetail} from "./detailView"
 
 // gets data from an API and uses a dispatch/reducer to set the art
 // TODO: need a new dispatch function for adding art info for a single work
-const useArtData = (artId, dispatch) => {
-
-  useEffect(() => {
-      if (artId){
-          fetch('/art/'+artId)
-          .then(response => response.json())
-          .then(data => dispatch({...data, artId: artId, types: 'ADD_ART'}));
-      }
-      }, [artId, dispatch]);
-
+function detailSetter(artId, setter) {
+  return (artId) => {setter(artId)}
 }
+
 
 function App() {
   const [landingState, setLandingState] = useState({"open": true});
   const [loadMore, setLoadMore] = useState(false);
+  const [artDetailShow, setArtDetailShow] = useState(null);
   const imgReducer = (state, action) => {
     switch (action.type) {
       case 'STACK_IMAGES':
@@ -180,12 +175,12 @@ function App() {
     <div className="App">
       <main>
           <LandingPage landingState={landingState} setLandingState={setLandingState}></LandingPage>
-          <div style={{"position": "fixed", "top": 0}}>
+          <div style={{"position": "fixed", "top": 0, "zIndex": 1}}>
             <MainHeader></MainHeader>
             <div className='art-feed'>
               <div className='carousal-spacing main-feed' style={{'width': imgData.images.length*126+15+'px'}}>
                 {imgData.images.map((image, index) => {
-                  const { artist, images } = image
+                  const { artist, images, id } = image
                   return (
                     <div key={index} className='imgholder'>
                           <img
@@ -193,6 +188,9 @@ function App() {
                             data-src={images}
                             className="imgholder img"
                             src={images}
+                            style={{"pointerEvents": "all"}}
+                            onClick={()=>{
+                              setArtDetailShow(id)}}
                           />
                     </div>
                   )
@@ -206,7 +204,10 @@ function App() {
               </div>
             </div>
           </div>
-          <Rooms rooms={artData.rooms}></Rooms>
+          {artDetailShow && (
+          <ArtDetail artId={artDetailShow} backButton={setArtDetailShow}/>)
+          }
+          <Rooms rooms={artData.rooms} artDetailShow={artDetailShow}></Rooms>
       </main>
     </div>
   )
@@ -224,7 +225,7 @@ function LandingPage(props) {
     overflow: "hidden",
     backgroundColor: "rgba(33, 37, 41, 0.98)",
     top: 0,
-    zIndex: 1
+    zIndex: 2
   }
   
   function loadLandingPage() {

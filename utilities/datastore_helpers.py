@@ -58,7 +58,12 @@ class DataStoreInterface(object):
             if single_key:
                 return [v[single_key] for v in kvdict.values()]
             else:
-                return [v for v in kvdict.values()]
+                # make sure to add the id back into it
+                rlist = []
+                for idx, value in kvdict.items():
+                    value.update({'id': idx})
+                    rlist.append(value)
+                return rlist
         else:
             return kvdict
 
