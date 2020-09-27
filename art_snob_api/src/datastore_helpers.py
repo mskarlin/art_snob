@@ -66,7 +66,7 @@ class FriendlyDataStore():
 
         return logged_likes
 
-    def similar_art(self, id_list, hydrated=False, interleaved_results=True):
+    def similar_art(self, id_list, hydrated=False, interleaved_results=True, limit=None, start=0):
         """Get all similar art to the id list"""
 
         id_set = OrderedSet(id_list)
@@ -87,12 +87,15 @@ class FriendlyDataStore():
         # remove the items themselves
         unique_art = [aid for aid in unique_art if aid not in id_set]
 
+        if limit:
+            unique_art = unique_art[start:limit]
+
         if hydrated:
             unique_art = self.dsi.read(unique_art, kind=self.INFO_KIND, sorted_list=False)
 
         return unique_art
 
-    def search(self, query, get_cursor=False, start_cursor=None):
+    def search(self, query, get_cursor=False, start_cursor=None, n_records=25):
         """Get all search results based on tags"""
         queries = query.lower().split(' ')
 
@@ -101,7 +104,7 @@ class FriendlyDataStore():
         for q in queries:
             results, cursor = self.dsi.query(kind=self.INFO_KIND,
                                      query_filters=[('standard_tags', '=', q.capitalize())],
-                                     n_records=25,
+                                     n_records=n_records,
                                      cursor=start_cursor,
                                      tolist=True
                                      )

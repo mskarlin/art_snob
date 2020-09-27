@@ -20,6 +20,8 @@ function App() {
   const [landingState, setLandingState] = useState({"open": true});
   const [loadMore, setLoadMore] = useState(false);
   const [artDetailShow, setArtDetailShow] = useState(null);
+  const [potentialArt, setPotentialArt] = useState(null);
+  const [newRoomShow, setNewRoomShow] = useState(true);
   const imgReducer = (state, action) => {
     switch (action.type) {
       case 'STACK_IMAGES':
@@ -41,7 +43,7 @@ function App() {
   const initArtState = {'rooms': [{
     name: "My First Room", 
     id: uuidv4(),
-    room_type: "blank",
+    roomType: "blank",
     art:[{id:1, size: 'medium', artId: 4926422927802368,
          name: "Food, Don't Waste It - WWI Poster, 1917 Art Print",
          sizes: "X-Small 8\" X 10\"| | |$22.99|Small 13\" X 17\"| | |$27.99|Medium 17\" X 22\"| | |$34.99|Large 21\" X 28\"| | |$42.99",
@@ -78,18 +80,25 @@ function App() {
   {
     name: "My Second Room", 
     id: uuidv4(),
-    room_type: "blank",
-    art:[{id:1, size: 'medium', artId: null},
-         {id:2, size: 'medium', artId: null},
-         {id:3, size: 'medium', artId: null}], // usually starts out null
-    arrangement: {rows: [1, 2, 3]}, // usually starts out null
+    roomType: "blank",
+    art:[{id:1, size: 'p_small', artId: null},
+         {id:2, size: 'p_small', artId: null},
+         {id:3, size: 'p_large', artId: null},
+         {id:4, size: 'p_small', artId: null},
+         {id:5, size: 'p_small', artId: null}
+        ], // usually starts out null
+    arrangement: {rows: [{cols: [1, 2]}, 3, {cols: [4, 5]}]}, // usually starts out null
     arrangementSize: 3 // usually starts out 0
   }
 
 ]}
 
+
+  // TODO: this is where we'll put the POST requests to the App
   const artReducer = (state, action) => {
     // TODO: delete rooms 
+    console.log('ACTION', action)
+    console.log('STATE', state)
     switch(action.type){
       case 'ADD_ROOM':
         return {...state, rooms: state.rooms.concat(action.room)}
@@ -123,17 +132,18 @@ function App() {
           }
         })
       case 'ADD_ART':
-        return state.rooms.map((room, _) => {
+        return {rooms: state.rooms.map((room, _) => {
           const {id} = room
           if (id == action.roomId) {
-              const updatedArtwork = room.art.map((_,work) => {
+              const updatedArtwork = room.art.map((work, _) => {
               if (work.id == action.roomArtId) {
                 return {...work, 
-                          artId: action.ArtId,
+                          artId: action.artId,
                           page_url: action.page_url,
                           standard_tags: action.standard_tags,
                           name: action.name,
-                          sizes: action.sizes
+                          sizes: action.sizes,
+                          images: action.images
                         }
               }
               else {
@@ -147,7 +157,7 @@ function App() {
           else{
             return room
           }
-        })
+        })}
       case 'ADD_NAME':
         return state.rooms.map((room, _) => {
           const {id} = room
@@ -166,7 +176,7 @@ function App() {
   }
 
   const [artData, artDispatch] = useReducer(artReducer, initArtState)
-
+  console.log('APP ARTD', artData)
   let feedBoundaryRef = useRef(null);
   useFetch(loadMore, imgDispatch, setLoadMore);
   useInfiniteScroll(feedBoundaryRef, setLoadMore);
@@ -205,9 +215,11 @@ function App() {
             </div>
           </div>
           {artDetailShow && (
-          <ArtDetail artId={artDetailShow} backButton={setArtDetailShow}/>)
+          <ArtDetail artId={artDetailShow} backButton={setArtDetailShow} setPotentialArt={setPotentialArt}/>)
           }
-          <Rooms rooms={artData.rooms} artDetailShow={artDetailShow}></Rooms>
+          <Rooms rooms={artData.rooms} artDetailShow={artDetailShow} setArtDetailShow={setArtDetailShow}
+          artDispatch={artDispatch} potentialArt={{potentialArt: potentialArt, setPotentialArt: setPotentialArt}}
+          newRoomShow={newRoomShow} setNewRoomShow={setNewRoomShow}></Rooms>
       </main>
     </div>
   )

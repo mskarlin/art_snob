@@ -19,29 +19,28 @@ export const useFetch = (loadMore, dispatch, setLoadMore) => {
     }, [dispatch, loadMore, setLoadMore])
 }
 
-export const useMultiFetch = (loadMore, dispatch, setLoadMore, endpoints) => {
+export const useTagFetch = (loadMore, dispatch, setLoadMore, endpoint, formatEndpoint) => {
   useEffect(() => {
-      endpoints.forEach( endpoint => {
-      dispatch({ endpoint: endpoint, type: 'FETCHING_IMAGES', fetching: true })
-      fetch(endpoint)
+      dispatch({ type: 'FETCHING_IMAGES', fetching: true })
+      fetch(formatEndpoint)
       .then(data => data.json())
-      .then(images => {
-          dispatch({ endpoint: endpoint, type: 'STACK_IMAGES', images: images.art, cursor: images.cursor })     
-          dispatch({ endpoint: endpoint, type: 'FETCHING_IMAGES', fetching: false })
-          // loop through setLoadMore only where needed
-          setLoadMore(Object.fromEntries( Object.keys(loadMore).map( x => 
-            (x == endpoint)?[x, false]:[x, loadMore[x]]
-            )))
+      .then(json => {
+          dispatch({ type: 'STACK_IMAGES', images: json.art, cursor: json.cursor})
+          dispatch({ type: 'FETCHING_IMAGES', fetching: false })
+          setLoadMore(false)
       })
       .catch(e => {
           // handle error
-          dispatch({ endpoint: endpoint, type: 'FETCHING_IMAGES', fetching: false })
-          setLoadMore(Object.fromEntries( Object.keys(loadMore).map( x => 
-            (x == endpoint)?[x, false]:[x, loadMore[x]]
-            )))
+          dispatch({ type: 'FETCHING_IMAGES', fetching: false })
+          setLoadMore(false)
           return e
-      })})
-  }, [...endpoints, loadMore, dispatch, setLoadMore])
+      })
+      // clean up - clear the images
+      return () => {
+        dispatch({ type: 'RESET', new_feed: {images:[], cursor: null, fetching: true}})
+      }
+
+  }, [dispatch, endpoint, loadMore, setLoadMore])
 }
 
 export const useInfiniteScroll = (scrollRef, dispatch) => {

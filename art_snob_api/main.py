@@ -53,9 +53,10 @@ def feed(seed_likes=[], session_id=None):
     return work_list
 
 @app.get('/tags/{tag}')
-def tags(tag: str, start_cursor: str = None):
+def tags(tag: str, start_cursor: str = None, n_records: int = 10):
     art, cursor = data.search(tag, 
                               get_cursor=True, 
+                              n_records=n_records,
                               start_cursor=start_cursor)
     work_list = add_image_prefix(art)
     return {'art': work_list, 'cursor': cursor}
@@ -65,3 +66,8 @@ def art(art_id: int):
     work = dsi.read([art_id], data.INFO_KIND, sorted_list=True)[0]
     work['images'] = f"https://storage.googleapis.com/artsnob-image-scrape/{work['images']}"
     return work
+
+@app.get('/similar_works/{art_id}')
+def similar_works(art_id: int, start_cursor:int = 0, limit:int = 10):
+    works = data.similar_art([art_id], hydrated=True, interleaved_results=False, limit=limit+start_cursor, start=start_cursor)
+    return {'art': list_and_add_image_prefix({art_id: works}), 'cursor': start_cursor+limit}

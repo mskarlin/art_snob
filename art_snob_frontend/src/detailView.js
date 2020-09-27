@@ -1,46 +1,35 @@
 import React, { useState, useReducer, useEffect, useRef } from 'react';
-import { useMultiFetch, useInfiniteScroll } from './feedHooks'
+import { useTagFetch, useInfiniteScroll } from './feedHooks'
 import {useArtData} from './artComponents'
 import { addPropertyControls } from 'framer';
 
-export function ArtCarousel(props) {
-    // lists of carousels for each type of art
+
+function SingleCarousel(props) {
+
     const feedReducer = (state, action) => {
-        switch (action.type) {
-          case 'STACK_IMAGES':
-            // append images to the right list
-            let tmp = Object.fromEntries( Object.keys(state).map( x => 
-                (x == action.endpoint)?[x, {...state[x], images: state[x].images.concat(action.images), cursor: action.cursor}]:[x, state[x]]
-                ))
-            return tmp
-          case 'FETCHING_IMAGES':
-            let ftemp = Object.fromEntries( Object.keys(state).map( x => 
-                (x == action.endpoint)?[x, {...state[x], fetching: action.fetching}]:[x, state[x]]
-                ))
-            return ftemp
-          default:
+    switch (action.type) {
+        case 'STACK_IMAGES':
+            return {...state, images: state.images.concat(action.images), cursor: action.cursor}
+        case 'FETCHING_IMAGES':
+            return {...state, fetching: action.fetching}
+        case 'RESET':
+            return action.new_feed
+        default:
             return state;
-        }
-      }
-    // across each endpoint, build a data object and dispatch function via the reducer
-    // must invert the state to be an array, rather than making an array of states
-    const [allLoadStatus, setAllLoadStatus] = useState(Object.fromEntries(props.endpoints.map( x => [x, false])))
-    const [allFeedData, allFeedDataDispatch] = useReducer(feedReducer, Object.fromEntries( props.endpoints.map( x => [x, { images:[], fetching: true, cursor: null}])))
+    }
+    }
+    const [feedData, feedDataDispatch] = useReducer(feedReducer, { images:[], cursor: null, fetching: true})
+    const [loadMore, setLoadMore] = useState(false);
+    // this changes every single render (since the cursor changes...)
+    const formatEndpoint = feedData.cursor ? props.endpoint+'?start_cursor='+feedData.cursor : props.endpoint
 
-    // set up fetchers for each feed
-    let endpointWithQuery = props.endpoints.map( x => (allFeedData[x].cursor) ? x+'?start_cursor='+allFeedData[x].cursor : x)
-    useMultiFetch(allLoadStatus, allFeedDataDispatch, setAllLoadStatus, endpointWithQuery)
+    useTagFetch(loadMore, feedDataDispatch, setLoadMore, props.endpoint, formatEndpoint)
 
-    return (
-        <div className='art-feed'>
-        {Object.keys(allLoadStatus).map((endpoint, eindex) => {
-            let feedData = allFeedData[endpoint];
-        return (
-                <div key={'feed-'+eindex.toString()} className='carousal-spacing main-feed' style={{'width': feedData.images.length*126+15+'px'}}>
+    return (<div key={'feed-'+props.index.toString()} className='carousal-spacing main-feed' style={{'width': feedData.images.length*126+15+'px'}}>
                 {feedData.images.map((image, index) => {
                     const { artist, images, id } = image
                     return (
-                    <div key={'art-'+index.toString()+eindex.toString() } className='imgholder'>
+                    <div key={'art-'+index.toString()+props.index.toString() } className='imgholder'>
                             <img
                             alt={artist}
                             data-src={images}
@@ -48,7 +37,8 @@ export function ArtCarousel(props) {
                             src={images}
                             style={{"pointerEvents": "all"}}
                             onClick={()=>{
-                                props.setArtDetailShow(id)}}
+                                props.setArtDetailShow(id);
+                                }}
                             />
                     </div>
                     )
@@ -60,8 +50,42 @@ export function ArtCarousel(props) {
                     )}
                     <div id='mini-feed-boundary' style={{ border: '1px solid black' }}></div>
                 </div>
-        )})}
-      </div>
+    )
+
+}
+
+export function ArtCarousel(props) {
+    // lists of carousels for each type of art
+
+    const makeTitle = (endpoint) => {
+        if (endpoint.substring(1, 14) == "similar_works") {
+            return "Similar works for you"
+        }
+        else if (endpoint.substring(1,5) == "tags") {
+            let tagName = endpoint.substring(6)
+            return tagName.charAt(0).toUpperCase() + tagName.slice(1) + " works"
+        }
+    }
+
+
+    return (
+            <div className='art-feed detail'>
+            {props.endpoints.map((endpoint, eindex) => {
+            return (
+            <div key={'endpoint'+eindex}>
+                <div className='detail-title-tag'>
+                    <div className='detail-name'>
+                    {makeTitle(endpoint)}
+                    </div>
+                </div>
+                <div className='art-feed-small'>
+                    <SingleCarousel endpoint={endpoint} setArtDetailShow={props.setArtDetailShow} index={eindex} key={'sc-'+eindex.toString()}/>
+                </div>
+            </div>
+            )
+            }
+            )}
+        </div>
             )
 }
 
@@ -74,6 +98,9 @@ export function ArtDetail(props) {
                                             artist: "",
                                             images: ""});
     useArtData(props.artId, setArtData)
+    let artTags = ['/similar_works/'+props.artId]
+    const endpoints = artTags.concat(artData.standard_tags.map(i => '/tags/'+i.toLowerCase()))
+
 return (
     <div className="locked-detail-container">
     <div className="detail-container">
@@ -112,13 +139,17 @@ return (
             </ul>
             </div>
             <div className="detail-purchase-buttons">
-            <button className="detail-button">Add to room</button>
+            <button className="detail-button" onClick={()=>{props.setPotentialArt(artData);
+                                                            props.backButton(null)
+                                                            }}>Add to room</button>
             <button className="detail-button" style={{"backgroundColor":"#CED4DA"}}>Save for later</button>
             <button className="detail-button" style={{"backgroundColor":"#DEE2E6"}}>Purchase work</button>
             </div>
         </div>
-        <ArtCarousel endpoints={['/tags/tropical', '/tags/paintings']}
-         setArtDetailShow={props.backButton}/>
+        <ArtCarousel endpoints={endpoints}
+         setArtDetailShow={props.backButton}
+         id={props.artId}
+         />
     </div>
     </div>
 )
