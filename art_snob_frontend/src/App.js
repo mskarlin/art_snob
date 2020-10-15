@@ -21,7 +21,7 @@ function App() {
   const [loadMore, setLoadMore] = useState(false);
   const [artDetailShow, setArtDetailShow] = useState(null);
   const [potentialArt, setPotentialArt] = useState(null);
-  const [newRoomShow, setNewRoomShow] = useState(true);
+  const [newRoomShow, setNewRoomShow] = useState({show: false, currentName: '', selectionRoom: {roomType: ''}});
   const imgReducer = (state, action) => {
     switch (action.type) {
       case 'STACK_IMAGES':
@@ -44,6 +44,7 @@ function App() {
     name: "My First Room", 
     id: uuidv4(),
     roomType: "blank",
+    showingMenu: false,
     art:[{id:1, size: 'medium', artId: 4926422927802368,
          name: "Food, Don't Waste It - WWI Poster, 1917 Art Print",
          sizes: "X-Small 8\" X 10\"| | |$22.99|Small 13\" X 17\"| | |$27.99|Medium 17\" X 22\"| | |$34.99|Large 21\" X 28\"| | |$42.99",
@@ -81,14 +82,16 @@ function App() {
     name: "My Second Room", 
     id: uuidv4(),
     roomType: "blank",
+    showingMenu: false,
     art:[{id:1, size: 'p_small', artId: null},
          {id:2, size: 'p_small', artId: null},
          {id:3, size: 'p_large', artId: null},
          {id:4, size: 'p_small', artId: null},
-         {id:5, size: 'p_small', artId: null}
+         {id:5, size: 'p_small', artId: "NULLFRAME"}
         ], // usually starts out null
     arrangement: {rows: [{cols: [1, 2]}, 3, {cols: [4, 5]}]}, // usually starts out null
-    arrangementSize: 3 // usually starts out 0
+    // arrangement: {"cols": [{"rows": [1, 5]}, {"rows": [5, 2]}]},
+    arrangementSize: 4 // usually starts out 0
   }
 
 ]}
@@ -102,25 +105,56 @@ function App() {
     switch(action.type){
       case 'ADD_ROOM':
         return {...state, rooms: state.rooms.concat(action.room)}
-      case 'ADD_ARRANGEMENT':
+      case 'CHANGE_MENU':
         // filter for arrangement in the room equal to action.id
-        return state.rooms.map((room, _) => {
+        return {'rooms': state.rooms.map((room, _) => {
           const {id} = room
           if (id == action.id) {
             // TODO: add validation that the art exists for this
-            if ('additionalArt' in action.arrangementSize) {
+              return {...room, 
+                showingMenu: action.menu
+              }
+          }
+          else{
+            return room
+          }
+        })}
+      case 'ADD_ARRANGEMENT':
+        // filter for arrangement in the room equal to action.id
+        return {rooms: state.rooms.map((room, _) => {
+          const {id} = room
+          if (id == action.id) {
+           const popArt =  JSON.parse(JSON.stringify(room.art));
+            // TODO -- change the prices here to the proper prices!!!!!
+            // TODO -- NULL OUT THE ART IF IT DOESN'T EXIST IN THE NEW SIZE
+            // TODO -- SET MAX DEVICE WIDENESS!! 
+            const artRenumbered = action.art.map((a, _) => {
+              if (a.artId != 'NULLFRAME') {
+                let sPopArt = {...popArt.shift(), id: a.id, size: a.size}
+                if (!('artId' in sPopArt)) {
+                  sPopArt['artId'] = a.artId
+                }
+                return sPopArt
+              }
+              else {
+                return a
+              }
+            })
+            if ('additionalArt' in action) {
               return {...room, 
                 arrangement: action.arrangement, 
+                arrangementSize: action.arrangementSize,
                 art: room.art.concat(action.additionalArt)}
             }
             else {
-            return {...room, arrangement: action.arrangement}
+            return {...room, showingMenu: false, art: artRenumbered, 
+              arrangement: action.arrangement, arrangementSize: action.arrangementSize}
           }
           }
           else{
             return room
           }
-        })
+        })}
       case 'ADD_ROOMTYPE':
         return state.rooms.map((room, _) => {
           const {id} = room
@@ -143,7 +177,8 @@ function App() {
                           standard_tags: action.standard_tags,
                           name: action.name,
                           sizes: action.sizes,
-                          images: action.images
+                          images: action.images,
+                          price: action.price
                         }
               }
               else {
@@ -159,7 +194,7 @@ function App() {
           }
         })}
       case 'ADD_NAME':
-        return state.rooms.map((room, _) => {
+        return {rooms: state.rooms.map((room, _) => {
           const {id} = room
           if (id == action.id) {
             return {...room, name: action.name}
@@ -169,7 +204,7 @@ function App() {
           }
 
         }
-        ) 
+        ) }
       default:
         return state;
     }
@@ -185,34 +220,10 @@ function App() {
     <div className="App">
       <main>
           <LandingPage landingState={landingState} setLandingState={setLandingState}></LandingPage>
-          <div style={{"position": "fixed", "top": 0, "zIndex": 1}}>
+          <div style={{"position": "fixed", "top": 0, "zIndex": 2}}>
             <MainHeader></MainHeader>
-            <div className='art-feed'>
-              <div className='carousal-spacing main-feed' style={{'width': imgData.images.length*126+15+'px'}}>
-                {imgData.images.map((image, index) => {
-                  const { artist, images, id } = image
-                  return (
-                    <div key={index} className='imgholder'>
-                          <img
-                            alt={artist}
-                            data-src={images}
-                            className="imgholder img"
-                            src={images}
-                            style={{"pointerEvents": "all"}}
-                            onClick={()=>{
-                              setArtDetailShow(id)}}
-                          />
-                    </div>
-                  )
-                })}
-                {imgData.fetching && (
-                <div className='loadingbox'>
-                  <p>...</p>
-                </div>
-                  )}
-                  <div id='feed-boundary' style={{ border: '1px solid black' }} ref={feedBoundaryRef}></div>
-              </div>
-            </div>
+            <TopArtFeed imgData={imgData} setArtDetailShow={setArtDetailShow}
+              feedBoundaryRef={feedBoundaryRef} menuHide={newRoomShow.show}/>
           </div>
           {artDetailShow && (
           <ArtDetail artId={artDetailShow} backButton={setArtDetailShow} setPotentialArt={setPotentialArt}/>)
@@ -226,6 +237,40 @@ function App() {
 
 }
 
+function TopArtFeed({imgData, setArtDetailShow, feedBoundaryRef, menuHide}){
+if (!menuHide) {
+return (
+        <div className='art-feed'>
+            <div className='carousal-spacing main-feed' style={{'width': imgData.images.length*126+15+'px'}}>
+              {imgData.images.map((image, index) => {
+                const { artist, images, id } = image
+                return (
+                  <div key={index} className='imgholder'>
+                        <img
+                          alt={artist}
+                          data-src={images}
+                          className="imgholder img"
+                          src={images}
+                          style={{"pointerEvents": "all"}}
+                          onClick={()=>{
+                            setArtDetailShow(id)}}
+                        />
+                  </div>
+                )
+              })}
+              {imgData.fetching && (
+              <div className='loadingbox'>
+                <p>...</p>
+              </div>
+                )}
+                <div id='feed-boundary' style={{ border: '1px solid black' }} ref={feedBoundaryRef}></div>
+            </div>
+          </div>
+)}
+else {return <div id='feed-boundary' style={{ display: 'none' }} ref={feedBoundaryRef}></div>}
+}
+
+
 
 function LandingPage(props) {
   // NOTE THIS IS BEING CALLED MANY TIMES SO FOR EACH IMAGE LOAD OF THE ABOVE..
@@ -237,7 +282,7 @@ function LandingPage(props) {
     overflow: "hidden",
     backgroundColor: "rgba(33, 37, 41, 0.98)",
     top: 0,
-    zIndex: 2
+    zIndex: 3
   }
   
   function loadLandingPage() {

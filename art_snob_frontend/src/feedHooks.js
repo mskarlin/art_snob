@@ -20,27 +20,27 @@ export const useFetch = (loadMore, dispatch, setLoadMore) => {
 }
 
 export const useTagFetch = (loadMore, dispatch, setLoadMore, endpoint, formatEndpoint) => {
-  useEffect(() => {
-      dispatch({ type: 'FETCHING_IMAGES', fetching: true })
-      fetch(formatEndpoint)
-      .then(data => data.json())
-      .then(json => {
-          dispatch({ type: 'STACK_IMAGES', images: json.art, cursor: json.cursor})
-          dispatch({ type: 'FETCHING_IMAGES', fetching: false })
-          setLoadMore(false)
-      })
-      .catch(e => {
-          // handle error
-          dispatch({ type: 'FETCHING_IMAGES', fetching: false })
-          setLoadMore(false)
-          return e
-      })
-      // clean up - clear the images
-      return () => {
-        dispatch({ type: 'RESET', new_feed: {images:[], cursor: null, fetching: true}})
-      }
+    useEffect(() => {
+        dispatch({ type: 'FETCHING_IMAGES', fetching: true })
+        fetch(formatEndpoint)
+        .then(data => data.json())
+        .then(json => {
+            dispatch({ type: 'STACK_IMAGES', images: json.art, cursor: json.cursor})
+            dispatch({ type: 'FETCHING_IMAGES', fetching: false })
+            setLoadMore(false)
+        })
+        .catch(e => {
+            // handle error
+            dispatch({ type: 'FETCHING_IMAGES', fetching: false })
+            setLoadMore(false)
+            return e
+        })
+        // clean up - clear the images
+        return () => {
+          dispatch({ type: 'RESET', new_feed: {images:[], cursor: null, fetching: true}})
+        }
 
-  }, [dispatch, endpoint, loadMore, setLoadMore])
+    }, [dispatch, endpoint, loadMore, setLoadMore])
 }
 
 export const useInfiniteScroll = (scrollRef, dispatch) => {
