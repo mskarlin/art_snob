@@ -2,5 +2,6 @@
 .env_art_snob_primrose/*
 .env_art_snob_app/*
 .env-image-process-app/*
+art_snob_frontend/*
 image_process_app/*
 notebooks/*
