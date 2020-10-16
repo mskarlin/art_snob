@@ -66,13 +66,13 @@ DOWNLOADER_MIDDLEWARES = {
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'imagemetadata.pipelines.CroppedImagePipeline': 1,
+    'imagemetadata.pipelines.ImagesPipeline': 1,
     'imagemetadata.pipelines.ArtworkPipeline': 2
 }
 IMAGES_STORE = 'gs://artsnob-image-scrape/'
 GCS_PROJECT_ID = 'artsnob-1'
 GCS_PROJECT = 'artsnob-1'
-DATASTORE_KIND = 'scraped-image-data'
+DATASTORE_KIND = 'frames-scraped-image-data'
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
