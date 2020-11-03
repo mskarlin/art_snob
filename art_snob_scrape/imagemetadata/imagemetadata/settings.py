@@ -78,12 +78,12 @@ DATASTORE_KIND = 'frames-scraped-image-data'
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
 AUTOTHROTTLE_ENABLED = True
 # The initial download delay
-AUTOTHROTTLE_START_DELAY = 5
+AUTOTHROTTLE_START_DELAY = 1
 # The maximum download delay to be set in case of high latencies
-AUTOTHROTTLE_MAX_DELAY = 60
+AUTOTHROTTLE_MAX_DELAY = 30
 # The average number of requests Scrapy should be sending in parallel to
 # each remote server
-AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
+AUTOTHROTTLE_TARGET_CONCURRENCY = 2.0
 # Enable showing throttling stats for every response received:
 AUTOTHROTTLE_DEBUG = True
 

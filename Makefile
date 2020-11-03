@@ -22,6 +22,14 @@ submit-embed-job:
 		--scale-tier CUSTOM \
 		-- python run_primrose.py --config_loc config/image_embeddings_etl.yaml --use_stackdriver_logging False --project artsnob-1
 
+submit-random-job:
+	gcloud ai-platform jobs submit training $(JOBNAME) \
+		--master-machine-type n1-standard-8 \
+		--master-image-uri $(CONTAINERLOC)$(PRIMROSENAME) \
+		--region $(REGION) \
+		--scale-tier CUSTOM \
+		-- python run_primrose.py --config_loc config/create_random_selections.yaml --use_stackdriver_logging False --project artsnob-1
+
 submit-neighbor-job:
 	gcloud ai-platform jobs submit training $(JOBNAME) \
 		--master-machine-type n1-standard-8 \

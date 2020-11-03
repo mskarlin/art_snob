@@ -19,7 +19,7 @@ export const useFetch = (loadMore, dispatch, setLoadMore) => {
     }, [dispatch, loadMore, setLoadMore])
 }
 
-export const useTagFetch = (loadMore, dispatch, setLoadMore, endpoint, formatEndpoint) => {
+export const useTagFetch = (loadMore, dispatch, setLoadMore, endpoint, formatEndpoint, artState) => {
     useEffect(() => {
         dispatch({ type: 'FETCHING_IMAGES', fetching: true })
         fetch(formatEndpoint)
@@ -40,7 +40,7 @@ export const useTagFetch = (loadMore, dispatch, setLoadMore, endpoint, formatEnd
           dispatch({ type: 'RESET', new_feed: {images:[], cursor: null, fetching: true}})
         }
 
-    }, [dispatch, endpoint, loadMore, setLoadMore])
+    }, [dispatch, endpoint, loadMore, setLoadMore, artState])
 }
 
 export const useInfiniteScroll = (scrollRef, dispatch) => {

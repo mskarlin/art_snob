@@ -1,4 +1,4 @@
-import React, { useState,  useEffect, useReducer, useRef, useCallback } from 'react';
+import React, { useState,  useContext, useReducer, useRef, useCallback } from 'react';
 // import logo from './logo.svg';
 import { v4 as uuidv4 } from 'uuid';
 import living_room from './living_room.jpg';
@@ -8,20 +8,16 @@ import { useFetch, useInfiniteScroll } from './feedHooks'
 import { Frame, Stack, addPropertyControls } from "framer";
 import {Rooms} from "./artComponents"
 import {ArtDetail} from "./detailView"
-
-// gets data from an API and uses a dispatch/reducer to set the art
-// TODO: need a new dispatch function for adding art info for a single work
-function detailSetter(artId, setter) {
-  return (artId) => {setter(artId)}
-}
+import {ArtBrowse} from "./artBrowse"
+import { StateProvider, store } from './store.js';
 
 
 function App() {
-  const [landingState, setLandingState] = useState({"open": true});
   const [loadMore, setLoadMore] = useState(false);
   const [artDetailShow, setArtDetailShow] = useState(null);
   const [potentialArt, setPotentialArt] = useState(null);
   const [newRoomShow, setNewRoomShow] = useState({show: false, currentName: '', selectionRoom: {roomType: ''}});
+  
   const imgReducer = (state, action) => {
     switch (action.type) {
       case 'STACK_IMAGES':
@@ -45,34 +41,7 @@ function App() {
     id: uuidv4(),
     roomType: "blank",
     showingMenu: false,
-    art:[{id:1, size: 'medium', artId: 4926422927802368,
-         name: "Food, Don't Waste It - WWI Poster, 1917 Art Print",
-         sizes: "X-Small 8\" X 10\"| | |$22.99|Small 13\" X 17\"| | |$27.99|Medium 17\" X 22\"| | |$34.99|Large 21\" X 28\"| | |$42.99",
-         standard_tags:  [
-          "Graphic-design",
-          "Food",
-          "Frugal",
-          "Kitchen",
-          "Decor",
-          "Wwi",
-          "Print",
-          "Art",
-          "Poster",
-          "Propaganda",
-          "Typography",
-          "Cheap",
-          "Nutrition",
-          "Lithograph",
-          "Economics",
-          "Retro",
-          "Vintage",
-          "Cooking",
-          "Baking",
-          "Homemaker"
-        ],
-        images: "https://storage.googleapis.com/artsnob-image-scrape/full/1a223e13db1bc1e049606c7a61d512cadb343fb7.jpg",
-        page_url: "https://society6.com/product/food-dont-waste-it-wwi-poster-1917_print"
-      },
+    art:[{id:1, size: 'medium', artId: null},
         {id:2, size: 'xsmall', artId: null},
         {id:3, size: 'xsmall', artId: null}], // usually starts out null
     arrangement: {rows: [1, {cols: [2,3]}]}, // usually starts out null
@@ -125,9 +94,8 @@ function App() {
           const {id} = room
           if (id == action.id) {
            const popArt =  JSON.parse(JSON.stringify(room.art));
-            // TODO -- change the prices here to the proper prices!!!!!
             // TODO -- NULL OUT THE ART IF IT DOESN'T EXIST IN THE NEW SIZE
-            // TODO -- SET MAX DEVICE WIDENESS!! 
+            // TODO -- SET MAX DEVICE WIDENESS!!
             const artRenumbered = action.art.map((a, _) => {
               if (a.artId != 'NULLFRAME') {
                 let sPopArt = {...popArt.shift(), id: a.id, size: a.size}
@@ -178,7 +146,8 @@ function App() {
                           name: action.name,
                           sizes: action.sizes,
                           images: action.images,
-                          price: action.price
+                          price: action.price,
+                          size_price_list: action.size_price_list
                         }
               }
               else {
@@ -216,29 +185,43 @@ function App() {
   useFetch(loadMore, imgDispatch, setLoadMore);
   useInfiniteScroll(feedBoundaryRef, setLoadMore);
 
+  // optionally give instructions for placing a work of art into a room
+  const artExplain = () => {
+    if (state.potentialArt) {
+      return (
+            <div className="explain-menu">
+                <span className="material-icons md-36" onClick={() => {dispatch({type: 'POTENTIAL_ART', artData: null})}}>keyboard_backspace</span>
+                <div className="explain-text">Select a spot for your art</div>
+            </div>
+      )
+
+    }
+  }
+
   return (
-    <div className="App">
-      <main>
-          <LandingPage landingState={landingState} setLandingState={setLandingState}></LandingPage>
-          <div style={{"position": "fixed", "top": 0, "zIndex": 2}}>
-            <MainHeader></MainHeader>
-            <TopArtFeed imgData={imgData} setArtDetailShow={setArtDetailShow}
-              feedBoundaryRef={feedBoundaryRef} menuHide={newRoomShow.show}/>
-          </div>
-          {artDetailShow && (
-          <ArtDetail artId={artDetailShow} backButton={setArtDetailShow} setPotentialArt={setPotentialArt}/>)
-          }
-          <Rooms rooms={artData.rooms} artDetailShow={artDetailShow} setArtDetailShow={setArtDetailShow}
-          artDispatch={artDispatch} potentialArt={{potentialArt: potentialArt, setPotentialArt: setPotentialArt}}
-          newRoomShow={newRoomShow} setNewRoomShow={setNewRoomShow}></Rooms>
-      </main>
-    </div>
+    <StateProvider>
+      <div className="App">
+        <main>
+            <LandingPage></LandingPage>
+            <div style={{"position": "fixed", "top": 0, "zIndex": 2}}>
+              <MainHeader></MainHeader>
+              <TopArtFeed imgData={imgData} feedBoundaryRef={feedBoundaryRef}/>
+            </div>
+            <ArtDetail/>
+            <Rooms/>
+            <ArtBrowse/>
+        </main>
+      </div>
+    </StateProvider>
   )
 
 }
 
-function TopArtFeed({imgData, setArtDetailShow, feedBoundaryRef, menuHide}){
-if (!menuHide) {
+function TopArtFeed({imgData, feedBoundaryRef, menuHide}){
+const globalState = useContext(store);
+const { dispatch, state } = globalState;
+
+if (!state.newRoomShow.show && !state.artBrowseSeed) {
 return (
         <div className='art-feed'>
             <div className='carousal-spacing main-feed' style={{'width': imgData.images.length*126+15+'px'}}>
@@ -253,7 +236,8 @@ return (
                           src={images}
                           style={{"pointerEvents": "all"}}
                           onClick={()=>{
-                            setArtDetailShow(id)}}
+                            dispatch({type: 'POTENTIAL_ART', artData: null})
+                            dispatch({'type': 'ART_DETAIL', id: id})}}
                         />
                   </div>
                 )
@@ -272,10 +256,11 @@ else {return <div id='feed-boundary' style={{ display: 'none' }} ref={feedBounda
 
 
 
-function LandingPage(props) {
+function LandingPage() {
   // NOTE THIS IS BEING CALLED MANY TIMES SO FOR EACH IMAGE LOAD OF THE ABOVE..
   // THIS IS RE-RUN SO WE NEED AN EFFECT AT THE HIGHER LEVEL!!!
-  console.log("I AM LOADING LOADING LOADING ")
+  const { state } = useContext(store);
+
   var landingModalOver = {
     width: "100%",
     height: "100%",
@@ -286,7 +271,7 @@ function LandingPage(props) {
   }
   
   function loadLandingPage() {
-    if (props.landingState.open) {
+    if (state.landingState.open) {
       landingModalOver['display'] = 'block'
       return landingModalOver
     }
@@ -297,13 +282,17 @@ function LandingPage(props) {
   
   return (
       <Frame style={loadLandingPage()}>
-      <WelcomeMessage startFunc={props.setLandingState}></WelcomeMessage>
+      <WelcomeMessage></WelcomeMessage>
       </Frame>
   )
 
 }
 
-function WelcomeMessage({startFunc}) {
+function WelcomeMessage() {
+
+  const globalState = useContext(store);
+  const { dispatch } = globalState;
+
   const firstLine = {
     width: 327,
     height: 50,
@@ -330,7 +319,7 @@ return (
           </div>
           <div className="centerline">The room-centric art finder to complete your home.</div>
           <div className="cookiesnote">Note that we use cookies to store your info between sessions.</div>
-          <button variant="primary" onClick={() => startFunc({"open": false})}>Get Started!</button>
+          <button variant="primary" onClick={() => dispatch({type: "TOGGLE_LANDING"})}>Get Started!</button>
         </Stack>
       )
 

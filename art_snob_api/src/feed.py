@@ -37,7 +37,7 @@ class PersonalizedArt():
         if not seed_likes:
             # seed_likes = self.data.get_user_likes(self.session_id)
             # seed_likes = [4508670551392256, 4511542676553728, 4630303488344064]
-            seed_likes = [d for d in self.data.random(kind='scraped-image-data', seed=self.hash, n_items=3)]
+            seed_likes = [d for d in self.data.random(kind='frames-scraped-image-data', seed=self.hash, n_items=3)]
 
         # we can just make this a single feed (for now)
         similar_art = self.data.similar_art(seed_likes, hydrated=True)

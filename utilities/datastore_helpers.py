@@ -198,7 +198,7 @@ class DataStoreInterface(object):
 
         """
 
-        keys = [self.ds.key(kind, id) for id in ids]
+        keys = [self.ds.key(kind, idx) for idx in ids]
         results = self.ds.get_multi(keys)
 
         if filter_keys:
@@ -211,13 +211,13 @@ class DataStoreInterface(object):
 
         if sorted_list:
 
-            return [results[id] for id in ids]
+            return [results[idx] for idx in ids]
 
         else:
 
             return results
 
-    def update(self, data_list: List[dict], kind: str, exclude_from_indexes: Tuple[str] = None, ids: List[Any] = None):
+    def update(self, data_list: List[dict], kind: str, exclude_from_indexes: Tuple[str] = (), ids: List[Any] = None):
         """Update datastore kind keys with values in data_list
 
         Args:

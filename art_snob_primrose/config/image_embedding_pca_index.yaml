@@ -6,7 +6,7 @@ implementation_config:
     read_gcs_locations:
       class: DataStoreReader
       project: artsnob-1
-      kind: 07032020-images-full-embed
+      kind: 10232020-images-full-embed
       destinations:
         - flatten_lists
 
@@ -49,7 +49,7 @@ implementation_config:
 
     datastore_writer:
       class: DatastoreWriter
-      kind_name: 07062020-pca-nn
+      kind_name: 10232020-pca-nn
       gcs_project: artsnob-1
       key: entities
       project: artsnob-1

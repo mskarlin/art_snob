@@ -156,6 +156,7 @@ main {
 }
 
 .material-icons.md-36 { 
+  cursor: pointer;
   font-size: 36px; 
   color: #888; 
 }
@@ -176,19 +177,25 @@ main {
 }
 
 .art-feed-small {
-  box-sizing: border-box;
   width: 100vw;
   height: 118px;
   overflow: auto;
   white-space: nowrap;
-  border-top-width: 0px;
-  border-bottom-width: 0px;
+  border-top-width: 2px;
+  border-bottom-width: 2px;
   border-left-width: 0px;
   border-right-width: 0px;
-  display: inline-block
+  display: inline-block;
+  border-color: black;
+  border-style: solid;
+}
+
+.art-feed-small.large {
+  height: 175px;
 }
 
 .art-feed::-webkit-scrollbar {    display: none;}
+.art-feed-small::-webkit-scrollbar { display: none;}
 
 .art-feed.detail {
   box-sizing: border-box;
@@ -197,7 +204,7 @@ main {
   border-style: solid;
   border-color: #222;
   border-top-width: 0px;
-  border-bottom-width: 3px;
+  border-bottom-width: 0px;
   border-left-width: 0px;
   border-right-width: 0px;
   box-sizing: border-box;
@@ -230,15 +237,42 @@ main {
   overflow-x: auto;
 }
 
+.carousal-spacing.main-feed.large {
+  height: 175px;
+}
+
 .carousal-spacing.main-feed::-webkit-scrollbar {    display: none;}
 
 
+.browse-imgtext {
+ text-align: center;
+ overflow-wrap: normal;
+ width: 100%;
+ white-space: normal;
+}
+
 .imgholder {
   flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   width: 126px;
   height: 118px;
   overflow: hidden;
   background-color: rgba(0, 153, 255, 0.5);
+  border-bottom-width: 0px;
+  border-left-width: 0px;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  box-sizing: border-box;
+  border-color: black;
+  border-style: solid;
+}
+
+.imgholder.large {
+  width: 175px;
+  height: 175px;
 }
 
 .imgholder img {
@@ -269,6 +303,19 @@ main {
 .room-feed {
   width: 100vw;
   margin-top: 196px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  overflow: hidden;
+  background-color: white;
+  /* -webkit-filter: blur(8px);
+  filter: blur(8px); */
+}
+
+.browse-feed {
+  width: 100vw;
+  margin-top: 78px;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
@@ -388,6 +435,37 @@ main {
   z-index: 1;
   background-color: white;
   border: 2px solid #495057;
+}
+
+.browse-holder {
+  overflow: auto;
+  height: 100%;  
+}
+
+.auto-complete {
+  height: auto;
+  width: 100%;
+  position: absolute;
+  background-color: #ffffff;
+  margin-top: 40px;
+}
+
+.auto-complete-background {
+  width: 100%;
+  height: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  border-bottom-width: 2px;
+  border-left-width: 0px;
+  border-right-width: 0px;
+  border-top-width: 0px;
+  border-style: solid;
+  box-sizing:border-box;
+
 }
 
 .detail-container {

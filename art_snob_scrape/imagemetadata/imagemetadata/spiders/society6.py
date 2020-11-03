@@ -50,7 +50,7 @@ class Society6Scraper(scrapy.spiders.SitemapSpider):
 
         for entry in entries:
             if entry['loc'].split('#')[0] in seen_urls:
-                logging.info(f'SKIPPING {entry["loc"]}, already present in database')
+                print(f'SKIPPING {entry["loc"]}, already present in database')
                 continue
             else:
                 yield entry

@@ -26,10 +26,10 @@ def roundrobin(*iterables):
 
 
 class FriendlyDataStore():
-    ACTION_KIND = 'action_stream'
-    INFO_KIND = 'scraped-image-data'
-    RANDOM_INDEX_KIND = '07102020-random_selections'
-    NEIGHBOR_KIND = '07062020-pca-nn'
+    ACTION_KIND = 'prod-action-stream'
+    INFO_KIND = 'frames-scraped-image-data'
+    RANDOM_INDEX_KIND = '10232020-random_selections'
+    NEIGHBOR_KIND = '10232020-pca-nn'
     IMAGE_BUCKET_PREFIX = 'https://storage.googleapis.com/artsnob-image-scrape/'
     # RAND_MIN = 4503653962481664  # used for scraped-image-data indices
     # RAND_MAX = 6755350696951808
@@ -39,13 +39,20 @@ class FriendlyDataStore():
     def __init__(self, dsi=None):
         self.dsi = dsi if dsi else DataStoreInterface(os.environ.get('GOOGLE_CLOUD_PROJECT'))
 
+    def write_action(self, action):
+        write_dict = {}
+        write_dict['session'] = action.session
+        write_dict['action'] = action.action
+        write_dict['item'] = action.item
+        write_dict['time'] = datetime.datetime.now()
+        self.dsi.update([write_dict], kind=self.ACTION_KIND)
+
     def get_user_likes(self, user, cutoff=10):
         """Get all objects that a user has liked"""
         return self.dsi.query(kind=self.ACTION_KIND,
-                              query_filters=[('email', '=', user),
+                              query_filters=[('session', '=', user),
                                              ('action', '=', 'liked')],
                               n_records=cutoff,
-                              filter_keys=['object'],
                               tolist=True
                               )[0]
 
@@ -56,7 +63,6 @@ class FriendlyDataStore():
                                     query_filters=[('email', '=', user),
                                                    ('action', '=', 'feed_seen')],
                                     n_records=10,
-                                    filter_keys=['object'],
                                     tolist=True
                                     )[0]
         logged_likes = []

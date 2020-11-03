@@ -1,18 +1,29 @@
-import React, { useState,  useEffect, useRef } from 'react';
+import React, { useState,  useEffect, useRef, useContext } from 'react';
 import {round} from 'mathjs';
 import { v4 as uuidv4 } from 'uuid';
 import { useForm } from "react-hook-form";
 import Slider from '@material-ui/core/Slider';
 import { addPropertyControls } from 'framer';
+import { store } from './store.js';
 
 
-export const useArtData = (artId, dispatch) => {
+
+export const useArtData = (artId, dispatch, handleScrollClick) => {
   useEffect(() => {
       if (artId){
           fetch('/art/'+artId)
           .then(response => response.json())
-          .then(data => dispatch({...data, artId: artId, types: 'ADD_ART'}));
+          .then(data => dispatch({...data, artId: artId}));
+          handleScrollClick();
+          // .then(data => dispatch({...data, artId: artId, types: 'ADD_ART'}));
       }
+      return (() => {dispatch({name: "", 
+      size_price_list: [], 
+      standard_tags: [], 
+      artist: "",
+      images: ""});
+      handleScrollClick();
+    })
       }, [artId, dispatch]);
 
 }
@@ -28,43 +39,20 @@ export const useArrangementData = (nWorks, priceFilter, setArrangeData) => {
 }
 
 
-function ArtWork(props) {
-    const PPI = props.PPI ? props.PPI : 3.0
-    const margin = props.margin ? props.margin: round(1.5*PPI) + "px"
+function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, roomArtId, artId, nullFrame}) {
 
-    // art size, including frames (~1 inch either way)
-    // TODO move into global state
-    const artSize = {'p_xsmall': [12*PPI, 14*PPI], 'l_xsmall': [14*PPI, 12*PPI],
-                'xsmall': [14*PPI, 14*PPI], 'p_small': [17*PPI, 23*PPI], 'l_small': [23*PPI, 17*PPI],
-                'p_medium': [22*PPI, 28*PPI], 'l_medium': [28*PPI, 22*PPI], 'medium': [24*PPI, 24*PPI],
-                'p_large': [28*PPI, 40*PPI], 'l_large': [40*PPI, 28*PPI]}
-  
-    const priceRange = {'p_xsmall': '$40-60',
-                        'l_xsmall': '$40-60',
-                        'xsmall': '$40-60',
-                        'p_small': '$50-70',
-                        'l_small': '$50-70',
-                        'p_medium': '$70-90',
-                        'l_medium': '$70-90',
-                        'medium': '$80-115',
-                        'p_large': '$150-200',
-                        'l_large': '$150-200'
-  }
+    const globalState = useContext(store);
+    const { state, dispatch } = globalState;
 
-  const priceTextSize = {'p_xsmall': '10px',
-  'l_xsmall': '10px',
-  'xsmall': '10px',
-  'p_small': '11px',
-  'l_small': '11px',
-  'p_medium': '12px',
-  'l_medium': '12px',
-  'medium': '12px',
-  'p_large': '14px',
-  'l_large': '14px'}
-  
+    const PPI = ppi ? ppi : 3.0
+    const margin = artMargin ? artMargin: round(1.5*PPI) + "px"
+    
+    const width = state.priceRange[size].artSize[0]*PPI
+    const height = state.priceRange[size].artSize[1]*PPI
+    
     let nullFrameStyle = {
-      width: round(artSize[props.size][0])+'px',
-      height: round(artSize[props.size][1])+'px',
+      width: round(width)+'px',
+      height: round(height)+'px',
       overflow: "hidden",
       margin: margin,
       padding: round(2*PPI) + "px",
@@ -73,13 +61,13 @@ function ArtWork(props) {
 
     let frame = {
           boxSizing: "border-box",
-          width: round(artSize[props.size][0])+'px',
-          height: round(artSize[props.size][1])+'px',
+          width: round(width)+'px',
+          height: round(height)+'px',
           overflow: "hidden",
           backgroundColor: "#F8F9FA",
           border: round(1*PPI) + "px"+" dashed #222",
           margin: margin,
-          padding: props.showprice ? 0 : round(2*PPI) + "px",
+          padding: showprice ? 0 : round(2*PPI) + "px",
           userSelect: "all",
           pointerEvents: "all",
           boxShadow: "2px 2px 4px #9EA3B0"
@@ -92,42 +80,60 @@ function ArtWork(props) {
                         justifyContent: "center"
                         }
     
-    if (props.artImage) {
+    if (artImage) {
         frame = {...frame,
                 border: round(1*PPI) + "px"+" solid #222"}
         
         imagePaper = {...imagePaper,
-            backgroundImage: "url(" + props.artImage + ")",
+            backgroundImage: "url(" + artImage + ")",
             backgroundSize: "contain",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
             boxShadow: "0px -2px 2px rgba(50, 50, 50, 0.75)"
           }
     }
-    
-            
+  
     const priceFrame = {
           overflow: "hidden",
           fontFamily: `"Noto Sans JP", sans-serif`,
           color: "#000000",
-          fontSize: priceTextSize[props.size],
+          fontSize: state.priceRange[size].priceTextSize,
           letterSpacing: 0,
           lineHeight: 1.2,
           fontWeight: 400,
           fontStyle: "normal",
           textAlign: "center",
         }
-    
-    const clickAction = (artId) => {
+    // we need to check if (when unfilled) this work can support adding the potential art
+   const isArtworkEligible = () => {
+    if (state.potentialArt) {
+      if (state.potentialArt.size_price_list.map(x => x.type.trim()).includes(size)) {
+        return true
+      }
+      else {
+        return false
+      }
+    }
+    else {
+      return true
+    }
+   }
 
-      if (props.potentialArt.potentialArt) {
-        props.artDispatch({...props.potentialArt.potentialArt, type: 'ADD_ART', roomId: props.roomId, roomArtId: props.roomArtId})
-        props.potentialArt.setPotentialArt(null)
+   if (!isArtworkEligible()) {
+    imagePaper = {...imagePaper,
+      backgroundColor: "#adb5bd",
+      opacity: 0.2 
+    }
+   }
+
+    const clickAction = (aid) => {
+      if (state.potentialArt && isArtworkEligible()) {
+        dispatch({...state.potentialArt, type: 'ADD_ART', roomId: roomId, roomArtId: roomArtId})
+        dispatch({type: 'POTENTIAL_ART', artData: null})
       }
-      else if (artId) {
-        props.setArtDetailShow(artId)
+      else if (aid) {
+        dispatch({type: 'ART_DETAIL', id: aid})
       }
-      
     }
 
     const checkForNullFrame = (nullFrame) =>
@@ -136,14 +142,16 @@ function ArtWork(props) {
           return <div style={nullFrameStyle}></div>
         }
         else {
-            return (<div style={frame} onClick={()=>clickAction(props.artId)}>
+            return (<div style={frame} onClick={()=>clickAction(artId)}>
             <div style={imagePaper}>
-              {(props.showprice)
+              {(showprice)
                   ? <div style={priceFrame}>
-                      {artSize[props.size][0]/props.PPI+'" x '+artSize[props.size][1]/props.PPI+'"'}<br/>
-                      <span style={{"color": "#56876D", "fontWeight": 900}}>{priceRange[props.size]}</span>
+                      {state.priceRange[size].sizeDesc}<br/>
+                      <span style={{"color": "#56876D", "fontWeight": 900}}>{state.priceRange[size].price}</span>
                     </div>
                   : ''
+              }
+              {(!isArtworkEligible()) ? <div style={{fontSize: state.priceRange[size].priceTextSize, textAlign: 'center'}}>No matching<br/>size...</div>:  ''
               }
               </div>
               </div>)
@@ -151,10 +159,10 @@ function ArtWork(props) {
 
     }
 
-    return ( checkForNullFrame(props.nullFrame) )
+    return ( checkForNullFrame(nullFrame) )
   }
   
-function recursiveArrange(arrangement, art, ppi, id, setArtDetailShow, artDispatch, potentialArt, showPrices){
+function recursiveArrange(arrangement, art, ppi, id, showPrices){
     // recursively extract the row arrangement
     const artArray = [];
     // TODO need to add keys to the subelements here 
@@ -162,12 +170,9 @@ function recursiveArrange(arrangement, art, ppi, id, setArtDetailShow, artDispat
         if (typeof(arrangement[property]) === "number"){
             artArray.push(<ArtWork key={id+(arrangement[property]-1).toString()}
                                    size={art[arrangement[property]-1].size} 
-                                   PPI={ppi} 
+                                   ppi={ppi} 
                                    artId={art[arrangement[property]-1].artId}
                                    artImage={art[arrangement[property]-1].images}
-                                   setArtDetailShow={setArtDetailShow}
-                                   artDispatch={artDispatch}
-                                   potentialArt={potentialArt}
                                    roomId={id}
                                    roomArtId={arrangement[property]}
                                    nullFrame={(art[arrangement[property]-1].artId=="NULLFRAME")}
@@ -183,9 +188,6 @@ function recursiveArrange(arrangement, art, ppi, id, setArtDetailShow, artDispat
                      art,
                      ppi,
                      id,
-                     setArtDetailShow,
-                     artDispatch,
-                     potentialArt, 
                      showPrices)}
                 </div>)
             case 'cols':
@@ -194,41 +196,41 @@ function recursiveArrange(arrangement, art, ppi, id, setArtDetailShow, artDispat
                     art,
                     ppi,
                     id,
-                    setArtDetailShow,
-                    artDispatch,
-                    potentialArt, 
                     showPrices)}
                 </div>)
             default:
-                artArray.push((recursiveArrange(arrangement[property], art, ppi, id, setArtDetailShow, artDispatch, potentialArt, showPrices)))
+                artArray.push((recursiveArrange(arrangement[property], art, ppi, id, showPrices)))
         }   
     }
     return artArray
   }
 
   
-  function ArtArrangement(props) {
+  function ArtArrangement({arrangement, art, ppi, artHeight, id, showPrices}) {
   // get the arrangement from the props data structure
   // at the root, each node name is the size to dictate the node
   // deal with the side effect of querying art data
   const arrangementStyle = {
     width: "100%",
-    height: props.artHeight,
+    height: artHeight,
     display: "flex",
     alignItems: "center",
     justifyContent: "center"
   }
   return (
-  <div style={arrangementStyle}>{recursiveArrange(props.arrangement, props.art, props.ppi, props.id, props.setArtDetailShow, props.artDispatch, props.potentialArt, props.showPrices)}</div>
+  <div style={arrangementStyle}>{recursiveArrange(arrangement, art, ppi, id, showPrices)}</div>
   )
   }
   
 
-  function RoomView(props){
+  function RoomView({room, showPrices}){
+
+    const globalState = useContext(store);
+    const { state } = globalState;
 
     const ref = useRef(null);
     const [dimensions, setDimensions] = useState({ width:0, height: 0 });
-    const blurring = props.showingMenu ? {WebkitFilter: "blur(8px)", filter: "blur(8px)"} : {}
+    const blurring = room.showingMenu ? {WebkitFilter: "blur(8px)", filter: "blur(8px)"} : {}
 
  
     useEffect(() => {
@@ -238,11 +240,15 @@ function recursiveArrange(arrangement, art, ppi, id, setArtDetailShow, artDispat
 
     //TODO: include key for each PPI across each image
     const ZOOM = 1.0
+
     const PPI = {'living_room': (2486.0/104.0 * (dimensions.width / 3991.0) * ZOOM),
                  'blank': (4.0*ZOOM)}
+
     const roomImage = {'living_room': process.env.PUBLIC_URL + '/livingroom_noart.png',
                         'blank': null}
+
     const artHeight = {'living_room': '50%', 'blank': '100%'}
+
     //TODO: set up centerline margins for each room...
     const centerLineMargins = {'living_room': "75px"}
 
@@ -251,7 +257,7 @@ function recursiveArrange(arrangement, art, ppi, id, setArtDetailShow, artDispat
       maxWidth: "500px",
       height: 296,
       overflow: "visible",
-      backgroundImage: "url(" +roomImage[props.roomType] + ")",
+      backgroundImage: "url(" +roomImage[room.roomType] + ")",
       backgroundSize: "cover",
       backgroundRepeat: "no-repeat",
       backgroundPosition: "center",
@@ -261,19 +267,38 @@ function recursiveArrange(arrangement, art, ppi, id, setArtDetailShow, artDispat
     return (
       <div className="roomview" style={blurring}>
         <div ref={ref} style={roomBackground}>
-        <ArtArrangement arrangement={props.arrangement} art={props.art} 
-        ppi={PPI[props.roomType]} id={props.id} setArtDetailShow={props.setArtDetailShow} 
-        artDispatch={props.artDispatch} potentialArt={props.potentialArt} 
-        artHeight={artHeight[props.roomType]}
-        showPrices={props.showPrices}
-        />
+          <ArtArrangement arrangement={room.arrangement} art={room.art} 
+          ppi={PPI[room.roomType]} id={room.id}
+          artHeight={artHeight[room.roomType]}
+          showPrices={showPrices}
+          />
         </div>
       </div>
     )
   }
 
-  function RoomDescription({name, artNumFilled, artNumTotal, priceRange, selection, onRoomAdd, room, onRoomSelect, setIsUpdated, artDispatch, showingMenu}){
+  function RoomDescription({name, artNumFilled, artNumTotal, priceRange, selection, onRoomAdd, room, setIsUpdated, artDispatch, showingMenu, addNewMenu}){
+
+    const globalState = useContext(store);
+    const { state, dispatch } = globalState;
+
     //TODO: the case when this is the selected room!
+    // TODO: memoize this function
+    const artPriceExtractor = (art) => {
+      if ("size_price_list" in art) {
+        let typeMatch = art.size_price_list.filter( a => a.type.trim() == art.size)
+        if (typeMatch.length > 0) {
+          return "$"+typeMatch[0].price
+        }
+        else {
+          return "$0"
+        }
+      }
+      else {
+        return "$0"
+      }
+
+    }
 
     const selectionLabel = () => {
       if (selection == name) {
@@ -309,7 +334,7 @@ function recursiveArrange(arrangement, art, ppi, id, setArtDetailShow, artDispat
       </div>
     </div>)
     }
-    else if (onRoomSelect) {
+    else if (addNewMenu) {
       return(
         <div className="room-description">
           <div className="room-title">
@@ -321,7 +346,7 @@ function recursiveArrange(arrangement, art, ppi, id, setArtDetailShow, artDispat
             </div>
           </div>
           <span className="material-icons md-36" onClick={()=>{
-                            onRoomSelect({show: true, currentName: '', selectionRoom: {roomType: ''}});}} style={{"pointerEvents": "all"}}>add_circle_outline</span>
+                            dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {show: true, currentName: '', selectionRoom: {roomType: ''}}});}} style={{"pointerEvents": "all"}}>add_circle_outline</span>
         </div>
       )
 
@@ -334,7 +359,7 @@ function recursiveArrange(arrangement, art, ppi, id, setArtDetailShow, artDispat
             {name}
           </div>
           <div className="room-works">
-            {artNumFilled}/{artNumTotal}, ${room.art.map(a => a.price ? a.price : "$0").reduce((total, inp) => total+parseFloat(inp.substring(1)), 0)}
+            {artNumFilled}/{artNumTotal}, ${Math.round(room.art.map(a => artPriceExtractor(a)).reduce((total, inp) => total+parseFloat(inp.substring(1)), 0))}
           </div>
         </div>
         {(showingMenu) ?
@@ -345,13 +370,14 @@ function recursiveArrange(arrangement, art, ppi, id, setArtDetailShow, artDispat
     )}
   }
   
-function RoomConfigurationBrowse({currentName, selectionRoom, artDispatch, setNewRoomShow}){
+function RoomConfigurationBrowse(){
+  
+  const globalState = useContext(store);
+  const { dispatch, state } = globalState;
 
-  console.log("selectionRoom", selectionRoom)
-
-  const [name, setName] = useState(currentName)
+  const [name, setName] = useState(state.newRoomShow.currentName)
   const [isUpdated, setIsUpdated] = useState(false)
-  const [thisRoom, setThisRoom] = useState(selectionRoom)
+  const [thisRoom, setThisRoom] = useState(state.newRoomShow.selectionRoom)
   const { register, handleSubmit, watch, errors } = useForm();
   const [numMultiWorks, setNumMultiWorks] = useState(2);
   const [numVisibleMultiWorks, setNumVisibleMultiWorks] = useState(2);
@@ -362,7 +388,7 @@ function RoomConfigurationBrowse({currentName, selectionRoom, artDispatch, setNe
                                               'arrangements': {'rows': [1], 
                                               'arrangementSize': 1}}])
   
-  const selectionType = selectionRoom.roomType ? selectionRoom.roomType : ''
+  const selectionType = state.newRoomShow.selectionRoom.roomType ? state.newRoomShow.selectionRoom.roomType : ''
 
   useArrangementData(numMultiWorks, priceFilter, setRoomSelect)
   
@@ -372,37 +398,23 @@ function RoomConfigurationBrowse({currentName, selectionRoom, artDispatch, setNe
 
       // TODO: we need to split this into a conditional 
       // then ADD_NAME and ADD_ARRANGEMENT if it's something that already exists
-      if ('id' in selectionRoom) {
-        artDispatch({type: "ADD_NAME", id: selectionRoom.id, name: name});
-        artDispatch({type: "ADD_ARRANGEMENT", ...thisRoom, id: selectionRoom.id, roomType:selectionRoom.roomType, showingMenu: false});
+      if ('id' in state.newRoomShow.selectionRoom) {
+        dispatch({type: "ADD_NAME", id: state.newRoomShow.selectionRoom.id, name: name});
+        dispatch({type: "ADD_ARRANGEMENT", ...thisRoom, id: state.newRoomShow.selectionRoom.id, roomType: state.newRoomShow.selectionRoom.roomType, showingMenu: false});
       }
       else {
-        artDispatch({type: "ADD_ROOM", room: {...thisRoom, name: name, id: uuidv4(), roomType: "blank", showingMenu: false}})
+        dispatch({type: "ADD_ROOM", room: {...thisRoom, name: name, id: uuidv4(), roomType: "blank", showingMenu: false}})
       }
-      setNewRoomShow({show: false, currentName: '', selectionRoom: {roomType: ''}});
+      dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {show: false, currentName: '', selectionRoom: {roomType: ''}}});
     }
-    }, [thisRoom, name, artDispatch, setNewRoomShow]);
+    }, [thisRoom, name, dispatch]);
 
   const onSubmit = (data) => {
       setIsUpdated(true);
       setName(data["room_name"]);
   };
 
-  // TODO: raise this to a higher level or make it pull from the backend
-  // TODO: MOVE ALL THIS STATE INTO THE STATE STORE!! no more passing along :-D
-  // TODO: then get all this data from the backend, no need to hard code
-  const priceRange = {'p_xsmall': {'price': '$40-60', 'name': 'Extra Small', 'sizeDesc': '12" x 14"'},
-                        'l_xsmall': {'price':'$40-60', 'name': 'Extra Small', 'sizeDesc': '14" x 12"'},
-                        'xsmall': {'price': '$40-60', 'name': 'Extra Small', 'sizeDesc': '14" x 14"'},
-                        'p_small': {'price': '$50-70', 'name': 'Small', 'sizeDesc': '17" x 23"'},
-                        'l_small': {'price': '$50-70', 'name': 'Small', 'sizeDesc': '23" x 17"'},
-                        'p_medium': {'price': '$70-90', 'name': 'Medium', 'sizeDesc': '22" x 28"'},
-                        'l_medium': {'price': '$70-90', 'name': 'Medium', 'sizeDesc': '28" x 22"'},
-                        'medium': {'price': '$80-115', 'name': 'Medium', 'sizeDesc': '24" x 24"'},
-                        'p_large': {'price': '$150-200', 'name': 'Large', 'sizeDesc': '28" x 40"'},
-                        'l_large': {'price': '$150-200', 'name': 'Large', 'sizeDesc': '40" x 28"'}
-  }
-  const includeTest = () => {if (selectionType in priceRange) { return "Selected"} else { return "Not Selected (tap to select)"}}
+  const includeTest = () => {if (selectionType in state.priceRange) { return "Selected"} else { return "Not Selected (tap to select)"}}
   const includeShowPrice = (selectionType) => {if (['p_large', 'l_large'].includes(selectionType)) {return true} else {return false}}
 // gotta loop over artworks for the carousal
   return (
@@ -412,7 +424,7 @@ function RoomConfigurationBrowse({currentName, selectionRoom, artDispatch, setNe
           <div className='room-name-form'>
             Name:
           </div>
-          <input className='name-form' name="room_name" defaultValue={currentName} ref={register}/>
+          <input className='name-form' name="room_name" defaultValue={state.newRoomShow.currentName} ref={register}/>
           <input type="submit" />
         </div>
         </form>
@@ -431,7 +443,7 @@ function RoomConfigurationBrowse({currentName, selectionRoom, artDispatch, setNe
         </div>
         <div className='single-work-art-sizes'>
             <div className='single-work-art-stack'>
-            {Object.entries(priceRange).map(([size, {price, name, sizeDesc}], index)=>{
+            {Object.entries(state.priceRange).map(([size, {price, name, sizeDesc}], index)=>{
                 return (<div className='single-work-view'>
                           <div className="work-desc-text">{name}</div>
                           <ArtWork key={'single-price-sample'+index.toString()}
@@ -517,8 +529,7 @@ function RoomConfigurationBrowse({currentName, selectionRoom, artDispatch, setNe
                   <RoomDescription name={room.name} artNumFilled={0} artNumTotal={room.arrangementSize} 
                   priceRange={[room.minprice, room.maxprice]} selection={selectionType}
                   onRoomAdd={setThisRoom} room={room} setIsUpdated={setIsUpdated}/>
-                  <RoomView roomType={'blank'} arrangement={room.arrangement} art={room.art} id={thisId} setArtDetailShow={null} 
-                  artDispatch={null} potentialArt={null} showPrices={true}></RoomView>
+                  <RoomView room={{roomType:'blank', arrangement: room.arrangement, art: room.art, id: thisId}} showPrices={true}></RoomView>
                   </div>)
           })
         }
@@ -528,56 +539,71 @@ function RoomConfigurationBrowse({currentName, selectionRoom, artDispatch, setNe
   )
 }
 
-function RoomMenu ({setArtRecommendationShow, setNewRoomShow, art, room, setCheckoutShow}) {
+function RoomMenu ({art, room}) {
+
+  const globalState = useContext(store);
+  const { dispatch } = globalState;
 
 return (<div className="menu-box">
           <div className="room-menu-single-item"> 
-            <span className="material-icons md-36" onClick={() => {setArtRecommendationShow(art)}}>search</span>
+            <span className="material-icons md-36" onClick={() => 
+            
+            dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: art})
+            
+            }>search</span>
             <div className="room-menu-text">Find art...</div>
           </div>
           {/* figure out why this doesn't work via adding the room to the feed?? */}
           <div className="room-menu-single-item"> 
-            <span className="material-icons md-36" onClick={() => {setNewRoomShow({currentName: room.name, selectionRoom: {...room, showingMenu: false}, show: true})}}>edit</span>
+            <span className="material-icons md-36" onClick={() => {
+              dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: room.name, selectionRoom: {...room, showingMenu: false}, show: true}})
+              }}>edit</span>
             <div className="room-menu-text">Change room...</div>
           </div>
           <div className="room-menu-single-item"> 
-            <span className="material-icons md-36" onClick={() => {setCheckoutShow(room)}}>shopping_cart</span>
+            <span className="material-icons md-36" onClick={() => {
+              dispatch({type: 'CHECKOUT_ROOM_SHOW', room: room})
+              }}>shopping_cart</span>
             <div className="room-menu-text">Purchase room...</div>
           </div>
         </div>
         )
 }  
 
+  export function Rooms() {
+    const globalState = useContext(store);
+    const { dispatch, state } = globalState;
 
-  export function Rooms(props) {
-    const blurring = props.artDetailShow ? {WebkitFilter: "blur(8px)", filter: "blur(8px)"} : {}
+    const blurring = state.artDetailShow ? {WebkitFilter: "blur(8px)", filter: "blur(8px)"} : {}
     let roomStyle = {...blurring}
 
-    if (props.newRoomShow.show)
+    if (state.newRoomShow.show)
       {roomStyle = {...roomStyle, marginTop: '78px'}}
 
+    // TODO: need to not show this when the browse menu is up
     const roomFeed = () => {
-      if(props.newRoomShow.show){
+      if(state.newRoomShow.show){
         return (
             <div className="works-select-menu">
                 <div className="explain-menu">
-                  <span className="material-icons md-36" onClick={() => {props.setNewRoomShow({...props.newRoomShow, show: false})}}>keyboard_backspace</span>
-                <div className="explain-text">Choose a name and artwork configuration</div>
+                  <span className="material-icons md-36" onClick={() => {dispatch({type: 'TOGGLE_NEW_ROOM_SHOW'})}}>keyboard_backspace</span>
+                  <div className="explain-text">Choose a name and artwork configuration</div>
               </div>
-              <RoomConfigurationBrowse currentName={props.newRoomShow.currentName} selectionRoom={props.newRoomShow.selectionRoom} artDispatch={props.artDispatch} setNewRoomShow={props.setNewRoomShow}/>
+              <RoomConfigurationBrowse/>
             </div>
         )
       }
       else {
-        return (props.rooms.map((room, _) => {
+        return (state.rooms.map((room, _) => {
           return (
-                  <div className="room-menu-box">
-                    {(room.showingMenu) ? (<RoomMenu setNewRoomShow={props.setNewRoomShow} art={room.art} room={room}/>):''}
+                  <div className="room-menu-box" key={'rmb'+room.id}>
+                    {(room.showingMenu) ? (<RoomMenu art={room.art} room={room}/>):''}
                     <div className="room" id={room.id} key={room.id}>
-                      <RoomDescription name={room.name} artNumFilled={room.art.filter(a => (a.artId != null) & (a.artId != 'NULLFRAME')).length} artNumTotal={room.arrangementSize} artDispatch={props.artDispatch} showingMenu={room.showingMenu} room={room}></RoomDescription>
-                      <RoomView roomType={room.roomType} arrangement={room.arrangement} art={room.art} id={room.id} 
-                      setArtDetailShow={props.setArtDetailShow} artDispatch={props.artDispatch} 
-                      potentialArt={props.potentialArt} showingMenu={room.showingMenu}></RoomView>
+
+                      <RoomDescription key={'rd'+room.id} name={room.name} artNumFilled={room.art.filter(a => (a.artId != null) & (a.artId != 'NULLFRAME')).length} artNumTotal={room.arrangementSize} artDispatch={dispatch} showingMenu={room.showingMenu} room={room}></RoomDescription>
+                      
+                      <RoomView key={'rv'+room.id} room={room}></RoomView>
+
                     </div>
                   </div>
                   )
@@ -590,15 +616,16 @@ return (<div className="menu-box">
 
 
     return(
+    (!state.artBrowseSeed) && (
     <div className="room-main">
         <div className="room-feed" style={roomStyle}>
         {
           roomFeed()
         }
         {
-          (props.newRoomShow.show == false) ? <RoomDescription name={"Add new room..."} artNumFilled={0} artNumTotal={0} onRoomSelect={props.setNewRoomShow} room={{art:[]}}></RoomDescription> : ''
+          (state.newRoomShow.show == false) ? <RoomDescription name={"Add new room..."} artNumFilled={0} artNumTotal={0} room={{art:[]}} addNewMenu={true} artDispatch={dispatch}></RoomDescription> : ''
         }
         </div>
        </div>
-    )
+    ))
   }

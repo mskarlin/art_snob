@@ -3,7 +3,7 @@ import json
 import math
 import os
 import sys
-import google.cloud.logging
+# from google.cloud import logging
 from google.cloud.logging.handlers import ContainerEngineHandler
 
 

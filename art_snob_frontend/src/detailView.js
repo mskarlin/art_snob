@@ -1,10 +1,13 @@
-import React, { useState, useReducer, useEffect, useRef } from 'react';
+import React, { useState, useReducer, useEffect, useRef, useContext } from 'react';
 import { useTagFetch, useInfiniteScroll } from './feedHooks'
 import {useArtData} from './artComponents'
 import { addPropertyControls } from 'framer';
+import { store } from './store.js';
 
 
-function SingleCarousel(props) {
+function SingleCarousel({endpoint, index, showFavoriteSelect, initialImages={images:[], cursor: null, fetching: true}, imgSize=''}) {
+    const globalState = useContext(store);
+    const { dispatch, state } = globalState;
 
     const feedReducer = (state, action) => {
     switch (action.type) {
@@ -18,31 +21,39 @@ function SingleCarousel(props) {
             return state;
     }
     }
-    const [feedData, feedDataDispatch] = useReducer(feedReducer, { images:[], cursor: null, fetching: true})
+    const [feedData, feedDataDispatch] = useReducer(feedReducer, initialImages)
     const [loadMore, setLoadMore] = useState(false);
-    // this changes every single render (since the cursor changes...)
-    const formatEndpoint = feedData.cursor ? props.endpoint+'?start_cursor='+feedData.cursor : props.endpoint
+    // this changes every single render (since the cursor changes...) huge bug that took days to fix...
+    const formatEndpoint = feedData.cursor ? endpoint+'?start_cursor='+feedData.cursor : endpoint
+    const renderLikes = showFavoriteSelect ? state.likedArt : null
 
-    useTagFetch(loadMore, feedDataDispatch, setLoadMore, props.endpoint, formatEndpoint)
+    useTagFetch(loadMore, feedDataDispatch, setLoadMore, endpoint, formatEndpoint, renderLikes)
 
-    return (<div key={'feed-'+props.index.toString()} className='carousal-spacing main-feed' style={{'width': feedData.images.length*126+15+'px'}}>
+    const displayWidths = {'': 126, 'large': 175}
+    const initialWidth = (feedData.images.length + showFavoriteSelect)*displayWidths[imgSize]+15+'px'
+
+    return (<div key={'feed-'+index.toString()} className={'carousal-spacing main-feed '+imgSize} style={{'width': initialWidth}}>
                 {feedData.images.map((image, index) => {
-                    const { artist, images, id } = image
+                    const { name, images, id } = image
                     return (
-                    <div key={'art-'+index.toString()+props.index.toString() } className='imgholder'>
+                    <div key={'art-'+index.toString()+index.toString() } className={'imgholder ' + imgSize}>
                             <img
-                            alt={artist}
+                            alt={name}
                             data-src={images}
                             className="imgholder img"
                             src={images}
                             style={{"pointerEvents": "all"}}
                             onClick={()=>{
-                                props.setArtDetailShow(id);
+                                dispatch({type: 'ART_DETAIL', id: id, ref: state.scrollRef})
                                 }}
                             />
                     </div>
                     )
                 })}
+                {showFavoriteSelect && (<div className={'imgholder ' + imgSize}> 
+                                            <span className="material-icons md-36">save_alt</span> 
+                                            <div className='browse-imgtext'>Save art to find it here</div>
+                                        </div>)}
                 {feedData.fetching && (
                 <div className='loadingbox'>
                     <p>...</p>
@@ -54,7 +65,7 @@ function SingleCarousel(props) {
 
 }
 
-export function ArtCarousel(props) {
+export function ArtCarousel({endpoints, imgSize=''}) {
     // lists of carousels for each type of art
 
     const makeTitle = (endpoint) => {
@@ -65,12 +76,14 @@ export function ArtCarousel(props) {
             let tagName = endpoint.substring(6)
             return tagName.charAt(0).toUpperCase() + tagName.slice(1) + " works"
         }
+        else if (endpoint.substring(1,6) == "likes") {
+            return "My saved art"
+        }
     }
-
 
     return (
             <div className='art-feed detail'>
-            {props.endpoints.map((endpoint, eindex) => {
+            {endpoints.map((endpoint, eindex) => {
             return (
             <div key={'endpoint'+eindex}>
                 <div className='detail-title-tag'>
@@ -78,8 +91,8 @@ export function ArtCarousel(props) {
                     {makeTitle(endpoint)}
                     </div>
                 </div>
-                <div className='art-feed-small'>
-                    <SingleCarousel endpoint={endpoint} setArtDetailShow={props.setArtDetailShow} index={eindex} key={'sc-'+eindex.toString()}/>
+                <div className={'art-feed-small ' + imgSize}>
+                    <SingleCarousel imgSize={imgSize} endpoint={endpoint} showFavoriteSelect={endpoint.substring(1,6) == "likes"} index={eindex} key={'sc-'+eindex.toString()}/>
                 </div>
             </div>
             )
@@ -90,25 +103,37 @@ export function ArtCarousel(props) {
 }
 
 
-export function ArtDetail(props) {
-    const ntags = props.ntags ? props.ntags : 10
+export function ArtDetail({nTags}) {
+    const globalState = useContext(store);
+    const { dispatch, state } = globalState;
+    const scrollRef = useRef(null)
+     
+    const handleScrollClick = () => {
+    if ('current' in scrollRef) {
+        if (scrollRef.current) {
+            scrollRef.current.scrollIntoView(true);
+        }
+    }
+    }
+    
+    const ntags = nTags ? nTags : 10
     const [artData, setArtData] = useState({name: "", 
-                                            sizes: "", 
+                                            size_price_list: [], 
                                             standard_tags: [], 
                                             artist: "",
                                             images: ""});
-    useArtData(props.artId, setArtData)
-    let artTags = ['/similar_works/'+props.artId]
+    useArtData(state.artDetailShow, setArtData, handleScrollClick)
+    let artTags = ['/similar_works/'+state.artDetailShow]
     const endpoints = artTags.concat(artData.standard_tags.map(i => '/tags/'+i.toLowerCase()))
 
-return (
+return ( state.artDetailShow && (
     <div className="locked-detail-container">
-    <div className="detail-container">
+    <div className="detail-container" ref={scrollRef}>
         <div className="detail-title">
             <div className="detail-name">
             {artData.name}
             </div>
-            <span className="material-icons md-36" onClick={() => {props.backButton(null)}}>keyboard_backspace</span>
+            <span className="material-icons md-36" onClick={() => dispatch({'type': 'ART_DETAIL', 'id': null})}>keyboard_backspace</span>
         </div>
         <div className="large-image">
         <img
@@ -125,33 +150,35 @@ return (
             <div className="price-size">
             <ul style={{"listStyleType":"none", "padding": "0px"}}>
             <li className="pricing">Sizes:</li>
-            {artData.sizes.split("| | |").join("--").split("|").map(x => {
-                return <li className="pricing" key={x}>{x.split("--")[0]}</li>
+            {artData.size_price_list.map(x => {
+                return <li className="pricing" key={x}>{x.size}</li>
             })}
             </ul>
             </div>
             <div className="price-size" style={{'width': "15%"}}>
             <ul style={{"listStyleType":"none", "padding": "0px"}}>
             <li className="pricing">Prices:</li>
-            {artData.sizes.split("| | |").join("--").split("|").map(x => {
-                return <li className="pricing" key={x}>{x.split("--")[1]}</li>
+            {artData.size_price_list.map(x => {
+                return <li className="pricing" key={x}>{x.price}</li>
             })}
             </ul>
             </div>
             <div className="detail-purchase-buttons">
-            <button className="detail-button" onClick={()=>{props.setPotentialArt(artData);
-                                                            props.backButton(null)
+            <button className="detail-button" onClick={()=>{dispatch({'type': 'POTENTIAL_ART', 'artData': artData});
+                                                            dispatch({'type': 'ART_DETAIL', 'id': null})
+                                                            dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
+                                                            dispatch({'type': 'CLOSE_ALL_MENUS'})
                                                             }}>Add to room</button>
-            <button className="detail-button" style={{"backgroundColor":"#CED4DA"}}>Save for later</button>
+
+
+            <button className="detail-button" style={{"backgroundColor":"#CED4DA"}} 
+            onClick={()=>{dispatch({'type': 'LIKE_ART', 'art': artData})}}>Save for later</button>
             <button className="detail-button" style={{"backgroundColor":"#DEE2E6"}}>Purchase work</button>
             </div>
         </div>
-        <ArtCarousel endpoints={endpoints}
-         setArtDetailShow={props.backButton}
-         id={props.artId}
-         />
+        <ArtCarousel endpoints={endpoints}/>
     </div>
     </div>
-)
+))
 
 }
