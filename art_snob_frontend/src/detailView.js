@@ -4,6 +4,10 @@ import {useArtData} from './artComponents'
 import { addPropertyControls } from 'framer';
 import { store } from './store.js';
 
+const openInNewTab = (url) => {
+    const newWindow = window.open(url, '_blank', 'noopener,noreferrer')
+    if (newWindow) newWindow.opener = null
+}
 
 function SingleCarousel({endpoint, index, showFavoriteSelect, initialImages={images:[], cursor: null, fetching: true}, imgSize=''}) {
     const globalState = useContext(store);
@@ -126,6 +130,16 @@ export function ArtDetail({nTags}) {
     let artTags = ['/similar_works/'+state.artDetailShow]
     const endpoints = artTags.concat(artData.standard_tags.map(i => '/tags/'+i.toLowerCase()))
 
+    // TODO: figure out why this doesnt update...
+    const saveCopy = () => {
+        if (state.likedArt.map((x) => x.artId).includes(artData.artId)) {
+            return "Saved!"
+            }
+        else {
+            return "Save for later"
+        }
+}
+
 return ( state.artDetailShow && (
     <div className="locked-detail-container">
     <div className="detail-container" ref={scrollRef}>
@@ -172,8 +186,9 @@ return ( state.artDetailShow && (
 
 
             <button className="detail-button" style={{"backgroundColor":"#CED4DA"}} 
-            onClick={()=>{dispatch({'type': 'LIKE_ART', 'art': artData})}}>Save for later</button>
-            <button className="detail-button" style={{"backgroundColor":"#DEE2E6"}}>Purchase work</button>
+            onClick={()=>{dispatch({'type': 'LIKE_ART', 'art': artData})}}>{saveCopy()}</button>
+            <button className="detail-button" style={{"backgroundColor":"#DEE2E6"}}
+            onClick={() => {openInNewTab(artData.page_url+'?curator=mskarlin')}}>Purchase work</button>
             </div>
         </div>
         <ArtCarousel endpoints={endpoints}/>

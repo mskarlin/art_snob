@@ -70,6 +70,7 @@ Start of Framer elements
 */
 
 @import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Poiret+One&display=swap');
 @import url('https://fonts.googleapis.com/css?family=Italiana&display=swap');
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
@@ -144,7 +145,7 @@ main {
   width: 150px;
   height: 43px;
   overflow: hidden;
-  font-family: "Italiana", serif;
+  font-family: "Poiret One", serif;
   color: #000000;
   font-size: 24px;
   letter-spacing: 0px;
@@ -265,7 +266,6 @@ main {
   border-left-width: 0px;
   border-top-width: 0px;
   border-right-width: 0px;
-  box-sizing: border-box;
   border-color: black;
   border-style: solid;
 }

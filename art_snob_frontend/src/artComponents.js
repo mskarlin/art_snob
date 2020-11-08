@@ -580,6 +580,22 @@ return (<div className="menu-box">
     if (state.newRoomShow.show)
       {roomStyle = {...roomStyle, marginTop: '78px'}}
 
+    if (state.potentialArt)
+    {roomStyle = {...roomStyle, marginTop: '237px'}}
+
+    // optionally give instructions for placing a work of art into a room
+    const artExplain = () => {
+      if (state.potentialArt) {
+        return (
+              <div className="explain-menu" style={{top: '196px'}}>
+                  <span className="material-icons md-36" onClick={() => {dispatch({type: 'POTENTIAL_ART', artData: null})}}>keyboard_backspace</span>
+                  <div className="explain-text">Select a spot for your art</div>
+              </div>
+        )
+
+      }
+    }
+
     // TODO: need to not show this when the browse menu is up
     const roomFeed = () => {
       if(state.newRoomShow.show){
@@ -619,6 +635,7 @@ return (<div className="menu-box">
     (!state.artBrowseSeed) && (
     <div className="room-main">
         <div className="room-feed" style={roomStyle}>
+        {artExplain()}
         {
           roomFeed()
         }
