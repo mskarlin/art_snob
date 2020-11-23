@@ -2,6 +2,7 @@ import random, datetime
 from google.cloud import datastore
 import os
 from src.ordered_set import OrderedSet
+from typing import List
 import itertools
 import sys
 
@@ -31,6 +32,9 @@ class FriendlyDataStore():
     RANDOM_INDEX_KIND = '10232020-random_selections'
     NEIGHBOR_KIND = '10232020-pca-nn'
     IMAGE_BUCKET_PREFIX = 'https://storage.googleapis.com/artsnob-image-scrape/'
+    TAG_SCORES = '11122020-tag-scores'
+    VIBES = '11152020-vibes'
+    TAG_REVERSE_INDEX = '11202020-tag_reverse_index'
     # RAND_MIN = 4503653962481664  # used for scraped-image-data indices
     # RAND_MAX = 6755350696951808
     RAND_MIN = 1
@@ -77,7 +81,7 @@ class FriendlyDataStore():
 
         id_set = OrderedSet(id_list)
 
-        to_flatten = self.dsi.read(id_set, kind=self.NEIGHBOR_KIND, filter_keys=['neighbors'])
+        to_flatten = self.dsi.read(ids=id_set, kind=self.NEIGHBOR_KIND, filter_keys=['neighbors'])
 
         # flatten and de-dupe the result
         if interleaved_results:
@@ -97,9 +101,37 @@ class FriendlyDataStore():
             unique_art = unique_art[start:limit]
 
         if hydrated:
-            unique_art = self.dsi.read(unique_art, kind=self.INFO_KIND, sorted_list=False)
+            unique_art = self.dsi.read(ids=unique_art, kind=self.INFO_KIND, sorted_list=False)
 
         return unique_art
+
+
+    def tag(self, tags: List[str], seed=814, n_records:int=25, cursor:str=''):
+        
+        # extract cursor and turn into ints
+        if cursor:
+            rseed, start = cursor.split('_')
+            rseed = int(rseed)
+            start = int(start)
+
+        else:
+            rseed = int(seed)
+            start = 0
+
+        random.seed(rseed)
+
+        tag_keys = self.dsi.read(ids=tags, kind=self.TAG_REVERSE_INDEX, sorted_list=True)
+        
+        idx_to_request = []
+
+        for keys in tag_keys:
+            idx_to_request+=keys['keys']
+
+        idx_to_request = list(set(idx_to_request))
+        random.shuffle(idx_to_request)
+
+        return self.dsi.read(ids=idx_to_request[start:(start+n_records)], kind=self.INFO_KIND)
+
 
     def search(self, query, get_cursor=False, start_cursor=None, n_records=25):
         """Get all search results based on tags"""
@@ -130,10 +162,10 @@ class FriendlyDataStore():
 
         rand = random.randint(self.RAND_MIN, self.RAND_MAX)
 
-        keys = self.dsi.read([rand], self.RANDOM_INDEX_KIND)
+        keys = self.dsi.read(ids=[rand], kind=self.RANDOM_INDEX_KIND)
         keys = keys[rand]['random_keys'][:n_items]
 
-        return self.dsi.read(keys, kind)
+        return self.dsi.read(ids=keys, kind=kind)
 
 
 class DatastoreInteractions:

@@ -45,7 +45,7 @@ class DataStoreReader(AutoNode):
         return {'project', 'kind'}
 
     def execute(self, project: str, kind: str, n_records_per_query: int = 500,
-                query_filters: List = None, filter_keys: List = None, max_records: int = None,
+                query_filters: List = [], filter_keys: List = [], max_records: int = None,
                 keys_only: bool = False) -> Dict:
         """Read datastore object(s) from remote datastore queries
 

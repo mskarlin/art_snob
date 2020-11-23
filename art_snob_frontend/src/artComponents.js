@@ -5,7 +5,15 @@ import { useForm } from "react-hook-form";
 import Slider from '@material-ui/core/Slider';
 import { addPropertyControls } from 'framer';
 import { store } from './store.js';
+import Button from '@material-ui/core/Button';
 
+import Stepper from '@material-ui/core/Stepper';
+import Step from '@material-ui/core/Step';
+import StepLabel from '@material-ui/core/StepLabel';
+import Typography from '@material-ui/core/Typography';
+import CardActions from '@material-ui/core/CardActions';
+import CardContent from '@material-ui/core/CardContent';
+import Card from '@material-ui/core/Card';
 
 
 export const useArtData = (artId, dispatch, handleScrollClick) => {
@@ -39,7 +47,7 @@ export const useArrangementData = (nWorks, priceFilter, setArrangeData) => {
 }
 
 
-function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, roomArtId, artId, nullFrame}) {
+export function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, roomArtId, artId, nullFrame}) {
 
     const globalState = useContext(store);
     const { state, dispatch } = globalState;
@@ -85,7 +93,7 @@ function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, roomArtId, 
                 border: round(1*PPI) + "px"+" solid #222"}
         
         imagePaper = {...imagePaper,
-            backgroundImage: "url(" + artImage + ")",
+            backgroundImage: "url(https://storage.googleapis.com/artsnob-image-scrape/" + artImage + ")",
             backgroundSize: "contain",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
@@ -126,6 +134,23 @@ function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, roomArtId, 
     }
    }
 
+   const artPriceExtractor = () => {
+    if (state.potentialArt) {
+      if ("size_price_list" in state.potentialArt) {
+        let typeMatch = state.potentialArt.size_price_list.filter( a => a.type.trim() == size)
+        if (typeMatch.length > 0) {
+          return "$"+typeMatch[0].price
+        }
+        else {
+          return state.priceRange[size].price
+        }
+      }
+      else {
+        return state.priceRange[size].price
+      }
+  }
+  }
+
     const clickAction = (aid) => {
       if (state.potentialArt && isArtworkEligible()) {
         dispatch({...state.potentialArt, type: 'ADD_ART', roomId: roomId, roomArtId: roomArtId})
@@ -147,7 +172,7 @@ function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, roomArtId, 
               {(showprice)
                   ? <div style={priceFrame}>
                       {state.priceRange[size].sizeDesc}<br/>
-                      <span style={{"color": "#56876D", "fontWeight": 900}}>{state.priceRange[size].price}</span>
+                      <span style={{"color": "#56876D", "fontWeight": 900}}>{artPriceExtractor()}</span>
                     </div>
                   : ''
               }
@@ -346,7 +371,9 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
             </div>
           </div>
           <span className="material-icons md-36" onClick={()=>{
-                            dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {show: true, currentName: '', selectionRoom: {roomType: ''}}});}} style={{"pointerEvents": "all"}}>add_circle_outline</span>
+                            const tmpRoom = {...state.blankRoom, id: uuidv4()}
+                            dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: '', selectionRoom: tmpRoom, show: true}});}} 
+                            style={{"pointerEvents": "all"}}>add_circle_outline</span>
         </div>
       )
 
@@ -370,7 +397,326 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
     )}
   }
   
-function RoomConfigurationBrowse(){
+
+  function getSteps() {
+    return ['Choose name and inspiration', 'Choose art configuration'];
+  }
+
+
+
+function RoomConfigurationBrowse({activeStep}) {
+  // working state for the room is based on the state.selectionRoom room
+  const globalState = useContext(store);
+  const { dispatch, state } = globalState;
+  const { register, handleSubmit, watch, errors } = useForm();
+  
+  const [preferenceSelect, setPreferenceSelect] = useState('Tags')
+  const [vibes, setVibes] = useState([])
+  const [tags, setTags] = useState([])
+  const [art, setArt] = useState([])
+  const steps = getSteps();
+  const tagEndpoint = '/taglist/'+state.sessionId
+  const randomEndpoint = '/random/'
+  const vibesEndpoint = '/vibes/'+state.sessionId
+
+
+  useEffect(() => {
+    fetch(tagEndpoint)
+    .then(data => data.json())
+    .then(json => {
+      setTags(json.tags)
+    })
+    .catch(e => {
+        // handle error
+        return e
+    })
+
+    fetch(randomEndpoint)
+    .then(data => data.json())
+    .then(json => {
+      setArt(json)
+    })
+    .catch(e => {
+        // handle error
+        return e
+    })
+
+    fetch(vibesEndpoint)
+    .then(data => data.json())
+    .then(json => {
+      setVibes(json.vibes)
+    })
+    .catch(e => {
+        // handle error
+        return e
+    })
+
+    // clean up - clear the tags
+    return () => {
+      setArt([])
+    }
+
+    }, [tagEndpoint, setTags, setArt, randomEndpoint, vibesEndpoint, setVibes])
+
+
+  const selectorColor = (name, value) => {
+    if (name === value) { return 'secondary'
+    }
+    else {
+      return 'default'
+    }
+  }
+
+  const tagOrVibeInListColor = (t, list) => {
+    if (list.includes(t)) {
+      return 'secondary'
+    }
+    else {
+      return 'default'
+    }
+  }
+  //todo: function for whether or not the state is qualified to move on (otherwise grey out the next button)
+
+
+  const vibeColumn = (vibes) => {
+    return (
+    <div className='vert-column'>
+
+            {vibes.map((v) => 
+            <Card variant="outlined" key={v.Vibes} style={{'margin': '10px'}}>
+              <CardContent>
+              <Typography variant="h5">{v.Vibes}
+              </Typography>
+              <Typography variant="body2">{v.Tagline}</Typography>
+              {v.Tags.slice(0, 5).map(i => {return <button className="tag-button small" key={i}>{i}</button>})}
+              <Button variant="outlined" color={
+                tagOrVibeInListColor(v.Vibes, state.newRoomShow.selectionRoom.vibes.map(v => v.Vibes))} 
+              onClick={() => dispatch({type: 'TOGGLE_VIBE',  vibe: v})
+              }>Select</Button>
+              </CardContent>
+            </Card>
+            )}
+
+          </div>)
+  }
+
+  const tagButtons = (tags) => {
+
+    const tagCheck = (tagName) => {
+        if (state.newRoomShow.selectionRoom.seedTags.includes(tagName)) {
+          return 'selected'
+        }
+        else {
+          return ''
+        }
+    }
+  
+    return (
+    <div className='tag-select-container'>
+      {tags.map(i => 
+      {return <button className={"tag-button "+tagCheck(i.id.charAt(0).toUpperCase() + i.id.slice(1))}
+                      key={i.id+'-TAG'} 
+                      onClick={() => dispatch({type: 'TOGGLE_SEED_TAG',  seedTag: i.id.charAt(0).toUpperCase() + i.id.slice(1)})
+                      }>{i.id}</button>
+        })}
+    </div>
+  )
+  }
+
+  const imgColumn = (art) => {
+
+    const imgCheck = (artName) => {
+      if (state.newRoomShow.selectionRoom.seedArt.map(a => a.artId).includes(artName)) {
+        return 'selected'
+      }
+      else {
+        return ''
+      }
+  }
+    return (
+      <div className='vert-column'>
+        {art.map((image, index) => {
+                const { name, images, id } = image
+                return (
+                <div key={'art-'+index.toString()+index.toString() } className={'imgholder large'}>
+                        {(imgCheck(image.id)==='selected')?<span className="material-icons md-48" style={{'position': 'absolute',
+                        'color': '#018E42', zIndex: 2}}
+                        
+                        >check_circle_outline</span>:<></>}
+                        <img
+                        alt={name}
+                        data-src={"https://storage.googleapis.com/artsnob-image-scrape/"+images}
+                        className={"imgholder img "+imgCheck(image.id)}
+                        src={"https://storage.googleapis.com/artsnob-image-scrape/"+images}
+                        style={{"pointerEvents": "all"}}
+                        onClick={() => dispatch({type: 'TOGGLE_SEED_ART',  seedArt: {...image, artId: image.id}})}
+                        />
+                </div>
+                )
+            })}
+      </div>
+    )
+  }
+
+  const preferenceView = () => {
+
+    switch(preferenceSelect){
+      
+      case 'Vibes':
+        return (
+        <>     
+        <div className='select-explain'>
+        Pick a vibe for this room's art:
+        </div>
+        <div className='preference-flex'>
+            
+          {vibeColumn(vibes.slice(0, vibes.length/2))}
+          {vibeColumn(vibes.slice(vibes.length/2, vibes.length))}
+
+        </div>
+        </>
+      )
+      case 'Tags':
+        return (
+          <>
+            <div className='select-explain'>
+            Pick some tags for this room's art:
+            </div>
+            {tagButtons(tags)}
+          </>
+        )
+      case 'Art':
+        return (
+          <>
+          <div className='select-explain'>
+            Choose some art to inspire this room:
+          </div>
+          <div className='preference-flex'>
+            
+            {imgColumn(art.slice(0, art.length/2))}
+            {imgColumn(art.slice(art.length/2, art.length))}
+
+          </div>
+          </>
+        )
+    }
+  }
+
+  const preferenceStep = (show) => {
+    if (show) {
+          return (
+          <>
+          <div className='room-name-form'>
+            Name:
+            <input className='name-form' name="room_name" defaultValue={state.newRoomShow.currentName} ref={register}/>
+          </div>
+          <div className='button-split'>
+            <Button variant="outlined" style={{"width": "25%"}} color={selectorColor('Vibes', preferenceSelect)} onClick={()=>setPreferenceSelect('Vibes')}>Vibes</Button>
+            <Button variant="outlined" style={{"width": "25%"}} color={selectorColor('Tags', preferenceSelect)} onClick={()=>setPreferenceSelect('Tags')}>Tags</Button>
+            <Button variant="outlined" style={{"width": "25%"}} color={selectorColor('Art', preferenceSelect)} onClick={()=>setPreferenceSelect('Art')}>Art</Button>
+          </div>
+          {preferenceView()}
+        </>
+        )
+      }
+  else {
+    return <></>
+  }
+  }
+
+  const stepViewer = () => {
+    switch (activeStep) {
+      case 0:
+        return {showArt: false, showPreference: true}
+      case 1:
+        return {showArt: true, showPreference: false}
+    }
+  }
+
+  return (
+    <div style={{"marginTop": "45px", "height": "100%"}}>
+        <div style={{"height": "100%"}}>
+        {/*  ^^ this div used to be a form, switch back when ready*/}
+        <div className='room-name-entry'>
+            <Stepper activeStep={activeStep} alternativeLabel>
+            {steps.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+          {preferenceStep(stepViewer().showPreference)}
+          {SingleArtSelect(stepViewer().showArt)}
+        </div>
+        </div>
+    </div>
+  )
+}
+
+function SingleArtSelect({show}) {
+  const globalState = useContext(store);
+  const { dispatch, state } = globalState;
+
+  const selectionType = state.newRoomShow.selectionRoom.roomType ? state.newRoomShow.selectionRoom.roomType : ''
+
+  const includeTest = () => {if (selectionType in state.priceRange) { return "Selected"} else { return "Not Selected (tap to select)"}}
+  const includeShowPrice = (selectionType) => {if (['p_large', 'l_large'].includes(selectionType)) {return true} else {return false}}
+
+  if (show){
+    return (
+      <>
+      <div className="collection-heading">
+            <div className="stacked-descriptors">
+              <div className="collection-text "> 
+                Single work selections
+              </div>
+              <div className="collection-text-sub">
+               {includeTest()}
+              </div>
+            </div>
+            <div className="price-text">
+              $40-$200
+            </div>
+          </div>
+          <div className='single-work-art-sizes'>
+              <div className='single-work-art-stack'>
+              {Object.entries(state.priceRange).map(([size, {price, name, sizeDesc}], index)=>{
+                  return (<div className='single-work-view'>
+                            <div className="work-desc-text">{name}</div>
+                            <ArtWork key={'single-price-sample'+index.toString()}
+                                              size={size} 
+                                              PPI={3.0} 
+                                              artId={null}
+                                              artImage={null}
+                                              setArtDetailShow={null}
+                                              artDispatch={null}
+                                              potentialArt={null}
+                                              roomId={'room-single'+index.toString()}
+                                              roomArtId={null}
+                                              showprice={includeShowPrice(size)}
+                                              > 
+                                              </ArtWork>
+                            {(!includeShowPrice(size)) ?(
+                            <div className="work-desc-text" style={{'height': '40px'}}>{sizeDesc}<br/>
+                            <span style={{"color": "#56876D", "fontWeight": 900}}>{price}</span>
+                            </div>
+                            ): null
+                            }
+                          </div>)
+              }
+              )}
+              </div>
+            </div>
+        </>
+    )
+  }
+  else {
+    return <></>
+  }
+}
+
+
+function RoomConfigurationBrowseOrig(){
   
   const globalState = useContext(store);
   const { dispatch, state } = globalState;
@@ -553,7 +899,6 @@ return (<div className="menu-box">
             }>search</span>
             <div className="room-menu-text">Find art...</div>
           </div>
-          {/* figure out why this doesn't work via adding the room to the feed?? */}
           <div className="room-menu-single-item"> 
             <span className="material-icons md-36" onClick={() => {
               dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: room.name, selectionRoom: {...room, showingMenu: false}, show: true}})
@@ -562,7 +907,7 @@ return (<div className="menu-box">
           </div>
           <div className="room-menu-single-item"> 
             <span className="material-icons md-36" onClick={() => {
-              dispatch({type: 'CHECKOUT_ROOM_SHOW', room: room})
+              dispatch({type: 'PURCHASE_LIST', purchaseList: [room]})
               }}>shopping_cart</span>
             <div className="room-menu-text">Purchase room...</div>
           </div>
@@ -573,15 +918,32 @@ return (<div className="menu-box">
   export function Rooms() {
     const globalState = useContext(store);
     const { dispatch, state } = globalState;
+    const [activeStep, setActiveStep] = useState(0);
 
+    const handleNext = () => {
+      setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    };
+  
+    const handleBack = () => {
+      setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    };
+  
+    const handleReset = () => {
+      setActiveStep(0);
+    };
     const blurring = state.artDetailShow ? {WebkitFilter: "blur(8px)", filter: "blur(8px)"} : {}
     let roomStyle = {...blurring}
+    let showPrices = false
 
     if (state.newRoomShow.show)
       {roomStyle = {...roomStyle, marginTop: '78px'}}
 
     if (state.potentialArt)
-    {roomStyle = {...roomStyle, marginTop: '237px'}}
+    {
+      roomStyle = {...roomStyle, marginTop: '237px'};
+      showPrices = true
+    } 
+
 
     // optionally give instructions for placing a work of art into a room
     const artExplain = () => {
@@ -596,16 +958,55 @@ return (<div className="menu-box">
       }
     }
 
-    // TODO: need to not show this when the browse menu is up
+    
+    // TODO: need to grey out buttons when a selection has yet to be made, then solidify when ready
+    const buttonCopy = () =>{
+      switch(activeStep) {
+        case 0:
+          return (
+            {
+              backFunc: () => {dispatch({type: 'TOGGLE_NEW_ROOM_SHOW'})},
+              backCopy: 'Back to rooms',
+              forCopy: 'Continue',
+              forFunc: handleNext
+            }
+          )
+        case 1:
+          return (
+            {
+              backFunc: handleBack,
+              backCopy: 'Back',
+              forCopy: 'Add room and choose art',
+              forFunc: () => {
+                dispatch({type: 'ADD_ROOM', 'room': state.newRoomShow.selectionRoom});
+                dispatch({type: 'TOGGLE_NEW_ROOM_SHOW'});
+                dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: state.newRoomShow.selectionRoom.art})
+              }
+            }
+          )
+
+      }
+
+    }
+
     const roomFeed = () => {
       if(state.newRoomShow.show){
+        // if we didn't come from a room (to edit it) then we need to make a working room that we're going to be editing
+        if (!'id' in state.newRoomShow.selectionRoom) {
+          const tmpRoom = {...state.blankRoom, id: uuidv4()}
+          dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: '', selectionRoom: tmpRoom, show: true}})
+        }
         return (
             <div className="works-select-menu">
                 <div className="explain-menu">
-                  <span className="material-icons md-36" onClick={() => {dispatch({type: 'TOGGLE_NEW_ROOM_SHOW'})}}>keyboard_backspace</span>
-                  <div className="explain-text">Choose a name and artwork configuration</div>
+                  <span className="material-icons md-36" onClick={buttonCopy().backFunc}>keyboard_backspace</span>
+                  <div className="explain-text">{buttonCopy().backCopy}</div>
+                  <div className="next-buttons">
+                    <div className="explain-text-next">{buttonCopy().forCopy}</div>
+                    <span className="material-icons md-36" onClick={buttonCopy().forFunc}>keyboard_arrow_right</span>
+                  </div>
               </div>
-              <RoomConfigurationBrowse/>
+              <RoomConfigurationBrowse activeStep={activeStep}/>
             </div>
         )
       }
@@ -618,7 +1019,7 @@ return (<div className="menu-box">
 
                       <RoomDescription key={'rd'+room.id} name={room.name} artNumFilled={room.art.filter(a => (a.artId != null) & (a.artId != 'NULLFRAME')).length} artNumTotal={room.arrangementSize} artDispatch={dispatch} showingMenu={room.showingMenu} room={room}></RoomDescription>
                       
-                      <RoomView key={'rv'+room.id} room={room}></RoomView>
+                      <RoomView key={'rv'+room.id} room={room} showPrices={showPrices}></RoomView>
 
                     </div>
                   </div>
@@ -632,7 +1033,7 @@ return (<div className="menu-box">
 
 
     return(
-    (!state.artBrowseSeed) && (
+    ((!state.artBrowseSeed) && (!state.purchaseList)) && (
     <div className="room-main">
         <div className="room-feed" style={roomStyle}>
         {artExplain()}
@@ -640,7 +1041,7 @@ return (<div className="menu-box">
           roomFeed()
         }
         {
-          (state.newRoomShow.show == false) ? <RoomDescription name={"Add new room..."} artNumFilled={0} artNumTotal={0} room={{art:[]}} addNewMenu={true} artDispatch={dispatch}></RoomDescription> : ''
+          (state.newRoomShow.show === false) ? <RoomDescription name={"Add new room..."} artNumFilled={0} artNumTotal={0} room={{art:[]}} addNewMenu={true} artDispatch={dispatch}></RoomDescription> : ''
         }
         </div>
        </div>

@@ -7,9 +7,27 @@ from aiohttp import ClientTimeout
 import random
 from typing import List, Union, Any, Tuple
 import asyncio
+import cachetools
+from cachetools.keys import hashkey
+from functools import partial
+from threading import RLock
 
 import os
 
+
+def query_key(*args, query_filters=[], filter_keys=[], **kwargs):
+    """custom hashkey builder for caching"""
+    key = hashkey(*args, **kwargs)
+    key += tuple(sorted(query_filters))
+    key += tuple(sorted(filter_keys))
+    return key
+
+def read_key(*args, ids=[], filter_keys=[], **kwargs):
+    """custom hashkey builder for caching"""
+    key = hashkey(*args, **kwargs)
+    key += tuple(sorted(ids))
+    key += tuple(sorted(filter_keys))
+    return key
 
 class DataStoreInterface(object):
     """Simplify operations to datastore"""
@@ -20,9 +38,11 @@ class DataStoreInterface(object):
                               '>=': PropertyFilterOperator.GREATER_THAN_OR_EQUAL,
                               '<=': PropertyFilterOperator.LESS_THAN_OR_EQUAL}
 
-    def __init__(self, project=''):
+    def __init__(self, project='', use_cache=False):
         self.project = project
         self.ds = datastore.Client(project=os.environ.get('GOOGLE_PROJECT_ID', project))
+        self.cache = cachetools.TTLCache(5000, 600) # 5000 items at 600 seconds
+        self.lock = lock = RLock()
 
     def random_selection(self, kind: str, min: int, max: int, n_items: int = 1):
         """Pull a random index from a numeric index"""
@@ -124,9 +144,10 @@ class DataStoreInterface(object):
 
         return results
 
+    @cachetools.cachedmethod(lambda self: self.cache, lock=lambda self: self.lock, key=partial(query_key, 'query'))
     def query(self, kind: str, n_records: int = 500, query_filters: List[Tuple[str, str, str]] = None,
               filter_keys: List[str] = None, cursor: Any = None, keys_only: bool = False, tolist: bool = False,
-              key_filter: bool = False):
+              key_filter: bool = False, cache_break: int = 0):
         """Query records in a kind, with optional filters and keys
 
         Args:
@@ -139,12 +160,12 @@ class DataStoreInterface(object):
             keys_only (bool): return only the keys? saving some bandwidth
             tolist (bool): transform the results into a list?
             key_filter (bool): use a keyfilter rather than a property based query filter
+            cache_break (int): value used to break cache if needed (0 default for all calls)
 
         Returns:
             (dict) keyed to the record_id and filtered via the inputs, (cursor) next page cursor
 
         """
-
         query = self.ds.query(kind=kind)
 
         if query_filters:
@@ -176,15 +197,15 @@ class DataStoreInterface(object):
 
             # if there's a single filter key, let's return that as a list
             single_key = filter_keys[0] if len(filter_keys) == 1 else None
-
-            return self.maybetolist({q.id: self.results_filter(q, filter_keys) for q in page},
+            return self.maybetolist({q.key.id_or_name: self.results_filter(q, filter_keys) for q in page},
                                     single_key, tolist), next_cursor
 
         else:
 
-            return self.maybetolist({q.id: q for q in page}, None, tolist), next_cursor
+            return self.maybetolist({q.key.id_or_name: q for q in page}, None, tolist), next_cursor
 
-    def read(self, ids: List[Union[int, str]], kind: str, filter_keys: List[str] = None, sorted_list: bool = False):
+    @cachetools.cachedmethod(lambda self: self.cache, lock=lambda self: self.lock, key=partial(read_key, 'read'))
+    def read(self, ids: List[Union[int, str]], kind: str, filter_keys: List[str] = None, sorted_list: bool = False, cache_break: int = 0):
         """read filtered values from a list of ids within a particular datastore kind
 
         Args:
@@ -192,6 +213,7 @@ class DataStoreInterface(object):
             kind (str): valid datastore kind name
             filter_keys (List[str]): (optional) list of keys you'd like filtered before returning
             sorted_list (bool): return as a sorted list rather than a dict
+            cache_break (int): value used to break cache if needed (0 default for all calls)
 
         Returns:
             (dict) keyed to record id or sorted list by input ids
@@ -203,11 +225,11 @@ class DataStoreInterface(object):
 
         if filter_keys:
 
-            results = {r.id: self.results_filter(r, filter_keys) for r in results}
+            results = {r.key.id_or_name: self.results_filter(r, filter_keys) for r in results}
 
         else:
 
-            results = {r.id: r for r in results}
+            results = {r.key.id_or_name: r for r in results}
 
         if sorted_list:
 

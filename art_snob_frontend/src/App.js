@@ -10,6 +10,9 @@ import {Rooms} from "./artComponents"
 import {ArtDetail} from "./detailView"
 import {ArtBrowse} from "./artBrowse"
 import { StateProvider, store } from './store.js';
+import {PurchaseList} from "./purchasePage"
+import Button from '@material-ui/core/Button';
+
 
 
 function App() {
@@ -41,13 +44,14 @@ function App() {
       <div className="App">
         <main>
             <LandingPage></LandingPage>
-            <div style={{"position": "fixed", "top": 0, "zIndex": 2}}>
+            <div style={{"position": "fixed", "top": 0, "zIndex": 4}}>
               <MainHeader></MainHeader>
               <TopArtFeed imgData={imgData} feedBoundaryRef={feedBoundaryRef}/>
             </div>
             <ArtDetail/>
             <Rooms/>
             <ArtBrowse/>
+            <PurchaseList/>
         </main>
       </div>
     </StateProvider>
@@ -59,7 +63,7 @@ function TopArtFeed({imgData, feedBoundaryRef, menuHide}){
 const globalState = useContext(store);
 const { dispatch, state } = globalState;
 
-if (!state.newRoomShow.show && !state.artBrowseSeed) {
+if (!state.newRoomShow.show && !state.artBrowseSeed && !state.purchaseList) {
 return (
         <div className='art-feed'>
             <div className='carousal-spacing main-feed' style={{'width': imgData.images.length*126+15+'px'}}>
@@ -69,9 +73,9 @@ return (
                   <div key={index} className='imgholder'>
                         <img
                           alt={artist}
-                          data-src={images}
+                          data-src={'https://storage.googleapis.com/artsnob-image-scrape/'+images}
                           className="imgholder img"
-                          src={images}
+                          src={'https://storage.googleapis.com/artsnob-image-scrape/'+images}
                           style={{"pointerEvents": "all"}}
                           onClick={()=>{
                             dispatch({type: 'POTENTIAL_ART', artData: null})
@@ -105,7 +109,7 @@ function LandingPage() {
     overflow: "hidden",
     backgroundColor: "rgba(33, 37, 41, 0.98)",
     top: 0,
-    zIndex: 3
+    zIndex: 5
   }
   
   function loadLandingPage() {
@@ -157,7 +161,7 @@ return (
           </div>
           <div className="centerline">The room-centric art finder to complete your home.</div>
           <div className="cookiesnote">Note that we use cookies to store your info between sessions.</div>
-          <button variant="primary" onClick={() => dispatch({type: "TOGGLE_LANDING"})}>Get Started!</button>
+          <Button variant="contained" color="primary" onClick={() => dispatch({type: "TOGGLE_LANDING"})}>Get Started!</Button>
         </Stack>
       )
 

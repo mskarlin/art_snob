@@ -31,7 +31,9 @@ const initialState = {
     'artDetailShow': null,
     'sessionId': uuidv4(),
     'potentialArt': null,
+    'blankRoom': {roomType: 'blank', 'showingMenu': false, art: [], arrangement: {}, arrangementSize: 0, name: '', vibes: [], 'seedTags': [], 'seedArt': []},
     'artBrowseSeed': null, 
+    'purchaseList': null,
     'currentTagSet': ['Digital', 'Drawing'],
     'likedArt': [],
     'priceRange': {'p_xsmall': {'price': '$40-60', 'name': 'Extra Small', 'sizeDesc': '12" x 14"', artSize: [12, 14], 'priceTextSize': '10px'},
@@ -89,10 +91,36 @@ const StateProvider = ( { children } ) => {
     switch(action.type){
       case 'ADD_ROOM':
         return {...state, rooms: state.rooms.concat(action.room)}
+      case 'TOGGLE_VIBE':
+      // add vibes to the pending (or current) room selection
+        if (state.newRoomShow.selectionRoom.vibes.map(v => v.Vibes).includes(action.vibe.Vibes)) {
+            const removedVibe = state.newRoomShow.selectionRoom.vibes.filter(v => v.Vibes !== action.vibe.Vibes)
+            return {...state, newRoomShow: {...state.newRoomShow, selectionRoom: {...state.newRoomShow.selectionRoom, vibes: removedVibe}}}
+        }
+        else {
+            return {...state, newRoomShow: {...state.newRoomShow, selectionRoom: {...state.newRoomShow.selectionRoom, vibes: state.newRoomShow.selectionRoom.vibes.concat(action.vibe)}}}
+        }
+      case 'TOGGLE_SEED_TAG':
+        if (state.newRoomShow.selectionRoom.seedTags.includes(action.seedTag)) {
+            const removedTag = state.newRoomShow.selectionRoom.seedTags.filter(t => t !== action.seedTag)
+            return {...state, newRoomShow: {...state.newRoomShow, selectionRoom: {...state.newRoomShow.selectionRoom, seedTags: removedTag}}}
+        }
+        else {
+            return {...state, newRoomShow: {...state.newRoomShow, selectionRoom: {...state.newRoomShow.selectionRoom, seedTags: state.newRoomShow.selectionRoom.seedTags.concat(action.seedTag)}}}
+        }
+      case 'TOGGLE_SEED_ART':
+            if (state.newRoomShow.selectionRoom.seedArt.map(a => a.artId).includes(action.seedArt.artId)) {
+                const removedArt = state.newRoomShow.selectionRoom.seedArt.filter(t => t.artId !== action.seedArt.artId)
+                return {...state, newRoomShow: {...state.newRoomShow, selectionRoom: {...state.newRoomShow.selectionRoom, seedArt: removedArt}}}
+            }
+            else {
+                return {...state, newRoomShow: {...state.newRoomShow, selectionRoom: {...state.newRoomShow.selectionRoom, seedArt: state.newRoomShow.selectionRoom.seedArt.concat(action.seedArt)}}}
+            }
       case 'TOGGLE_LANDING':
         return {...state, landingState: {'open': !state.landingState.open}}
       case 'TOGGLE_NEW_ROOM_SHOW':
-        return {...state, newRoomShow: {...state.newRoomShow, show: !state.newRoomShow.show}}
+        // also clear the state so there's no hanging newRoomShow potential room
+        return {...state, newRoomShow: {...state.newRoomShow, show: !state.newRoomShow.show, currentName: '', selectionRoom: {roomType: ''}}}
       case 'ASSIGN_NEW_ROOM_SHOW':
         return {...state, newRoomShow: action.newRoomShow}
       case 'ART_DETAIL':
@@ -102,6 +130,8 @@ const StateProvider = ( { children } ) => {
       case 'LIKE_ART':
         postData('/actions/', { session: state.sessionId, action: 'liked', item: action.art.artId})
         return {...state, likedArt: state.likedArt.concat(action.art)}
+      case 'PURCHASE_LIST':
+          return {...state, purchaseList: action.purchaseList}
       case 'ART_BROWSE_SEED':
         // set the potential tags
         let tagSet = new Set()
@@ -195,7 +225,7 @@ const StateProvider = ( { children } ) => {
                           artId: action.artId,
                           page_url: action.page_url,
                           standard_tags: action.standard_tags,
-                          name: action.name,
+                          name: action.name.substring(0, action.name.length - 17),
                           sizes: action.sizes,
                           images: action.images,
                           price: action.price,

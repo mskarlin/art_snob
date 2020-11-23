@@ -4,7 +4,7 @@ import {useArtData} from './artComponents'
 import { addPropertyControls } from 'framer';
 import { store } from './store.js';
 
-const openInNewTab = (url) => {
+export const openInNewTab = (url) => {
     const newWindow = window.open(url, '_blank', 'noopener,noreferrer')
     if (newWindow) newWindow.opener = null
 }
@@ -43,9 +43,9 @@ function SingleCarousel({endpoint, index, showFavoriteSelect, initialImages={ima
                     <div key={'art-'+index.toString()+index.toString() } className={'imgholder ' + imgSize}>
                             <img
                             alt={name}
-                            data-src={images}
+                            data-src={'https://storage.googleapis.com/artsnob-image-scrape/'+images}
                             className="imgholder img"
-                            src={images}
+                            src={'https://storage.googleapis.com/artsnob-image-scrape/'+images}
                             style={{"pointerEvents": "all"}}
                             onClick={()=>{
                                 dispatch({type: 'ART_DETAIL', id: id, ref: state.scrollRef})
@@ -152,9 +152,9 @@ return ( state.artDetailShow && (
         <div className="large-image">
         <img
             alt={artData.artist}
-            data-src={artData.images}
+            data-src={'https://storage.googleapis.com/artsnob-image-scrape/'+artData.images}
             className="large-image img"
-            src={artData.images}
+            src={'https://storage.googleapis.com/artsnob-image-scrape/'+artData.images}
             />
         </div>
         <div className="tag-holder">

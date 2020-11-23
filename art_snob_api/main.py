@@ -4,6 +4,7 @@ import os
 # import logging
 import uuid 
 import time
+import random as rand
 from datetime import datetime
 from typing import List, Dict
 from pydantic import BaseModel
@@ -42,20 +43,20 @@ ac = ArtConfigurations(fileloc=os.environ.get('ART_CONFIG_FILE', 'art_configurat
 async def startup_event():
     ac.expand_all_templates()
 
+# TODO: move the images URL appendage client side
 def list_and_add_image_prefix(artdata: Dict) -> List:  
     work_list = []
     for art, works in artdata.items():
         for idx, work in works.items():
             work['id'] = idx
-            work['images'] = f"https://storage.googleapis.com/artsnob-image-scrape/{work['images']}"
+            # work['images'] = f"https://storage.googleapis.com/artsnob-image-scrape/{work['images']}"
             work_list.append(work)
     return work_list
 
 def add_image_prefix(artlist: List):
     rlist = []
-    
     for al in artlist:
-        al.update({'images': f"https://storage.googleapis.com/artsnob-image-scrape/{al['images']}"})
+        # al.update({'images': f"https://storage.googleapis.com/artsnob-image-scrape/{al['images']}"})
         rlist.append(al)
 
     return rlist
@@ -101,29 +102,64 @@ def feed(seed_likes=[], session_id=None):
     # recommendations.update({'session_id': session_id})
     return work_list
 
+@app.get("/random/")
+def random(session_id=None):
+
+    if not session_id:
+        session_id = str(uuid.uuid4())
+
+    works = data.random(n_items=25, seed=rand.randint(0,10000))
+    
+    # split up the art into what's needed
+    work_list = list_and_add_image_prefix({'art': works})
+
+    # recommendations.update({'session_id': session_id})
+    return work_list
+
 @app.get('/tags/{tag}')
 def tags(tag: str, start_cursor: str = None, n_records: int = 10, session_id=None):
     if not session_id:
         session_id = str(uuid.uuid4())
 
-    # todo: cache the start_cursors to be able to pull down a random one per tag
-    art, cursor = data.search(tag, 
-                              get_cursor=True, 
-                              n_records=n_records,
-                              start_cursor=start_cursor)
-    work_list = add_image_prefix(art)
-
+    seed = rand.randint(0,10000)
+    works = data.tag([tag.capitalize()], seed=seed, n_records=n_records, cursor=start_cursor)
+    work_list = list_and_add_image_prefix({'art': works})
     log_exposure(work_list, session_id, how=f"exposure:tags:{tag}")
 
-    return {'art': work_list, 'cursor': cursor}
+    return {'art': work_list, 'cursor': f'{seed}_{n_records}'}
 
+
+@app.get('/taglist/{session_id}')
+def taglist(session_id=None, n: int = 300, min_score: float = 4.0):
+    if not session_id:
+        session_id = str(uuid.uuid4())
+
+    tags = dsi.query(kind = data.TAG_SCORES, 
+                n_records = n, 
+                query_filters = [('weighted_score', '>', min_score)],
+                tolist = True
+                )
+
+    return {'tags': sorted(tags[0], key=lambda x: -x['weighted_score'])}
+
+@app.get('/vibes/{session_id}')
+def vibes(session_id=None):
+    if not session_id:
+        session_id = str(uuid.uuid4())
+
+    vibes = dsi.query(kind = data.VIBES, 
+                n_records = 100, 
+                tolist = True
+                )
+    
+    return {'vibes': vibes[0]}    
 
 @app.get('/likes/{session}')
 def likes(session: str, n: int = 10):
 
     # todo: cache the start_cursors to be able to pull down a random one per tag
     art = data.get_user_likes(session, n)
-    works = dsi.read(list(set([int(a['item']) for a in art])), data.INFO_KIND, sorted_list=True)
+    works = dsi.read(ids=list(set([int(a['item']) for a in art])), kind=data.INFO_KIND, sorted_list=True)
     work_list = add_image_prefix(works)
 
     log_exposure(work_list, session, how=f"exposure:likes")
@@ -137,8 +173,8 @@ def art(art_id: int, session_id=None):
     if not session_id:
         session_id = str(uuid.uuid4())
 
-    work = dsi.read([art_id], data.INFO_KIND, sorted_list=True)[0]
-    work['images'] = f"https://storage.googleapis.com/artsnob-image-scrape/{work['images']}"
+    work = dsi.read(ids=[art_id], kind=data.INFO_KIND, sorted_list=True)[0]
+    # work['images'] = f"https://storage.googleapis.com/artsnob-image-scrape/{work['images']}"
     # work['prices'] = {art_type_from_name(x.split("--")[0]):x.split("--")[1] for x in "--".join(work['sizes'].split("| | |")).split("|")}
     log_exposure([work], session_id, how="exposure:detail", id=art_id)
     return work
