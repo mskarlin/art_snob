@@ -12,6 +12,7 @@
     "@testing-library/user-event": "^7.1.2",
     "framer": "^1.2.5",
     "framer-motion": "^2.4.3-beta.2",
+    "lodash": "^4.17.20",
     "material-design-icons": "^3.0.1",
     "mathjs": "^7.1.0",
     "node-sass": "^4.14.1",
@@ -21,6 +22,7 @@
     "react-pro-sidebar": "^0.4.3",
     "react-scripts": "3.4.1",
     "react-sidebar": "^3.0.2",
+    "react-zoom-pan-pinch": "^1.6.1",
     "typescript": "^4.0.2",
     "uuid": "^8.3.0"
   },

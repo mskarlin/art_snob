@@ -5,6 +5,7 @@ import os
 import uuid 
 import time
 import random as rand
+import itertools
 from datetime import datetime
 from typing import List, Dict
 from pydantic import BaseModel
@@ -86,47 +87,79 @@ def log_exposure(work_list, session_id, how="exposure", id=None):
 
         cloud_logger.info(to_log)
 
+def cursor_parse(cursor):
+    start, n_items = cursor.split('_')
+    try:
+        start = int(start)
+        n_items = int(n_items)
+    except:
+        print('ERROR PARSING CURSOR')
+        return 0, 25, '25_25'
+
+    return (start, n_items, f'{n_items+start}_{n_items}')
+
 @app.get("/feed/")
-def feed(seed_likes=[], session_id=None):
+def feed(seed_likes:str='', session_id=None, start_cursor='0_25'):
 
     if not session_id:
         session_id = str(uuid.uuid4())
 
+    start, n_items, next_cursor = cursor_parse(start_cursor)
+
     pa = PersonalizedArt(session_id, data)
     
-    recommendations = pa.recommended(seed_likes)
+    seed_likes = [int(s) for s in seed_likes.split(',') if s]
+
+    recommendations = pa.recommended(seed_likes, start=start, n_per_carousal=n_items)
 
     # split up the art into what's needed
     work_list = list_and_add_image_prefix(recommendations)
 
     # recommendations.update({'session_id': session_id})
-    return work_list
+    return {'art': work_list, 'cursor': next_cursor}
 
 @app.get("/random/")
-def random(session_id=None):
+def random(session_id=None, cursor='0_25'):
 
     if not session_id:
         session_id = str(uuid.uuid4())
 
-    works = data.random(n_items=25, seed=rand.randint(0,10000))
+    start, n_items = cursor.split('_')
+    start = int(start)
+    n_items = int(n_items)
+
+    works = data.random(n_items=n_items, seed=abs(hash(session_id)) % (10 ** 8), start=start)
     
     # split up the art into what's needed
     work_list = list_and_add_image_prefix({'art': works})
 
     # recommendations.update({'session_id': session_id})
-    return work_list
+    return {'art': work_list, 'cursor': f"{start+n_items}_{n_items}"}
 
 @app.get('/tags/{tag}')
 def tags(tag: str, start_cursor: str = None, n_records: int = 10, session_id=None):
     if not session_id:
         session_id = str(uuid.uuid4())
-
+    
     seed = rand.randint(0,10000)
-    works = data.tag([tag.capitalize()], seed=seed, n_records=n_records, cursor=start_cursor)
-    work_list = list_and_add_image_prefix({'art': works})
+    start = 0
+
+    if start_cursor:
+        seed, start = start_cursor.split('_')
+        seed = int(seed)
+        start = int(start)
+
+    works = []
+    for t in tag.split('|'):
+        tdata = data.tag([t.capitalize()], seed=seed, n_records=n_records, cursor=start_cursor)
+        work_list = list_and_add_image_prefix({'art': tdata})
+        works.append(work_list)
+
+    works = [x for x in itertools.chain(*itertools.zip_longest(*works)) if x is not None]
+
     log_exposure(work_list, session_id, how=f"exposure:tags:{tag}")
 
-    return {'art': work_list, 'cursor': f'{seed}_{n_records}'}
+    return {'art': works, 'cursor': f'{seed}_{start+n_records}'}
 
 
 @app.get('/taglist/{session_id}')
@@ -143,16 +176,31 @@ def taglist(session_id=None, n: int = 300, min_score: float = 4.0):
     return {'tags': sorted(tags[0], key=lambda x: -x['weighted_score'])}
 
 @app.get('/vibes/{session_id}')
-def vibes(session_id=None):
+def vibes(vibe=None, session_id=None, start_cursor=None, n_records=25):
     if not session_id:
         session_id = str(uuid.uuid4())
+
+    seed = rand.randint(0,10000)
+    start = 0
+
+    if start_cursor:
+        seed, start = start_cursor.split('_')
+        seed = int(seed)
+        start = int(start)
 
     vibes = dsi.query(kind = data.VIBES, 
                 n_records = 100, 
                 tolist = True
                 )
-    
-    return {'vibes': vibes[0]}    
+    if vibe:
+        # get the vibe of interest from object
+        vibe_candidate = [v['Tags'] for v in vibes[0] if v['Vibes'] == vibe]
+        if vibe_candidate:
+            return tags('|'.join(vibe_candidate[0]), f'{seed}_{start}', n_records, session_id)
+        else:
+            return {'art': None, 'cursor': None}
+    else:
+        return {'vibes': vibes[0]}    
 
 @app.get('/likes/{session}')
 def likes(session: str, n: int = 10):

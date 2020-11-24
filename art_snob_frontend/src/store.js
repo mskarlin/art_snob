@@ -31,10 +31,10 @@ const initialState = {
     'artDetailShow': null,
     'sessionId': uuidv4(),
     'potentialArt': null,
-    'blankRoom': {roomType: 'blank', 'showingMenu': false, art: [], arrangement: {}, arrangementSize: 0, name: '', vibes: [], 'seedTags': [], 'seedArt': []},
+    'blankRoom': {roomType: 'blank', 'name': 'My new room', 'showingMenu': false, art: [], arrangement: {}, arrangementSize: 0, vibes: [], 'seedTags': [], 'seedArt': []},
     'artBrowseSeed': null, 
     'purchaseList': null,
-    'currentTagSet': ['Digital', 'Drawing'],
+    'searchTagSet': [],
     'likedArt': [],
     'priceRange': {'p_xsmall': {'price': '$40-60', 'name': 'Extra Small', 'sizeDesc': '12" x 14"', artSize: [12, 14], 'priceTextSize': '10px'},
                         'l_xsmall': {'price':'$40-60', 'name': 'Extra Small', 'sizeDesc': '14" x 12"', artSize: [14, 12], 'priceTextSize': '10px'},
@@ -47,7 +47,7 @@ const initialState = {
                         'p_large': {'price': '$150-200', 'name': 'Large', 'sizeDesc': '28" x 40"', artSize: [28, 40], 'priceTextSize': '14px'},
                         'l_large': {'price': '$150-200', 'name': 'Large', 'sizeDesc': '40" x 28"', artSize: [40, 28], 'priceTextSize': '14px'}
   },
-    'newRoomShow': {show: false, currentName: '', selectionRoom: {roomType: ''}},
+    'newRoomShow': {show: false, currentName: 'My new room', selectionRoom: {roomType: ''}},
     'rooms': [{
     name: "My First Room", 
     id: uuidv4(),
@@ -90,7 +90,21 @@ const StateProvider = ( { children } ) => {
     console.log('StateProvider:STATE', state)
     switch(action.type){
       case 'ADD_ROOM':
-        return {...state, rooms: state.rooms.concat(action.room)}
+        if (state.rooms.map(r=>r.id).includes(action.room.id)) {
+            return {...state, rooms: state.rooms.map(r => {
+                
+                if (r.id === action.room.id) {
+                    return action.room
+                }
+                else {
+                    return r
+                }
+
+            })}
+        }
+        else {
+            return {...state, rooms: state.rooms.concat(action.room)}
+        }
       case 'TOGGLE_VIBE':
       // add vibes to the pending (or current) room selection
         if (state.newRoomShow.selectionRoom.vibes.map(v => v.Vibes).includes(action.vibe.Vibes)) {
@@ -133,22 +147,15 @@ const StateProvider = ( { children } ) => {
       case 'PURCHASE_LIST':
           return {...state, purchaseList: action.purchaseList}
       case 'ART_BROWSE_SEED':
-        // set the potential tags
-        let tagSet = new Set()
-        let art;
-        let tag;
-        if (action.artBrowseSeed) {
-            for (art of action.artBrowseSeed) {
-                if ('standard_tags' in art){
-                    for (tag of art.standard_tags){
-                        tagSet.add(tag)
-                    }
-                }
-            }
-        }
-        return {...state, artBrowseSeed: action.artBrowseSeed, currentTagSet: [...tagSet].slice(0, 10)}
-      case 'CHANGE_CURRENT_TAG_SET':
-          return {...state, currentTagSet: action.currentTagSet}
+        // artBrowseSeed should be a seed for a single room
+        // vibes (per vibe), tags (separate?) and works of art (combined?) get their own carousals
+        // right now, the order should be art->vibe->tag but this ranking can be optimized too
+        // each exposure combo can be written to the backend where we get a chance to rank it
+        // could also take the features for the art, and rank by those (on the front-end...)
+
+        return {...state, artBrowseSeed: action.artBrowseSeed}
+      case 'CHANGE_SEARCH_TAG_SET':
+          return {...state, searchTagSet: action.searchTagSet}
       case 'CHANGE_MENU':
         // filter for arrangement in the room equal to action.id
         return {...state, 'rooms': state.rooms.map((room, _) => {
@@ -170,40 +177,26 @@ const StateProvider = ( { children } ) => {
                 }
           })}    
       case 'ADD_ARRANGEMENT':
-        // filter for arrangement in the room equal to action.id
-        return {...state, rooms: state.rooms.map((room, _) => {
-          const {id} = room
-          if (id == action.id) {
-           const popArt =  JSON.parse(JSON.stringify(room.art));
-            // TODO -- NULL OUT THE ART IF IT DOESN'T EXIST IN THE NEW SIZE
-            // TODO -- SET MAX DEVICE WIDENESS!!
-            const artRenumbered = action.art.map((a, _) => {
-              if (a.artId != 'NULLFRAME') {
-                let sPopArt = {...popArt.shift(), id: a.id, size: a.size}
-                if (!('artId' in sPopArt)) {
-                  sPopArt['artId'] = a.artId
-                }
-                return sPopArt
+        const popArt =  JSON.parse(JSON.stringify(state.newRoomShow.selectionRoom.art));
+        const artRenumbered = action.art.map((a, _) => {
+            if (a.artId != 'NULLFRAME') {
+              let sPopArt = {...popArt.shift(), id: a.id, size: a.size}
+              if (!('artId' in sPopArt)) {
+                sPopArt['artId'] = a.artId
               }
-              else {
-                return a
-              }
-            })
-            if ('additionalArt' in action) {
-              return {...room, 
-                arrangement: action.arrangement, 
-                arrangementSize: action.arrangementSize,
-                art: room.art.concat(action.additionalArt)}
+              return sPopArt
             }
             else {
-            return {...room, showingMenu: false, art: artRenumbered, 
-              arrangement: action.arrangement, arrangementSize: action.arrangementSize}
-          }
-          }
-          else{
-            return room
-          }
-        })}
+              return a
+            }
+          })
+        // filter for arrangement in the room equal to action.id
+        return {...state, newRoomShow: {...state.newRoomShow, 
+            selectionRoom: {...state.newRoomShow.selectionRoom, 
+                arrangement: action.arrangement,
+                arrangementSize: action.arrangementSize,
+                art: artRenumbered
+                }}}
       case 'ADD_ROOMTYPE':
         return state.rooms.map((room, _) => {
           const {id} = room
@@ -245,17 +238,10 @@ const StateProvider = ( { children } ) => {
           }
         })}
       case 'ADD_NAME':
-        return {...state, rooms: state.rooms.map((room, _) => {
-          const {id} = room
-          if (id == action.id) {
-            return {...room, name: action.name}
-          }
-          else {
-            return room
-          }
-
-        }
-        ) }
+        return {...state, newRoomShow: {...state.newRoomShow, 
+            selectionRoom: {...state.newRoomShow.selectionRoom, 
+                name: action.name
+                }}}
       default:
         return state;
     }

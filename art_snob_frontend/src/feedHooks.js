@@ -6,7 +6,7 @@ export const useFetch = (loadMore, dispatch, setLoadMore) => {
         fetch('/feed/')
         .then(data => data.json())
         .then(images => {
-            dispatch({ type: 'STACK_IMAGES', images })
+            dispatch({ type: 'STACK_IMAGES', images: images.art })
             dispatch({ type: 'FETCHING_IMAGES', fetching: false })
             setLoadMore(false)
         })
@@ -36,9 +36,9 @@ export const useTagFetch = (loadMore, dispatch, setLoadMore, endpoint, formatEnd
             return e
         })
         // clean up - clear the images
-        return () => {
-          dispatch({ type: 'RESET', new_feed: {images:[], cursor: null, fetching: true}})
-        }
+        // return () => {
+        //   dispatch({ type: 'RESET', new_feed: {images:[], cursor: null, fetching: true}})
+        // }
 
     }, [dispatch, endpoint, loadMore, setLoadMore, artState])
 }

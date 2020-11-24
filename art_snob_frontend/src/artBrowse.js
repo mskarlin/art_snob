@@ -35,7 +35,6 @@ const useStyles = makeStyles((theme) => ({
   }));
 
 // todo: add blurring to the background while detail is open
-// todo: move the detail box up since we don't have the overhead feed
 // todo: rank tag importances by tf-idf scores -- we can deliver from the backend
 // todo: allow for vertical menu to pop up for browsing within a particular interest
 // todo: color the pills by interest of the member -- allow the member to set pills of interest in menu
@@ -48,8 +47,22 @@ export function ArtBrowse() {
 
     const tagSetter = (e, v) => {
         if (e) {
-           dispatch({type: 'CHANGE_CURRENT_TAG_SET', currentTagSet: v})
+           dispatch({type: 'CHANGE_CURRENT_TAG_SET', searchTagSet: v})
     }
+    }
+
+    const feedEndpoints = () => {
+        // get seed art ids to send to the backend
+        const artIds = state.artBrowseSeed.seedArt.map(x=>x.artId).join(',')
+        return '/feed/?seed_likes='+encodeURIComponent(artIds)
+    }
+
+    const tagEndpoints = () => {
+        return state.artBrowseSeed.seedTags.map(tag => '/tags/'+tag)
+    }
+
+    const vibeEndpoints = () => {
+        return state.artBrowseSeed.vibes.map(v => '/vibes/'+state.sessionId+'?vibe=' + v.Vibes)
     }
 
     const getMargin = () => {
@@ -77,7 +90,7 @@ export function ArtBrowse() {
                                         id="tags-standard"
                                         classes={classes}
                                         options={tag_suggestions}
-                                        defaultValue={state.currentTagSet}
+                                        defaultValue={state.searchTagSet}
                                         onChange={tagSetter}
                                         renderInput={(params) => (
                                         <TextField
@@ -92,8 +105,13 @@ export function ArtBrowse() {
                         </div>
                     </div>
                     <div style={{'marginTop': getMargin()}}>
+                    <ArtCarousel endpoints={ state.searchTagSet.map((tag, index) => {return ('/tags/'+tag )})} imgSize={'large'} />
                     <ArtCarousel endpoints={ ['/likes/'+state.sessionId] } imgSize={'large'} />
-                    <ArtCarousel endpoints={ state.currentTagSet.map((tag, index) => {return ('/tags/'+tag )})} imgSize={'large'} />                        
+                    <ArtCarousel endpoints={ [feedEndpoints()] } imgSize={'large'} />
+                    <ArtCarousel endpoints={ tagEndpoints() } imgSize={'large'} />
+                    <ArtCarousel endpoints={ vibeEndpoints() } imgSize={'large'} />
+
+                        
                     </div>
                 </div>
             </div>

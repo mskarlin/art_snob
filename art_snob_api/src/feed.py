@@ -29,7 +29,7 @@ class PersonalizedArt():
         # get sorted list of tags back
         return [t[0] for t in sorted(tag_counts.items(), key=lambda item: -1*item[1])]
 
-    def recommended(self, seed_likes=None, n_carousals=0, n_per_carousal=25):
+    def recommended(self, seed_likes=None, start=0, n_per_carousal=25):
         """Index return... with both carousals and art..."""
 
         recommended = {}
@@ -43,7 +43,7 @@ class PersonalizedArt():
         similar_art = self.data.similar_art(seed_likes, hydrated=True)
 
         # eventually break this out!
-        similar_art = {sa: similar_art[sa] for i,sa in enumerate(similar_art) if i < n_per_carousal}
+        similar_art = {sa: similar_art[sa] for i,sa in enumerate(similar_art) if (i >= start and i < start + n_per_carousal)}
         recommended[f'art:{seed_likes[0]}'] = similar_art#[:n_per_carousal]
 
         # TODO: figure out tags, might not work since we're returning a dict..

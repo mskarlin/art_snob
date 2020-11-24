@@ -484,6 +484,7 @@ main {
   position: absolute;
   background-color: #ffffff;
   margin-top: 40px;
+  z-index: 3;
 }
 
 .auto-complete-background {
@@ -845,7 +846,6 @@ main {
   }
 
   .single-work-art-sizes {
-    box-sizing: border-box;
     width: 100%;
     height: 175px;
     overflow: auto;
@@ -877,6 +877,11 @@ main {
   align-items: center;
   overflow: hidden;
   background-color: white;
+}
+
+.single-work-view.selected {
+  background: beige;
+  position: relative;
 }
 
 .work-desc-text {

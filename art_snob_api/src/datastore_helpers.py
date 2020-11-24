@@ -97,6 +97,8 @@ class FriendlyDataStore():
         # remove the items themselves
         unique_art = [aid for aid in unique_art if aid not in id_set]
 
+        print('unique_art', len(unique_art))
+
         if limit:
             unique_art = unique_art[start:limit]
 
@@ -153,7 +155,7 @@ class FriendlyDataStore():
         else:
             return search_results, cursor
 
-    def random(self, kind=None, seed=814, n_items=1):
+    def random(self, kind=None, seed=814, start=0, n_items=1):
 
         if kind is None:
             kind = self.INFO_KIND
@@ -163,7 +165,7 @@ class FriendlyDataStore():
         rand = random.randint(self.RAND_MIN, self.RAND_MAX)
 
         keys = self.dsi.read(ids=[rand], kind=self.RANDOM_INDEX_KIND)
-        keys = keys[rand]['random_keys'][:n_items]
+        keys = keys[rand]['random_keys'][start:start+n_items]
 
         return self.dsi.read(ids=keys, kind=kind)
 

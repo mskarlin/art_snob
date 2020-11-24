@@ -28,16 +28,26 @@ function SingleCarousel({endpoint, index, showFavoriteSelect, initialImages={ima
     const [feedData, feedDataDispatch] = useReducer(feedReducer, initialImages)
     const [loadMore, setLoadMore] = useState(false);
     // this changes every single render (since the cursor changes...) huge bug that took days to fix...
-    const formatEndpoint = feedData.cursor ? endpoint+'?start_cursor='+feedData.cursor : endpoint
+    const endpointBuilder  = (endpoint) => {
+        if (endpoint.search('\\?') !== -1) {
+            return feedData.cursor ? endpoint+'&start_cursor='+feedData.cursor : endpoint
+        }
+        else {
+            return feedData.cursor ? endpoint+'?start_cursor='+feedData.cursor : endpoint
+        }
+    }
+    
+    const formatEndpoint = endpointBuilder(endpoint)
     const renderLikes = showFavoriteSelect ? state.likedArt : null
 
     useTagFetch(loadMore, feedDataDispatch, setLoadMore, endpoint, formatEndpoint, renderLikes)
 
     const displayWidths = {'': 126, 'large': 175}
-    const initialWidth = (feedData.images.length + showFavoriteSelect)*displayWidths[imgSize]+15+'px'
+    const initialWidth = (feedData.images.length + 1 + showFavoriteSelect)*displayWidths[imgSize]+15+'px'
 
     return (<div key={'feed-'+index.toString()} className={'carousal-spacing main-feed '+imgSize} style={{'width': initialWidth}}>
                 {feedData.images.map((image, index) => {
+                    console.log('IMG RET', image)
                     const { name, images, id } = image
                     return (
                     <div key={'art-'+index.toString()+index.toString() } className={'imgholder ' + imgSize}>
@@ -55,7 +65,7 @@ function SingleCarousel({endpoint, index, showFavoriteSelect, initialImages={ima
                     )
                 })}
                 {showFavoriteSelect && (<div className={'imgholder ' + imgSize}> 
-                                            <span className="material-icons md-36">save_alt</span> 
+                                            <span className="material-icons md-36" style={{'color': 'black'}}>save_alt</span> 
                                             <div className='browse-imgtext'>Save art to find it here</div>
                                         </div>)}
                 {feedData.fetching && (
@@ -63,7 +73,11 @@ function SingleCarousel({endpoint, index, showFavoriteSelect, initialImages={ima
                     <p>...</p>
                 </div>
                     )}
-                    <div id='mini-feed-boundary' style={{ border: '1px solid black' }}></div>
+                    <div className={'imgholder ' + imgSize} style={{'pointerEvents': 'all'}} onClick={()=>setLoadMore(true)}> 
+                        <span className="material-icons md-36" style={{'color': 'black'}}>add_circle_outline</span> 
+                        <div className='browse-imgtext'>Show me more.</div>
+                    </div>
+                    {/* <div id='mini-feed-boundary' style={{ border: '1px solid black' }}></div> */}
                 </div>
     )
 
@@ -71,7 +85,7 @@ function SingleCarousel({endpoint, index, showFavoriteSelect, initialImages={ima
 
 export function ArtCarousel({endpoints, imgSize=''}) {
     // lists of carousels for each type of art
-
+    console.log('ENDPOINTS', endpoints)
     const makeTitle = (endpoint) => {
         if (endpoint.substring(1, 14) == "similar_works") {
             return "Similar works for you"
@@ -82,6 +96,9 @@ export function ArtCarousel({endpoints, imgSize=''}) {
         }
         else if (endpoint.substring(1,6) == "likes") {
             return "My saved art"
+        }
+        else if (endpoint.substring(1,5) == "feed") {
+            return "Recommended Art"
         }
     }
 

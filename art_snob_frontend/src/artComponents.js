@@ -6,6 +6,7 @@ import Slider from '@material-ui/core/Slider';
 import { addPropertyControls } from 'framer';
 import { store } from './store.js';
 import Button from '@material-ui/core/Button';
+import _ from 'lodash';
 
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
@@ -14,6 +15,7 @@ import Typography from '@material-ui/core/Typography';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
 import Card from '@material-ui/core/Card';
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 
 export const useArtData = (artId, dispatch, handleScrollClick) => {
@@ -148,6 +150,9 @@ export function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, room
       else {
         return state.priceRange[size].price
       }
+  }
+  else {
+    return state.priceRange[size].price
   }
   }
 
@@ -290,19 +295,24 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
     }
 
     return (
+      <TransformWrapper pan={{'disabled': true}} wheel={{'disabled': true}}>
+            <TransformComponent> 
       <div className="roomview" style={blurring}>
-        <div ref={ref} style={roomBackground}>
-          <ArtArrangement arrangement={room.arrangement} art={room.art} 
-          ppi={PPI[room.roomType]} id={room.id}
-          artHeight={artHeight[room.roomType]}
-          showPrices={showPrices}
-          />
+             
+            <div ref={ref} style={roomBackground}>
+              <ArtArrangement arrangement={room.arrangement} art={room.art} 
+              ppi={PPI[room.roomType]} id={room.id}
+              artHeight={artHeight[room.roomType]}
+              showPrices={showPrices}
+              />
         </div>
       </div>
+      </TransformComponent>
+        </TransformWrapper>
     )
   }
 
-  function RoomDescription({name, artNumFilled, artNumTotal, priceRange, selection, onRoomAdd, room, setIsUpdated, artDispatch, showingMenu, addNewMenu}){
+  function RoomDescription({name, artNumFilled, artNumTotal, priceRange, room, artDispatch, showingMenu, addNewMenu}){
 
     const globalState = useContext(store);
     const { state, dispatch } = globalState;
@@ -325,8 +335,13 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
 
     }
 
+    const isCurrentSelection = () => {
+      return (_.isEqual(state.newRoomShow.selectionRoom.arrangement, room.arrangement) && 
+      _.isEqual(state.newRoomShow.selectionRoom.art.map(a => a.size), room.art.map(a => a.size)))
+    }
+
     const selectionLabel = () => {
-      if (selection == name) {
+      if (isCurrentSelection()) {
         return (
         <div className="collection-text-sub" style={{'color': '#56876D'}}>
           Selected!
@@ -353,8 +368,12 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
       </div>
       <div className="room-price-and-add-button">
       <span className="material-icons md-36" onClick={()=>{
-                            setIsUpdated(true);
-                            onRoomAdd(room)}} style={{"pointerEvents": "all"}}>add_circle_outline</span>
+                          dispatch({type: "ADD_ARRANGEMENT", art: room.art,
+                          arrangement: room.arrangement, arrangementSize: room.arrangementSize});
+                            }} style={{"pointerEvents": "all",
+                                       "color": (isCurrentSelection())?"rgb(1, 142, 66)":"#888"}}
+                            >{(isCurrentSelection())?'check_circle_outline':
+                            'add_circle_outline'}</span>
       <div className="price-text">{'$'+priceRange[0]+'- $'+priceRange[1]}</div>
       </div>
     </div>)
@@ -408,7 +427,6 @@ function RoomConfigurationBrowse({activeStep}) {
   // working state for the room is based on the state.selectionRoom room
   const globalState = useContext(store);
   const { dispatch, state } = globalState;
-  const { register, handleSubmit, watch, errors } = useForm();
   
   const [preferenceSelect, setPreferenceSelect] = useState('Tags')
   const [vibes, setVibes] = useState([])
@@ -416,7 +434,8 @@ function RoomConfigurationBrowse({activeStep}) {
   const [art, setArt] = useState([])
   const steps = getSteps();
   const tagEndpoint = '/taglist/'+state.sessionId
-  const randomEndpoint = '/random/'
+  // TODO: add randomEndpoint to a state variable, so that we can add a "see more" button!
+  const randomEndpoint = '/random/?session_id='+state.sessionId
   const vibesEndpoint = '/vibes/'+state.sessionId
 
 
@@ -434,7 +453,7 @@ function RoomConfigurationBrowse({activeStep}) {
     fetch(randomEndpoint)
     .then(data => data.json())
     .then(json => {
-      setArt(json)
+      setArt(json.art)
     })
     .catch(e => {
         // handle error
@@ -602,13 +621,17 @@ function RoomConfigurationBrowse({activeStep}) {
     }
   }
 
+  const handleNameChange = (event) => {
+    dispatch({type: 'ADD_NAME', name: event.target.value});
+  }
+
   const preferenceStep = (show) => {
     if (show) {
           return (
           <>
           <div className='room-name-form'>
             Name:
-            <input className='name-form' name="room_name" defaultValue={state.newRoomShow.currentName} ref={register}/>
+            <input className='name-form' name="room_name" value={state.newRoomShow.selectionRoom.name} onChange={handleNameChange}/>
           </div>
           <div className='button-split'>
             <Button variant="outlined" style={{"width": "25%"}} color={selectorColor('Vibes', preferenceSelect)} onClick={()=>setPreferenceSelect('Vibes')}>Vibes</Button>
@@ -624,7 +647,7 @@ function RoomConfigurationBrowse({activeStep}) {
   }
   }
 
-  const stepViewer = () => {
+  const stepViewer = (activeStep) => {
     switch (activeStep) {
       case 0:
         return {showArt: false, showPreference: true}
@@ -645,21 +668,34 @@ function RoomConfigurationBrowse({activeStep}) {
               </Step>
             ))}
           </Stepper>
-          {preferenceStep(stepViewer().showPreference)}
-          {SingleArtSelect(stepViewer().showArt)}
+          {preferenceStep(stepViewer(activeStep).showPreference)}
+          {SingleArtSelect(stepViewer(activeStep).showArt)}
+          {MultiArtSelect(stepViewer(activeStep).showArt)}
         </div>
         </div>
     </div>
   )
 }
 
-function SingleArtSelect({show}) {
+function SingleArtSelect(show) {
   const globalState = useContext(store);
   const { dispatch, state } = globalState;
 
   const selectionType = state.newRoomShow.selectionRoom.roomType ? state.newRoomShow.selectionRoom.roomType : ''
 
-  const includeTest = () => {if (selectionType in state.priceRange) { return "Selected"} else { return "Not Selected (tap to select)"}}
+  const includeTest = () => {
+    if (state.newRoomShow.selectionRoom.arrangementSize === 1) { return "Selected!"} else { return "Not Selected (tap to select)"}
+  }
+
+  const currentSizeLabel = (size) => {
+    if (state.newRoomShow.selectionRoom.arrangementSize === 1 && state.newRoomShow.selectionRoom.art[0].size === size) {
+      return 'selected'
+    }
+    else {
+      return ''
+    }
+  }
+
   const includeShowPrice = (selectionType) => {if (['p_large', 'l_large'].includes(selectionType)) {return true} else {return false}}
 
   if (show){
@@ -670,7 +706,7 @@ function SingleArtSelect({show}) {
               <div className="collection-text "> 
                 Single work selections
               </div>
-              <div className="collection-text-sub">
+              <div className={(includeTest()!=="Selected!")?"collection-text-sub":"collection-text "}>
                {includeTest()}
               </div>
             </div>
@@ -681,7 +717,16 @@ function SingleArtSelect({show}) {
           <div className='single-work-art-sizes'>
               <div className='single-work-art-stack'>
               {Object.entries(state.priceRange).map(([size, {price, name, sizeDesc}], index)=>{
-                  return (<div className='single-work-view'>
+                  return (<div className={'single-work-view '+currentSizeLabel(size)} 
+                  onClick={() => dispatch({type: "ADD_ARRANGEMENT",
+                          art: [{id:1, size: size, artId: null}],
+                          arrangement: {rows: 1},
+                          arrangementSize: 1,
+                          id: state.newRoomShow.selectionRoom.id, 
+                          roomType: state.newRoomShow.selectionRoom.roomType, 
+                          showingMenu: false})}>
+                          {(currentSizeLabel(size)==='selected')?<span className="material-icons md-36" style={{'position': 'absolute',
+                          'top': '5px', 'left': '5px', 'color': '#018E42', zIndex: 2}}>check_circle_outline</span>:<></>}
                             <div className="work-desc-text">{name}</div>
                             <ArtWork key={'single-price-sample'+index.toString()}
                                               size={size} 
@@ -715,16 +760,9 @@ function SingleArtSelect({show}) {
   }
 }
 
-
-function RoomConfigurationBrowseOrig(){
-  
+function MultiArtSelect(show) {
   const globalState = useContext(store);
   const { dispatch, state } = globalState;
-
-  const [name, setName] = useState(state.newRoomShow.currentName)
-  const [isUpdated, setIsUpdated] = useState(false)
-  const [thisRoom, setThisRoom] = useState(state.newRoomShow.selectionRoom)
-  const { register, handleSubmit, watch, errors } = useForm();
   const [numMultiWorks, setNumMultiWorks] = useState(2);
   const [numVisibleMultiWorks, setNumVisibleMultiWorks] = useState(2);
   const [priceFilter, setPriceFilter] = useState({'min': 20, 'max': 1200});
@@ -733,156 +771,79 @@ function RoomConfigurationBrowseOrig(){
                                               'art': {id:1, size: 'xsmall', artId: null}, 
                                               'arrangements': {'rows': [1], 
                                               'arrangementSize': 1}}])
-  
-  const selectionType = state.newRoomShow.selectionRoom.roomType ? state.newRoomShow.selectionRoom.roomType : ''
 
+  const selectionType = state.newRoomShow.selectionRoom.roomType ? state.newRoomShow.selectionRoom.roomType : ''
   useArrangementData(numMultiWorks, priceFilter, setRoomSelect)
   
-  // problem is that the stuff we need in artDispatch is set at call time, and not updated...
-  useEffect(() => {
-    if (('name' in thisRoom) & (name != '') & (isUpdated == true)) {
-
-      // TODO: we need to split this into a conditional 
-      // then ADD_NAME and ADD_ARRANGEMENT if it's something that already exists
-      if ('id' in state.newRoomShow.selectionRoom) {
-        dispatch({type: "ADD_NAME", id: state.newRoomShow.selectionRoom.id, name: name});
-        dispatch({type: "ADD_ARRANGEMENT", ...thisRoom, id: state.newRoomShow.selectionRoom.id, roomType: state.newRoomShow.selectionRoom.roomType, showingMenu: false});
-      }
-      else {
-        dispatch({type: "ADD_ROOM", room: {...thisRoom, name: name, id: uuidv4(), roomType: "blank", showingMenu: false}})
-      }
-      dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {show: false, currentName: '', selectionRoom: {roomType: ''}}});
-    }
-    }, [thisRoom, name, dispatch]);
-
-  const onSubmit = (data) => {
-      setIsUpdated(true);
-      setName(data["room_name"]);
-  };
-
-  const includeTest = () => {if (selectionType in state.priceRange) { return "Selected"} else { return "Not Selected (tap to select)"}}
-  const includeShowPrice = (selectionType) => {if (['p_large', 'l_large'].includes(selectionType)) {return true} else {return false}}
-// gotta loop over artworks for the carousal
+  if (show) {
   return (
-    <div style={{"marginTop": "45px"}}>
-        <form onSubmit={handleSubmit(onSubmit)}>
-        <div className='room-name-entry'>
-          <div className='room-name-form'>
-            Name:
-          </div>
-          <input className='name-form' name="room_name" defaultValue={state.newRoomShow.currentName} ref={register}/>
-          <input type="submit" />
-        </div>
-        </form>
-        <div className="collection-heading">
-          <div className="stacked-descriptors">
-            <div className="collection-text "> 
-              Single work selections
-            </div>
-            <div className="collection-text-sub">
-             {includeTest()}
-            </div>
-          </div>
-          <div className="price-text">
-            $40-$200
-          </div>
-        </div>
-        <div className='single-work-art-sizes'>
-            <div className='single-work-art-stack'>
-            {Object.entries(state.priceRange).map(([size, {price, name, sizeDesc}], index)=>{
-                return (<div className='single-work-view'>
-                          <div className="work-desc-text">{name}</div>
-                          <ArtWork key={'single-price-sample'+index.toString()}
-                                            size={size} 
-                                            PPI={3.0} 
-                                            artId={null}
-                                            artImage={null}
-                                            setArtDetailShow={null}
-                                            artDispatch={null}
-                                            potentialArt={null}
-                                            roomId={'room-single'+index.toString()}
-                                            roomArtId={null}
-                                            showprice={includeShowPrice(size)}
-                                            > 
-                                            </ArtWork>
-                          {(!includeShowPrice(size)) ?(
-                          <div className="work-desc-text" style={{'height': '40px'}}>{sizeDesc}<br/>
-                          <span style={{"color": "#56876D", "fontWeight": 900}}>{price}</span>
-                          </div>
-                          ): null
-                          }
-                        </div>)
-            }
-            )}
-
-            </div>
-          </div>
-        
-        <div className="collection-heading multi">
-          
+  <>
+  <div className="collection-heading multi">
           <div className="stacked-descriptors multi">
-            <div className="collection-text "> 
-              Multi work selections
-            </div>
-            <div className='filter-selectors'>
-                <div style={{'width': '50%'}}>
-                <div className="min-max-price-input">
-                  <div className="room-name-form" style={{'paddingRight': '25px'}}>
-                  {'Works ('+numMultiWorks+')'}
+              <div className="collection-text "> 
+                Multi work selections
+              </div>
+              <div className='filter-selectors'>
+                  <div style={{'width': '50%'}}>
+                  <div className="min-max-price-input">
+                    <div className="room-name-form" style={{'paddingRight': '25px'}}>
+                    {'Works ('+numMultiWorks+')'}
+                    </div>
+                    
                   </div>
-                  
-                </div>
-                <Slider
+                  <Slider
+                        style={{'width': '75%'}}
+                        value={numVisibleMultiWorks}
+                        min={2}
+                        step={1}
+                        max={6}
+                        onChange={(event, value) => {setNumVisibleMultiWorks(value)}}
+                        onChangeCommitted={(event, value) => {setNumMultiWorks(value)}}
+                        getAriaLabel={(index)=> index.toString()}
+                        getAriaValueText={(value, index)=> value.toString()}
+                        valueLabelDisplay="auto"
+                      />
+                  </div>
+                  <div style={{'width': '50%'}}>
+                    <div className="min-max-price-input">
+                      <div className="room-name-form">
+                      {'Price ($'+priceFilter.min+' to $'+priceFilter.max+')'}
+                      </div>
+                    </div>
+                    <Slider
                       style={{'width': '75%'}}
-                      value={numVisibleMultiWorks}
-                      min={2}
-                      step={1}
-                      max={6}
-                      onChange={(event, value) => {setNumVisibleMultiWorks(value)}}
-                      onChangeCommitted={(event, value) => {setNumMultiWorks(value)}}
+                      value={[visiblePriceFilter.min, visiblePriceFilter.max]}
+                      min={20}
+                      step={20}
+                      max={1200}
+                      onChange={(event, value) => {setVisiblePriceFilter({min: value[0], max: value[1]})}}
+                      onChangeCommitted={(event, value) => {setPriceFilter({min: value[0], max: value[1]})}}
                       getAriaLabel={(index)=> index.toString()}
                       getAriaValueText={(value, index)=> value.toString()}
                       valueLabelDisplay="auto"
                     />
-                </div>
-                <div style={{'width': '50%'}}>
-                  <div className="min-max-price-input">
-                    <div className="room-name-form">
-                    {'Price ($'+priceFilter.min+' to $'+priceFilter.max+')'}
-                    </div>
                   </div>
-                  <Slider
-                    style={{'width': '75%'}}
-                    value={[visiblePriceFilter.min, visiblePriceFilter.max]}
-                    min={20}
-                    step={20}
-                    max={1200}
-                    onChange={(event, value) => {setVisiblePriceFilter({min: value[0], max: value[1]})}}
-                    onChangeCommitted={(event, value) => {setPriceFilter({min: value[0], max: value[1]})}}
-                    getAriaLabel={(index)=> index.toString()}
-                    getAriaValueText={(value, index)=> value.toString()}
-                    valueLabelDisplay="auto"
-                  />
                 </div>
               </div>
             </div>
-          </div>
-        
-        <div>
-        {roomSelect.map((room, _) => {
-          let thisId = uuidv4()
-          return (<div className="room" id={room.name} key={room.name}>
-                  <RoomDescription name={room.name} artNumFilled={0} artNumTotal={room.arrangementSize} 
-                  priceRange={[room.minprice, room.maxprice]} selection={selectionType}
-                  onRoomAdd={setThisRoom} room={room} setIsUpdated={setIsUpdated}/>
-                  <RoomView room={{roomType:'blank', arrangement: room.arrangement, art: room.art, id: thisId}} showPrices={true}></RoomView>
-                  </div>)
-          })
-        }
-        </div>
-      
-    </div>
-  )
+
+            <div>
+            {roomSelect.map((room, _) => {
+              let thisId = uuidv4()
+              return (<div className="room" id={room.name} key={room.name}>
+                      <RoomDescription name={room.name} artNumFilled={0} artNumTotal={room.arrangementSize} 
+                      priceRange={[room.minprice, room.maxprice]} room={room}/>
+                      <RoomView room={{roomType:'blank', arrangement: room.arrangement, art: room.art, id: thisId}} showPrices={true}></RoomView>
+                      </div>)
+              })
+            }
+            </div>
+            </>
+  )}
+  else {
+    return <></>
+  }
+
 }
 
 function RoomMenu ({art, room}) {
@@ -894,7 +855,7 @@ return (<div className="menu-box">
           <div className="room-menu-single-item"> 
             <span className="material-icons md-36" onClick={() => 
             
-            dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: art})
+            dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: room})
             
             }>search</span>
             <div className="room-menu-text">Find art...</div>
@@ -980,7 +941,8 @@ return (<div className="menu-box">
               forFunc: () => {
                 dispatch({type: 'ADD_ROOM', 'room': state.newRoomShow.selectionRoom});
                 dispatch({type: 'TOGGLE_NEW_ROOM_SHOW'});
-                dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: state.newRoomShow.selectionRoom.art})
+                handleReset();
+                dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: state.newRoomShow.selectionRoom})
               }
             }
           )
