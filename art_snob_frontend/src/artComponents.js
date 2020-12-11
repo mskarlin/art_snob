@@ -3,9 +3,9 @@ import {round} from 'mathjs';
 import { v4 as uuidv4 } from 'uuid';
 import { useForm } from "react-hook-form";
 import Slider from '@material-ui/core/Slider';
-import { addPropertyControls } from 'framer';
 import { store } from './store.js';
 import Button from '@material-ui/core/Button';
+import ButtonGroup from '@material-ui/core/ButtonGroup';
 import _ from 'lodash';
 
 import Stepper from '@material-ui/core/Stepper';
@@ -14,7 +14,13 @@ import StepLabel from '@material-ui/core/StepLabel';
 import Typography from '@material-ui/core/Typography';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
+import LinearProgress from '@material-ui/core/LinearProgress';
 import Card from '@material-ui/core/Card';
+import Box from '@material-ui/core/Box';
+import ThumbUpAltOutlinedIcon from '@material-ui/icons/ThumbUpAltOutlined';
+import ThumbDownAltOutlinedIcon from '@material-ui/icons/ThumbDownAltOutlined';
+import ClearOutlinedIcon from '@material-ui/icons/ClearOutlined';
+
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 
@@ -41,9 +47,11 @@ export const useArtData = (artId, dispatch, handleScrollClick) => {
 export const useArrangementData = (nWorks, priceFilter, setArrangeData) => {
   useEffect(() => {
       if (nWorks){
-          fetch('/art_configurations/'+nWorks+'?minprice='+priceFilter.min+'&maxprice='+priceFilter.max)
+          // fetch('/art_configurations/'+nWorks+'?minprice='+priceFilter.min+'&maxprice='+priceFilter.max)
+          fetch('/art_configurations/0?defaults=true')
           .then(response => response.json())
-          .then(data => {setArrangeData(data.art_configuration);});
+          .then(data => {setArrangeData(data.art_configuration);
+                        });
       }
       }, [nWorks, priceFilter, setArrangeData]);
 }
@@ -253,7 +261,7 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
   }
   
 
-  function RoomView({room, showPrices}){
+  export function RoomView({room, showPrices}){
 
     const globalState = useContext(store);
     const { state } = globalState;
@@ -295,8 +303,8 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
     }
 
     return (
-      <TransformWrapper pan={{'disabled': true}} wheel={{'disabled': true}}>
-            <TransformComponent> 
+      // <TransformWrapper pan={{'disabled': true}} wheel={{'disabled': true}}>
+      //       <TransformComponent> 
       <div className="roomview" style={blurring}>
              
             <div ref={ref} style={roomBackground}>
@@ -307,12 +315,12 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
               />
         </div>
       </div>
-      </TransformComponent>
-        </TransformWrapper>
+      // </TransformComponent>
+      //   </TransformWrapper>
     )
   }
 
-  function RoomDescription({name, artNumFilled, artNumTotal, priceRange, room, artDispatch, showingMenu, addNewMenu}){
+  export function RoomDescription({name, artNumFilled, artNumTotal, priceRange, room, artDispatch, showingMenu, addNewMenu}){
 
     const globalState = useContext(store);
     const { state, dispatch } = globalState;
@@ -374,7 +382,7 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
                                        "color": (isCurrentSelection())?"rgb(1, 142, 66)":"#888"}}
                             >{(isCurrentSelection())?'check_circle_outline':
                             'add_circle_outline'}</span>
-      <div className="price-text">{'$'+priceRange[0]+'- $'+priceRange[1]}</div>
+      <div className="price-text">{'$'+priceRange[0]+'-$'+priceRange[1]}</div>
       </div>
     </div>)
     }
@@ -423,12 +431,12 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
 
 
 
-function RoomConfigurationBrowse({activeStep}) {
+export function RoomConfigurationBrowse({activeStep}) {
   // working state for the room is based on the state.selectionRoom room
   const globalState = useContext(store);
   const { dispatch, state } = globalState;
   
-  const [preferenceSelect, setPreferenceSelect] = useState('Tags')
+  const [preferenceSelect, setPreferenceSelect] = useState('Art')
   const [vibes, setVibes] = useState([])
   const [tags, setTags] = useState([])
   const [art, setArt] = useState([])
@@ -438,6 +446,13 @@ function RoomConfigurationBrowse({activeStep}) {
   const randomEndpoint = '/random/?session_id='+state.sessionId
   const vibesEndpoint = '/vibes/'+state.sessionId
 
+  const exploreEndpoint = '/explore/'+state.sessionId 
+  + '?' + 'likes='+encodeURIComponent(state.newRoomShow.selectionRoom.clusterData.likes.join(','))
+  + '&' + 'dislikes='+encodeURIComponent(state.newRoomShow.selectionRoom.clusterData.dislikes.join(','))
+  + '&' + 'skip_n='+encodeURIComponent(state.newRoomShow.selectionRoom.clusterData.skipN)
+  + '&' + 'n_return=4'
+
+  const [exploreCluster, setExploreCluster] = useState(null)
 
   useEffect(() => {
     fetch(tagEndpoint)
@@ -450,10 +465,11 @@ function RoomConfigurationBrowse({activeStep}) {
         return e
     })
 
-    fetch(randomEndpoint)
+    fetch(exploreEndpoint)
     .then(data => data.json())
     .then(json => {
       setArt(json.art)
+      setExploreCluster(json.cluster)
     })
     .catch(e => {
         // handle error
@@ -475,7 +491,7 @@ function RoomConfigurationBrowse({activeStep}) {
       setArt([])
     }
 
-    }, [tagEndpoint, setTags, setArt, randomEndpoint, vibesEndpoint, setVibes])
+    }, [tagEndpoint, setTags, setArt, setExploreCluster, exploreEndpoint, vibesEndpoint, setVibes])
 
 
   const selectorColor = (name, value) => {
@@ -495,7 +511,20 @@ function RoomConfigurationBrowse({activeStep}) {
     }
   }
   //todo: function for whether or not the state is qualified to move on (otherwise grey out the next button)
-
+  function LinearProgressWithLabel(props) {
+    return (
+      <Box display="flex" alignItems="center" width="100%" height="40px">
+        <Box width="100%" mr={1}>
+          <LinearProgress variant="determinate" {...props} />
+        </Box>
+        <Box minWidth={35}>
+          <Typography variant="body2" color="textSecondary">{`${Math.round(
+            props.value,
+          )}%`}</Typography>
+        </Box>
+      </Box>
+    );
+  }
 
   const vibeColumn = (vibes) => {
     return (
@@ -607,15 +636,25 @@ function RoomConfigurationBrowse({activeStep}) {
       case 'Art':
         return (
           <>
+          <LinearProgressWithLabel value={Math.min(100 * state.newRoomShow.selectionRoom.clusterData.likes.length / 4.0, 100)}/>
           <div className='select-explain'>
-            Choose some art to inspire this room:
+            Rate art selections to complete your taste profile.
           </div>
           <div className='preference-flex'>
-            
             {imgColumn(art.slice(0, art.length/2))}
             {imgColumn(art.slice(art.length/2, art.length))}
-
           </div>
+          <ButtonGroup aria-label="outlined primary button group">
+              <Button onClick={() => {
+                dispatch({type: 'CLUSTER_LIKE', like: exploreCluster});
+              }}>Like{<ThumbUpAltOutlinedIcon/>}</Button>
+              <Button onClick={() => {
+                dispatch({type: 'CLUSTER_SKIP'});
+                }}>Skip{<ClearOutlinedIcon/>}</Button>
+              <Button onClick={() => {
+                dispatch({type: 'CLUSTER_DISLIKE', dislike: exploreCluster});
+              }}>Dislike{<ThumbDownAltOutlinedIcon/>}</Button>
+          </ButtonGroup>
           </>
         )
     }
@@ -634,9 +673,9 @@ function RoomConfigurationBrowse({activeStep}) {
             <input className='name-form' name="room_name" value={state.newRoomShow.selectionRoom.name} onChange={handleNameChange}/>
           </div>
           <div className='button-split'>
-            <Button variant="outlined" style={{"width": "25%"}} color={selectorColor('Vibes', preferenceSelect)} onClick={()=>setPreferenceSelect('Vibes')}>Vibes</Button>
-            <Button variant="outlined" style={{"width": "25%"}} color={selectorColor('Tags', preferenceSelect)} onClick={()=>setPreferenceSelect('Tags')}>Tags</Button>
-            <Button variant="outlined" style={{"width": "25%"}} color={selectorColor('Art', preferenceSelect)} onClick={()=>setPreferenceSelect('Art')}>Art</Button>
+            <Button variant="outlined" style={{"width": "33%"}} color={selectorColor('Vibes', preferenceSelect)} onClick={()=>setPreferenceSelect('Vibes')}>Vibes</Button>
+            {/* <Button variant="outlined" style={{"width": "25%"}} color={selectorColor('Tags', preferenceSelect)} onClick={()=>setPreferenceSelect('Tags')}>Tags</Button> */}
+            <Button variant="outlined" style={{"width": "33%"}} color={selectorColor('Art', preferenceSelect)} onClick={()=>setPreferenceSelect('Art')}>Taste Finder</Button>
           </div>
           {preferenceView()}
         </>
@@ -952,27 +991,27 @@ return (<div className="menu-box">
     }
 
     const roomFeed = () => {
-      if(state.newRoomShow.show){
-        // if we didn't come from a room (to edit it) then we need to make a working room that we're going to be editing
-        if (!'id' in state.newRoomShow.selectionRoom) {
-          const tmpRoom = {...state.blankRoom, id: uuidv4()}
-          dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: '', selectionRoom: tmpRoom, show: true}})
-        }
-        return (
-            <div className="works-select-menu">
-                <div className="explain-menu">
-                  <span className="material-icons md-36" onClick={buttonCopy().backFunc}>keyboard_backspace</span>
-                  <div className="explain-text">{buttonCopy().backCopy}</div>
-                  <div className="next-buttons">
-                    <div className="explain-text-next">{buttonCopy().forCopy}</div>
-                    <span className="material-icons md-36" onClick={buttonCopy().forFunc}>keyboard_arrow_right</span>
-                  </div>
-              </div>
-              <RoomConfigurationBrowse activeStep={activeStep}/>
-            </div>
-        )
-      }
-      else {
+      // if(state.newRoomShow.show){
+      //   // if we didn't come from a room (to edit it) then we need to make a working room that we're going to be editing
+      //   if (!'id' in state.newRoomShow.selectionRoom) {
+      //     const tmpRoom = {...state.blankRoom, id: uuidv4()}
+      //     dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: '', selectionRoom: tmpRoom, show: true}})
+      //   }
+      //   return (
+      //       <div className="works-select-menu">
+      //           <div className="explain-menu">
+      //             <span className="material-icons md-36" onClick={buttonCopy().backFunc}>keyboard_backspace</span>
+      //             <div className="explain-text">{buttonCopy().backCopy}</div>
+      //             <div className="next-buttons">
+      //               <div className="explain-text-next">{buttonCopy().forCopy}</div>
+      //               <span className="material-icons md-36" onClick={buttonCopy().forFunc}>keyboard_arrow_right</span>
+      //             </div>
+      //         </div>
+      //         <RoomConfigurationBrowse activeStep={activeStep}/>
+      //       </div>
+      //   )
+      // }
+      // else {
         return (state.rooms.map((room, _) => {
           return (
                   <div className="room-menu-box" key={'rmb'+room.id}>
@@ -989,7 +1028,7 @@ return (<div className="menu-box">
           })
           )
 
-      }
+      // }
 
     }
 

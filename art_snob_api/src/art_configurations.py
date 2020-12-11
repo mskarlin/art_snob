@@ -35,6 +35,158 @@ PRICES = {'p_xsmall': [40, 60],
             'p_large': [150, 200],
             'l_large': [150, 200]}
 
+DEFAULTS = [
+    {
+            "art": [
+                        {
+                        "id": 1,
+                        "size": "medium",
+                        "artId": None
+                        },
+                        {
+                        "id": 2,
+                        "size": "medium",
+                        "artId": None
+                        },
+                        {
+                        "id": 3,
+                        "size": "medium",
+                        "artId": None
+                        }
+
+                ],
+            "minprice": 240,
+            "maxprice": 345,
+            "arrangement": {
+                "rows": [
+                1,
+                2,
+                3
+                ]
+            },
+            "arrangementSize": 3,
+            "name": "3x medium"
+            },
+    {
+    "art": [
+        {
+          "id": 1,
+          "size": "p_medium",
+          "artId": None
+        },
+        {
+          "id": 2,
+          "size": "xsmall",
+          "artId": None
+        },
+        {
+          "id": 3,
+          "size": "xsmall",
+          "artId": None
+        }
+      ],
+      "minprice": 150,
+      "maxprice": 190,
+      "arrangement": {
+        "rows": [
+          1,
+          {"cols": [
+              2, 3
+          ]}
+        ]
+      },
+      "arrangementSize": 3,
+      "name": "1x medium portrait, 2x extra small landscape (right)"
+    },
+    {
+    "art": [
+        {
+          "id": 1,
+          "size": "p_small",
+          "artId": None
+        },
+        {
+          "id": 2,
+          "size": "p_small",
+          "artId": None
+        },
+        {
+          "id": 3,
+          "size": "p_small",
+          "artId": None
+        }
+      ],
+      "minprice": 150,
+      "maxprice": 210,
+      "arrangement": {
+        "cols": [
+          1,
+          2, 
+          3
+          ]},
+      "arrangementSize": 3,
+      "name": "3x small portrait, vertical"
+    },
+      {
+    "art": [
+        {
+          "id": 1,
+          "size": "xsmall",
+          "artId": None
+        },
+        {
+          "id": 2,
+          "size": "medium",
+          "artId": None
+        },
+        {
+          "id": 3,
+          "size": "xsmall",
+          "artId": None
+        }
+      ],
+      "minprice": 160,
+      "maxprice": 235,
+      "arrangement": {
+        "rows": [
+          1,
+          2, 
+          3
+          ]},
+      "arrangementSize": 3,
+      "name": "1x medium landscape, 2x extra small accents"
+    },
+    {
+    "art": [
+        {
+          "id": 1,
+          "size": "xsmall",
+          "artId": None
+        },
+        {
+          "id": 2,
+          "size": "xsmall",
+          "artId": None
+        },
+        {
+          "id": 3,
+          "size": "p_large",
+          "artId": None
+        }
+      ],
+      "minprice": 230,
+      "maxprice": 320,
+      "arrangement": {
+        "rows": [
+            {"cols": [1, 2]},
+          3
+          ]},
+      "arrangementSize": 3,
+      "name": "1x large landscape, 2x extra small accent left"
+    }
+    ]
+
+
 
 class ArtConfigurations():
 
@@ -100,3 +252,6 @@ class ArtConfigurations():
 
     def art_configurations(self, n):
         return self.art_objects.get(n)
+    
+    def defaults(self):
+        return DEFAULTS

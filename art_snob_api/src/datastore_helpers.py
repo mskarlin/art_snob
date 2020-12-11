@@ -35,6 +35,7 @@ class FriendlyDataStore():
     TAG_SCORES = '11122020-tag-scores'
     VIBES = '11152020-vibes'
     TAG_REVERSE_INDEX = '11202020-tag_reverse_index'
+    CLUSTER_REVERSE_INDEX = '11292020-inverse-cluster-index'
     # RAND_MIN = 4503653962481664  # used for scraped-image-data indices
     # RAND_MAX = 6755350696951808
     RAND_MIN = 1
@@ -97,8 +98,6 @@ class FriendlyDataStore():
         # remove the items themselves
         unique_art = [aid for aid in unique_art if aid not in id_set]
 
-        print('unique_art', len(unique_art))
-
         if limit:
             unique_art = unique_art[start:limit]
 
@@ -107,6 +106,8 @@ class FriendlyDataStore():
 
         return unique_art
 
+    def tag_scores(self, tags: List[str]):
+        return self.dsi.read(ids=tags, kind=self.TAG_SCORES, sorted_list=True)
 
     def tag(self, tags: List[str], seed=814, n_records:int=25, cursor:str=''):
         
@@ -134,6 +135,31 @@ class FriendlyDataStore():
 
         return self.dsi.read(ids=idx_to_request[start:(start+n_records)], kind=self.INFO_KIND)
 
+
+    def clusters(self, clusters: List, seed=814, cursor:str='', n_records:int=26):
+        
+        if cursor:
+            rseed, start = cursor.split('_')
+            rseed = int(rseed)
+            start = int(start)
+
+        else:
+            rseed = int(seed)
+            start = 0
+
+        random.seed(rseed)
+
+        cluster_keys = self.dsi.read(ids=clusters, kind=self.CLUSTER_REVERSE_INDEX, sorted_list=True)
+
+        idx_to_request = []
+
+        for keys in cluster_keys:
+            idx_to_request+=[int(k) for k in keys['idx']]
+        
+        idx_to_request = list(set(idx_to_request))
+        random.shuffle(idx_to_request)
+
+        return self.dsi.read(ids=idx_to_request[start:(start+n_records)], kind=self.INFO_KIND)
 
     def search(self, query, get_cursor=False, start_cursor=None, n_records=25):
         """Get all search results based on tags"""

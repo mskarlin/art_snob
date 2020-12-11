@@ -1,12 +1,14 @@
 import React, { useState, useReducer, useEffect, useRef, useContext } from 'react';
-import { useTagFetch, useInfiniteScroll } from './feedHooks'
-import {useArtData} from './artComponents'
+
+import { navigate } from "@reach/router"
 import { store } from './store.js';
-import { ArtCarousel } from './detailView'
+import { ArtCarousel, ArtColumns, ArtDetail, LikesColumns } from './detailView'
 import { tag_suggestions } from './tag_suggestions'
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import { makeStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -34,35 +36,41 @@ const useStyles = makeStyles((theme) => ({
     },
   }));
 
-// todo: add blurring to the background while detail is open
-// todo: rank tag importances by tf-idf scores -- we can deliver from the backend
-// todo: allow for vertical menu to pop up for browsing within a particular interest
-// todo: color the pills by interest of the member -- allow the member to set pills of interest in menu
-
-export function ArtBrowse() {
+export function ArtBrowse({children, navigate}) {
     const globalState = useContext(store);
     const { dispatch, state } = globalState;
     const classes = useStyles();
     const autoCompleteBox = useRef(null);
+    const [selectBrowseType, setSelectBrowseType] = useState(0)
+    const [tagSeedBrowse, setTagSeedBrowse] = useState('')
+
+    
+    const handleChange = (event, newValue) => {
+        setSelectBrowseType(newValue);
+      };
 
     const tagSetter = (e, v) => {
         if (e) {
-           dispatch({type: 'CHANGE_CURRENT_TAG_SET', searchTagSet: v})
-    }
+            if (v.length > 0) {
+                dispatch({type: 'CLEAR_FEED_IMAGES'})
+                setTagSeedBrowse('/tags/'+v.join('|'))
+            }
+            else {
+                dispatch({type: 'CLEAR_FEED_IMAGES'})
+                dispatch({type:'RELOAD_FEED'})
+                setTagSeedBrowse('')
+            }
+        }
     }
 
-    const feedEndpoints = () => {
+    const recommendedEndpoints = () => {
         // get seed art ids to send to the backend
-        const artIds = state.artBrowseSeed.seedArt.map(x=>x.artId).join(',')
-        return '/feed/?seed_likes='+encodeURIComponent(artIds)
-    }
+        const likes = state.artBrowseSeed.clusterData.likes.join(',')
+        const dislikes = state.artBrowseSeed.clusterData.dislikes.join(',')
 
-    const tagEndpoints = () => {
-        return state.artBrowseSeed.seedTags.map(tag => '/tags/'+tag)
-    }
-
-    const vibeEndpoints = () => {
-        return state.artBrowseSeed.vibes.map(v => '/vibes/'+state.sessionId+'?vibe=' + v.Vibes)
+        return '/recommended/' + state.sessionId
+        + '?likes='+encodeURIComponent(likes)
+        + '&dislikes='+encodeURIComponent(dislikes)
     }
 
     const getMargin = () => {
@@ -76,6 +84,8 @@ export function ArtBrowse() {
     const browser = () => {
         if(state.artBrowseSeed){
             return(
+            <>
+            {children}
             <div className="browse-holder">
                 <div className="browse-feed ">
                     <div className="works-select-menu">
@@ -83,6 +93,17 @@ export function ArtBrowse() {
                             <span className="material-icons md-36" onClick={() => {dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: null})}}>keyboard_backspace</span>
                             <div className="explain-text">Choose any work to fill your rooms</div>
                         </div>
+                        <Tabs
+                            value={selectBrowseType}
+                            onChange={handleChange}
+                            indicatorColor="primary"
+                            textColor="primary"
+                            centered
+                            style={{ marginTop: "40px"}}
+                            >
+                            <Tab label="Explore" />
+                            <Tab label="Favorites" />
+                        </Tabs>
                         <div className='auto-complete' ref={autoCompleteBox}>
                             <div className='auto-complete-background'>
                                     <Autocomplete
@@ -96,7 +117,7 @@ export function ArtBrowse() {
                                         <TextField
                                             {...params}
                                             variant="standard"
-                                            label="Browsing tags"
+                                            label="Search tags"
                                             placeholder="Type for tags..."
                                         />
                                         )}
@@ -105,19 +126,19 @@ export function ArtBrowse() {
                         </div>
                     </div>
                     <div style={{'marginTop': getMargin()}}>
-                    <ArtCarousel endpoints={ state.searchTagSet.map((tag, index) => {return ('/tags/'+tag )})} imgSize={'large'} />
-                    <ArtCarousel endpoints={ ['/likes/'+state.sessionId] } imgSize={'large'} />
-                    <ArtCarousel endpoints={ [feedEndpoints()] } imgSize={'large'} />
-                    <ArtCarousel endpoints={ tagEndpoints() } imgSize={'large'} />
-                    <ArtCarousel endpoints={ vibeEndpoints() } imgSize={'large'} />
+                    
+                    <LikesColumns navigate={navigate} art={state.likedArt} showFavoriteSelect={(state.likedArt.length === 0)} show={(selectBrowseType == 1) && (tagSeedBrowse === '')}/>
+                    <ArtColumns title='Recommended Art' navigate={navigate} endpoint={recommendedEndpoints()} show={(selectBrowseType == 0) && (tagSeedBrowse === '')}/>
+                    <ArtColumns title='Tag Results...' endpoint={tagSeedBrowse} show={tagSeedBrowse !== ''}/>
 
-                        
                     </div>
                 </div>
             </div>
+            </>
             )
         }
         else {
+            navigate('/taste')
             return <div/>
         }
     }

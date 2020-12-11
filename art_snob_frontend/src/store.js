@@ -31,7 +31,7 @@ const initialState = {
     'artDetailShow': null,
     'sessionId': uuidv4(),
     'potentialArt': null,
-    'blankRoom': {roomType: 'blank', 'name': 'My new room', 'showingMenu': false, art: [], arrangement: {}, arrangementSize: 0, vibes: [], 'seedTags': [], 'seedArt': []},
+    'blankRoom': {reload: true, feed: [], feedCursor: null, roomType: 'blank', 'name': 'My new room', 'showingMenu': false, art: [], arrangement: {}, arrangementSize: 0, clusterData:{likes:[], dislikes:[], skipN:0, startN:0}, vibes: [], 'seedTags': [], 'seedArt': []},
     'artBrowseSeed': null, 
     'purchaseList': null,
     'searchTagSet': [],
@@ -47,34 +47,37 @@ const initialState = {
                         'p_large': {'price': '$150-200', 'name': 'Large', 'sizeDesc': '28" x 40"', artSize: [28, 40], 'priceTextSize': '14px'},
                         'l_large': {'price': '$150-200', 'name': 'Large', 'sizeDesc': '40" x 28"', artSize: [40, 28], 'priceTextSize': '14px'}
   },
-    'newRoomShow': {show: false, currentName: 'My new room', selectionRoom: {roomType: ''}},
-    'rooms': [{
-    name: "My First Room", 
-    id: uuidv4(),
-    roomType: "blank",
-    showingMenu: false,
-    art:[{id:1, size: 'medium', artId: null},
-        {id:2, size: 'xsmall', artId: null},
-        {id:3, size: 'xsmall', artId: null}], // usually starts out null
-    arrangement: {rows: [1, {cols: [2,3]}]}, // usually starts out null
-    arrangementSize: 3 // usually starts out 0
-  },
+    'newRoomShow': {show: true, currentName: 'My new room', 
+    selectionRoom: {reload: true, feed: [], feedCursor: null, roomType: 'blank', 'name': 'My new room', 'showingMenu': false, art: [], arrangement: {}, arrangementSize: 0, clusterData:{likes:[], dislikes:[], skipN:0, startN:0}, vibes: [], 'seedTags': [], 'seedArt': []}},
+    'rooms': [
+      
+  // {
+  //   name: "My First Room", 
+  //   id: uuidv4(),
+  //   roomType: "blank",
+  //   showingMenu: false,
+  //   art:[{id:1, size: 'medium', artId: null},
+  //       {id:2, size: 'xsmall', artId: null},
+  //       {id:3, size: 'xsmall', artId: null}], // usually starts out null
+  //   arrangement: {rows: [1, {cols: [2,3]}]}, // usually starts out null
+  //   arrangementSize: 3 // usually starts out 0
+  // },
 
-  {
-    name: "My Second Room", 
-    id: uuidv4(),
-    roomType: "blank",
-    showingMenu: false,
-    art:[{id:1, size: 'p_small', artId: null},
-         {id:2, size: 'p_small', artId: null},
-         {id:3, size: 'p_large', artId: null},
-         {id:4, size: 'p_small', artId: null},
-         {id:5, size: 'p_small', artId: "NULLFRAME"}
-        ], // usually starts out null
-    arrangement: {rows: [{cols: [1, 2]}, 3, {cols: [4, 5]}]}, // usually starts out null
-    // arrangement: {"cols": [{"rows": [1, 5]}, {"rows": [5, 2]}]},
-    arrangementSize: 4 // usually starts out 0
-  }
+  // {
+  //   name: "My Second Room", 
+  //   id: uuidv4(),
+  //   roomType: "blank",
+  //   showingMenu: false,
+  //   art:[{id:1, size: 'p_small', artId: null},
+  //        {id:2, size: 'p_small', artId: null},
+  //        {id:3, size: 'p_large', artId: null},
+  //        {id:4, size: 'p_small', artId: null},
+  //        {id:5, size: 'p_small', artId: "NULLFRAME"}
+  //       ], // usually starts out null
+  //   arrangement: {rows: [{cols: [1, 2]}, 3, {cols: [4, 5]}]}, // usually starts out null
+  //   // arrangement: {"cols": [{"rows": [1, 5]}, {"rows": [5, 2]}]},
+  //   arrangementSize: 4 // usually starts out 0
+  // }
 ]
 
 };
@@ -105,6 +108,53 @@ const StateProvider = ( { children } ) => {
         else {
             return {...state, rooms: state.rooms.concat(action.room)}
         }
+      case 'CLUSTER_LIKE':
+        if (state.newRoomShow.selectionRoom.clusterData.likes.includes(action.like)) {
+          return state
+      }
+      else {
+          return {...state, newRoomShow: {...state.newRoomShow, 
+            selectionRoom: {...state.newRoomShow.selectionRoom, 
+              clusterData: {...state.newRoomShow.selectionRoom.clusterData, 
+                skipN: 0, 
+                startN: 0,
+                likes: state.newRoomShow.selectionRoom.clusterData.likes.concat(action.like)}}}}
+      }
+      case 'CLUSTER_DISLIKE':
+        if (state.newRoomShow.selectionRoom.clusterData.dislikes.includes(action.dislike)) {
+          return state
+      }
+      else {
+          return {...state, newRoomShow: {...state.newRoomShow, 
+            selectionRoom: {...state.newRoomShow.selectionRoom, 
+              clusterData: {...state.newRoomShow.selectionRoom.clusterData, 
+                skipN: 0, 
+                startN: 0,
+                dislikes: state.newRoomShow.selectionRoom.clusterData.dislikes.concat(action.dislike)}}}}
+      }
+      case 'CLUSTER_SKIP':
+        const currentSkip = state.newRoomShow.selectionRoom.clusterData.skipN
+        return {...state, newRoomShow: {...state.newRoomShow, 
+          selectionRoom: {...state.newRoomShow.selectionRoom, 
+            clusterData: {...state.newRoomShow.selectionRoom.clusterData, 
+              skipN: currentSkip+1}}}}
+
+      case 'CLUSTER_MORE':
+          const currentStart = state.newRoomShow.selectionRoom.clusterData.startN
+          return {...state, newRoomShow: {...state.newRoomShow, 
+            selectionRoom: {...state.newRoomShow.selectionRoom, 
+              clusterData: {...state.newRoomShow.selectionRoom.clusterData, 
+                startN: currentStart+1}}}}
+      
+      case 'ADD_FEED_IMAGES':
+        return {...state, artBrowseSeed: {...state.artBrowseSeed, feed: state.artBrowseSeed.feed.concat(action.images), feedCursor: action.cursor}}
+
+      case 'CLEAR_FEED_IMAGES':
+          return {...state, artBrowseSeed: {...state.artBrowseSeed, feed: [], feedCursor: null}}
+      
+      case 'RELOAD_FEED':
+          return {...state, artBrowseSeed: {...state.artBrowseSeed, reload: !state.artBrowseSeed.reload}}
+
       case 'TOGGLE_VIBE':
       // add vibes to the pending (or current) room selection
         if (state.newRoomShow.selectionRoom.vibes.map(v => v.Vibes).includes(action.vibe.Vibes)) {

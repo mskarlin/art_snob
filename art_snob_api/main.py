@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 sys.path.insert(0, '../')
 from utilities.datastore_helpers import DataStoreInterface
+from utilities.storage_helpers import download_gcs_local
 from fastapi import FastAPI, File, UploadFile
 # from google.cloud import logging
 
@@ -20,6 +21,8 @@ from fastapi import FastAPI, File, UploadFile
 # # This log can be found in the Cloud Logging console under 'Custom Logs'.
 # logger = logging_client.logger(os.environ.get('LOGGINGNAME', 'deco_api.dev'))
 import logging
+import pickle
+import copy
 import google.cloud.logging # Don't conflict with standard logging
 from google.cloud.logging.handlers import CloudLoggingHandler
 client = google.cloud.logging.Client()
@@ -29,12 +32,25 @@ cloud_logger.setLevel(logging.INFO) # defaults to WARN
 cloud_logger.addHandler(handler)
 
 
-from src.feed import PersonalizedArt
+from src.feed import PersonalizedArt, ExploreExploitClusters, DistanceClusterModel
 from src.art_configurations import ArtConfigurations
 from src.datastore_helpers import DatastoreInteractions, FriendlyDataStore
 
+DISTANCE_CLUSTER_MODEL = os.environ.get('DISTANCE_CLUSTER_MODEL', '12012020-distance-cluster-model.pkl')
+DCM_ALPHA = os.environ.get('DCM_ALPHA', '1.0')
+DCM_MIN_DIST = os.environ.get('DCM_MIN_DIST', '6.0')
+DCM_EXPLOIT_PCT = os.environ.get('DCM_EXPLOIT_PCT', '0.1')
+
 dsi = DataStoreInterface(os.environ.get('GOOGLE_CLOUD_PROJECT'))
 data = FriendlyDataStore(dsi)
+download_gcs_local('artsnob-models', 'clusters/'+DISTANCE_CLUSTER_MODEL, DISTANCE_CLUSTER_MODEL)
+
+dcm = DistanceClusterModel()
+dcm.load(DISTANCE_CLUSTER_MODEL)
+eec = ExploreExploitClusters(dcm, 
+                            alpha=float(DCM_ALPHA), 
+                            min_dist=float(DCM_MIN_DIST), 
+                            exp_exl=float(DCM_EXPLOIT_PCT))
 
 app = FastAPI()
 
@@ -54,13 +70,16 @@ def list_and_add_image_prefix(artdata: Dict) -> List:
             work_list.append(work)
     return work_list
 
-def add_image_prefix(artlist: List):
+def add_image_prefix(artlist: List, ids:List=None):
     rlist = []
-    for al in artlist:
-        # al.update({'images': f"https://storage.googleapis.com/artsnob-image-scrape/{al['images']}"})
-        rlist.append(al)
-
-    return rlist
+    if ids: 
+        for i,al in enumerate(artlist):
+            # al.update({'images': f"https://storage.googleapis.com/artsnob-image-scrape/{al['images']}"})
+            al.update({'id': ids[i]})
+            rlist.append(al)
+        return rlist
+    else: 
+        return artlist
 
 def art_type_from_name(name):
     name_dict = {'xsmall', 'small', 'medium', 'large'}
@@ -161,6 +180,31 @@ def tags(tag: str, start_cursor: str = None, n_records: int = 10, session_id=Non
 
     return {'art': works, 'cursor': f'{seed}_{start+n_records}'}
 
+@app.get('/recommended/{session_id}')
+def recommended(session_id=None, likes:str='', dislikes:str='', start_cursor=None, n_return=26):
+    if not session_id:
+        session_id = str(uuid.uuid4())
+
+    # Need to add 1 for db indexing rules (no 0 index...)
+    likes = [int(l)+1 for l in likes.split(',') if l]
+    dislikes = [int(d)+1 for d in dislikes.split(',') if d]
+
+    seed = rand.randint(0,10000)
+    start = 0
+
+    if start_cursor:
+        seed, start = start_cursor.split('_')
+        seed = int(seed)
+        start = int(start)
+
+    works = []
+    cdata = data.clusters(likes, seed=seed, cursor=start_cursor, n_records=int(n_return))
+    work_list = list_and_add_image_prefix({'art': cdata})
+
+    log_exposure(work_list, session_id, how=f"exposure:recommended:{likes}|{dislikes}")
+    
+    return {'art': work_list, 'cursor': f'{seed}_{start+int(n_return)}'}
+
 
 @app.get('/taglist/{session_id}')
 def taglist(session_id=None, n: int = 300, min_score: float = 4.0):
@@ -202,6 +246,43 @@ def vibes(vibe=None, session_id=None, start_cursor=None, n_records=25):
     else:
         return {'vibes': vibes[0]}    
 
+@app.get('/explore/{session_id}')
+def explore(session_id=None, likes:str='', dislikes:str='', skip_n=0, n_return=6, n_start=0):
+    if not session_id:
+        session_id = str(uuid.uuid4())
+
+    likes = [int(l) for l in likes.split(',') if l]
+    dislikes = [int(d) for d in dislikes.split(',') if d]
+
+    next_cluster, next_items = eec.predict_next(likes=likes, dislikes=dislikes, skip_n=int(skip_n), n_ids=int(n_return), n_start=int(n_start))
+    next_items = [int(ni) for ni in next_items]
+
+    # hydrate the items
+    works = dsi.read(ids=next_items, kind=data.INFO_KIND, sorted_list=True)
+    work_list = add_image_prefix(works, ids=next_items)
+
+    log_exposure(work_list, session_id, how=f"exposure:explore:{next_cluster['cluster']}")
+
+    next_cluster.update({'art': work_list})
+
+    return next_cluster
+
+
+@app.get('/clusters/{cluster_id}')
+def clusters(cluster_id, session_id=None, n_return=4, from_center=False):
+    
+    if not session_id:
+        session_id = str(uuid.uuid4())
+
+    work_ids = eec.cluster_center_art(int(cluster_id), n_ids=int(n_return))
+    works = dsi.read(ids=work_ids, kind=data.INFO_KIND, sorted_list=True)
+    work_list = add_image_prefix(works, ids=work_ids)
+
+    log_exposure(work_list, session_id, how=f"exposure:clusters:{cluster_id}")
+
+    return {'art': work_list, 'cluster': int(cluster_id)}
+
+
 @app.get('/likes/{session}')
 def likes(session: str, n: int = 10):
 
@@ -216,15 +297,23 @@ def likes(session: str, n: int = 10):
 
 
 @app.get('/art/{art_id}')
-def art(art_id: int, session_id=None):
+def art(art_id: int, session_id=None, max_tags=5):
     
     if not session_id:
         session_id = str(uuid.uuid4())
 
     work = dsi.read(ids=[art_id], kind=data.INFO_KIND, sorted_list=True)[0]
-    # work['images'] = f"https://storage.googleapis.com/artsnob-image-scrape/{work['images']}"
-    # work['prices'] = {art_type_from_name(x.split("--")[0]):x.split("--")[1] for x in "--".join(work['sizes'].split("| | |")).split("|")}
+    tag_scores = data.tag_scores([w.lower() for w in work['standard_tags']])
+    
+    # re-assign the standard tags to only the top 5 scores with over 10 links
+    tag_scores = sorted([ts for ts in tag_scores if ts['count'] >= 10], key=lambda x: x['weighted_score'])
+
+    tag_scores = ['-'.join([t.capitalize() for t in ts.key.id_or_name.split('-')]) for ts in tag_scores[:max_tags]]
+
+    work['standard_tags'] = tag_scores
+
     log_exposure([work], session_id, how="exposure:detail", id=art_id)
+
     return work
 
 @app.get('/similar_works/{art_id}')
@@ -237,14 +326,17 @@ def similar_works(art_id: int, start_cursor:int = 0, limit:int = 10, session_id=
     return {'art': works, 'cursor': start_cursor+limit}
 
 @app.get('/art_configurations/{nworks}')
-def art_configurations(nworks:int=2, minprice:int=0, maxprice:int=999999, session_id=None):
+def art_configurations(nworks:int=2, minprice:int=0, maxprice:int=999999, session_id=None, defaults=False):
     if not session_id:
         session_id = str(uuid.uuid4())
-    eligible_works = ac.art_configurations(nworks)
-    sorted_elig_works = sorted([e for e in eligible_works if e['minprice'] >= minprice and e['minprice'] <= maxprice], key=lambda x: x['minprice'])
-    log_exposure(sorted_elig_works, session_id, how=f"exposure:configuration:{nworks}:{minprice}:{maxprice}")
-    return {'art_configuration': sorted_elig_works}
-            # 'metadata': {'unfilteredMin': unfiltered_min, 'unfilteredMax': unfiltered_max}}
+    
+    if not defaults:
+        eligible_works = ac.art_configurations(nworks)
+        sorted_elig_works = sorted([e for e in eligible_works if e['minprice'] >= minprice and e['minprice'] <= maxprice], key=lambda x: x['minprice'])
+        log_exposure(sorted_elig_works, session_id, how=f"exposure:configuration:{nworks}:{minprice}:{maxprice}")
+        return {'art_configuration': sorted_elig_works}
+    else:
+        return {'art_configuration': ac.defaults()}
 
 class Action(BaseModel):
     session: str
