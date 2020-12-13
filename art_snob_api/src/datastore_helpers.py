@@ -33,9 +33,10 @@ class FriendlyDataStore():
     NEIGHBOR_KIND = '10232020-pca-nn'
     IMAGE_BUCKET_PREFIX = 'https://storage.googleapis.com/artsnob-image-scrape/'
     TAG_SCORES = '11122020-tag-scores'
-    VIBES = '11152020-vibes'
+    VIBES = '12132020-vibes'
     TAG_REVERSE_INDEX = '11202020-tag_reverse_index'
     CLUSTER_REVERSE_INDEX = '11292020-inverse-cluster-index'
+    CLUSTER_INDEX = '12122020-cluster-index'
     # RAND_MIN = 4503653962481664  # used for scraped-image-data indices
     # RAND_MAX = 6755350696951808
     RAND_MIN = 1

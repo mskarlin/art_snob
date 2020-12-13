@@ -12,7 +12,7 @@ import warnings
 
 from primrose.base.node import AbstractNode
 from src.auto_node import AutoNode
-from typing import Dict
+from typing import Dict, List
 
 
 class EntityFormatter(AbstractNode):
@@ -111,3 +111,28 @@ class ReverseIndex(AutoNode):
             inverse_index = list_index
 
         return {'inverse_index': inverse_index, 'index_keys': index_keys}
+
+
+class IndexFromReverseIndex(AutoNode):
+
+    @staticmethod
+    def necessary_config(node_config):
+        return {}
+    
+    def execute(self, data: Dict, key_to_reverse: str):
+        """Flatten entities to make one entry per atomic entity and associate with id_list items"""
+        index = []
+        index_ids = []
+        id_list = []
+        entities = []
+
+        for k,v in data.items():
+            id_list.append(k)
+            entities.append(v)
+
+        for entity, idx in zip(entities, id_list):
+            for item in entity[key_to_reverse]:
+                index.append({'cluster_id': idx-1}) # NOTE MINUS 1 BECAUSE OF DATASTORE LIMITATIONS
+                index_ids.append(item)
+
+        return {'data': index, 'keys': index_ids}

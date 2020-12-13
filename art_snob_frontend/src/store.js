@@ -25,15 +25,17 @@ async function postData(url = '', data = {}) {
 
 // todo: write a session ID to the cookies, and write the state every so often? maybe every update??
 // todo: then that way for logins or whatever, we could just load the state? 
+const blankRoom= {reload: true, feed: [], feedCursor: null, roomType: 'blank', 'name': 'My new room', 'showingMenu': false, art: [{id:1, size: 'medium', artId: null}], arrangement: {rows:1}, arrangementSize: 1, clusterData:{likes:[], dislikes:[], skipN:0, startN:0}, vibes: [], 'seedTags': [], 'seedArt': []}
+
 
 const initialState = {
     'landingState': {'open': true},
-    'artDetailShow': null,
     'sessionId': uuidv4(),
     'potentialArt': null,
-    'blankRoom': {reload: true, feed: [], feedCursor: null, roomType: 'blank', 'name': 'My new room', 'showingMenu': false, art: [], arrangement: {}, arrangementSize: 0, clusterData:{likes:[], dislikes:[], skipN:0, startN:0}, vibes: [], 'seedTags': [], 'seedArt': []},
+    'blankRoom': blankRoom,
     'artBrowseSeed': null, 
     'purchaseList': null,
+    'vibeSelect': true,
     'searchTagSet': [],
     'likedArt': [],
     'priceRange': {'p_xsmall': {'price': '$40-60', 'name': 'Extra Small', 'sizeDesc': '12" x 14"', artSize: [12, 14], 'priceTextSize': '10px'},
@@ -47,39 +49,8 @@ const initialState = {
                         'p_large': {'price': '$150-200', 'name': 'Large', 'sizeDesc': '28" x 40"', artSize: [28, 40], 'priceTextSize': '14px'},
                         'l_large': {'price': '$150-200', 'name': 'Large', 'sizeDesc': '40" x 28"', artSize: [40, 28], 'priceTextSize': '14px'}
   },
-    'newRoomShow': {show: true, currentName: 'My new room', 
-    selectionRoom: {reload: true, feed: [], feedCursor: null, roomType: 'blank', 'name': 'My new room', 'showingMenu': false, art: [], arrangement: {}, arrangementSize: 0, clusterData:{likes:[], dislikes:[], skipN:0, startN:0}, vibes: [], 'seedTags': [], 'seedArt': []}},
-    'rooms': [
-      
-  // {
-  //   name: "My First Room", 
-  //   id: uuidv4(),
-  //   roomType: "blank",
-  //   showingMenu: false,
-  //   art:[{id:1, size: 'medium', artId: null},
-  //       {id:2, size: 'xsmall', artId: null},
-  //       {id:3, size: 'xsmall', artId: null}], // usually starts out null
-  //   arrangement: {rows: [1, {cols: [2,3]}]}, // usually starts out null
-  //   arrangementSize: 3 // usually starts out 0
-  // },
-
-  // {
-  //   name: "My Second Room", 
-  //   id: uuidv4(),
-  //   roomType: "blank",
-  //   showingMenu: false,
-  //   art:[{id:1, size: 'p_small', artId: null},
-  //        {id:2, size: 'p_small', artId: null},
-  //        {id:3, size: 'p_large', artId: null},
-  //        {id:4, size: 'p_small', artId: null},
-  //        {id:5, size: 'p_small', artId: "NULLFRAME"}
-  //       ], // usually starts out null
-  //   arrangement: {rows: [{cols: [1, 2]}, 3, {cols: [4, 5]}]}, // usually starts out null
-  //   // arrangement: {"cols": [{"rows": [1, 5]}, {"rows": [5, 2]}]},
-  //   arrangementSize: 4 // usually starts out 0
-  // }
-]
-
+    'newRoomShow': {show: true, currentName: 'My new room', selectionRoom: blankRoom},
+    'rooms': []
 };
 
 const store = createContext(initialState);
@@ -154,6 +125,9 @@ const StateProvider = ( { children } ) => {
       
       case 'RELOAD_FEED':
           return {...state, artBrowseSeed: {...state.artBrowseSeed, reload: !state.artBrowseSeed.reload}}
+      
+      case 'TOGGLE_VIBE_SELECT':
+        return {...state, vibeSelect: !state.vibeSelect}
 
       case 'TOGGLE_VIBE':
       // add vibes to the pending (or current) room selection
@@ -184,11 +158,9 @@ const StateProvider = ( { children } ) => {
         return {...state, landingState: {'open': !state.landingState.open}}
       case 'TOGGLE_NEW_ROOM_SHOW':
         // also clear the state so there's no hanging newRoomShow potential room
-        return {...state, newRoomShow: {...state.newRoomShow, show: !state.newRoomShow.show, currentName: '', selectionRoom: {roomType: ''}}}
+        return {...state, newRoomShow: {...state.newRoomShow, show: !state.newRoomShow.show}}
       case 'ASSIGN_NEW_ROOM_SHOW':
         return {...state, newRoomShow: action.newRoomShow}
-      case 'ART_DETAIL':
-        return {...state, artDetailShow: action.id}
       case 'POTENTIAL_ART':
         return {...state, potentialArt: action.artData}
       case 'LIKE_ART':

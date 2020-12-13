@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 import './sidebar.scss';
 import './App.css';
 import { useFetch, useInfiniteScroll } from './feedHooks'
-import { Frame, Stack } from "framer";
 import {Rooms} from "./artComponents"
 import {TasteFinder} from "./tasteFinder"
 import {ArtDetail, ArtCarousel} from "./detailView"
@@ -164,7 +163,6 @@ const { dispatch, state } = globalState;
   const roomMatch = useMatch('/rooms')
   // const baseMatch = useMatch('/')
 
-// if (!state.newRoomShow.show && !state.artBrowseSeed && !state.purchaseList) 
 if (detailMatch || roomMatch )
 {
 return (
@@ -182,7 +180,8 @@ return (
                           style={{"pointerEvents": "all"}}
                           onClick={()=>{
                             dispatch({type: 'POTENTIAL_ART', artData: null})
-                            dispatch({'type': 'ART_DETAIL', id: id})}}
+                            navigate('/detail/'+id)
+                            }}
                         />
                   </div>
                 )
@@ -212,6 +211,7 @@ function SplashPage() {
     overflow: "hidden",
     backgroundColor: "rgba(33, 37, 41, 0.98)",
     top: 0,
+    position: "absolute",
     zIndex: 6
   }
   
@@ -226,9 +226,9 @@ function SplashPage() {
     }}
   
   return (
-      <Frame style={loadLandingPage()}>
+      <div style={loadLandingPage()}>
       <WelcomeMessage></WelcomeMessage>
-      </Frame>
+      </div>
   )
 
 }
@@ -255,9 +255,16 @@ function WelcomeMessage() {
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
+    flexShrink: 0,
+    background: "none",
+    alignItems: "center",
+    padding: "0px",
+    overflow: "hidden",
+    transform: "none"
+
   }
 return (
-        <Stack style={welcomeMessage}>
+        <div style={welcomeMessage}>
           <div style={firstLine}>
             <div className="welcome-to">Welcome to  </div>
             <div className="magic-lattice-art">Deco</div>
@@ -265,7 +272,7 @@ return (
           <div className="centerline">The room-centric art finder to complete your home.</div>
           <div className="cookiesnote">Note that we use cookies to store your info between sessions.</div>
           <Button variant="contained" color="primary" onClick={() => dispatch({type: "TOGGLE_LANDING"})}>Get Started!</Button>
-        </Stack>
+        </div>
       )
 
 }

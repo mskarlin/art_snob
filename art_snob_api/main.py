@@ -61,12 +61,14 @@ async def startup_event():
     ac.expand_all_templates()
 
 # TODO: move the images URL appendage client side
-def list_and_add_image_prefix(artdata: Dict) -> List:  
+def list_and_add_image_prefix(artdata: Dict, hydration_dict = None) -> List:  
     work_list = []
     for art, works in artdata.items():
         for idx, work in works.items():
             work['id'] = idx
             # work['images'] = f"https://storage.googleapis.com/artsnob-image-scrape/{work['images']}"
+            if hydration_dict:
+                work['metadata'] = hydration_dict[idx]
             work_list.append(work)
     return work_list
 
@@ -156,7 +158,7 @@ def random(session_id=None, cursor='0_25'):
     return {'art': work_list, 'cursor': f"{start+n_items}_{n_items}"}
 
 @app.get('/tags/{tag}')
-def tags(tag: str, start_cursor: str = None, n_records: int = 10, session_id=None):
+def tags(tag: str, start_cursor: str = None, n_records: int = 10, session_id=None, return_clusters=False):
     if not session_id:
         session_id = str(uuid.uuid4())
     
@@ -169,9 +171,20 @@ def tags(tag: str, start_cursor: str = None, n_records: int = 10, session_id=Non
         start = int(start)
 
     works = []
+
     for t in tag.split('|'):
         tdata = data.tag([t.capitalize()], seed=seed, n_records=n_records, cursor=start_cursor)
-        work_list = list_and_add_image_prefix({'art': tdata})
+        
+        cluster_info = None
+
+        if return_clusters: 
+            idx_list = []
+            for idx, work in tdata.items():
+                idx_list.append(idx)
+            cluster_info = dsi.read(ids=idx_list, kind=data.CLUSTER_INDEX, sorted_list=False)
+
+        work_list = list_and_add_image_prefix({'art': tdata}, hydration_dict=cluster_info)
+
         works.append(work_list)
 
     works = [x for x in itertools.chain(*itertools.zip_longest(*works)) if x is not None]
@@ -238,9 +251,13 @@ def vibes(vibe=None, session_id=None, start_cursor=None, n_records=25):
                 )
     if vibe:
         # get the vibe of interest from object
-        vibe_candidate = [v['Tags'] for v in vibes[0] if v['Vibes'] == vibe]
+        vibe_candidate = [v['Clusters'] for v in vibes[0] if v['Vibes'].strip(' ').lower() == vibe.strip(' ').lower()]
         if vibe_candidate:
-            return tags('|'.join(vibe_candidate[0]), f'{seed}_{start}', n_records, session_id)
+            return recommended(session_id=session_id, 
+                               likes=','.join([str(v) for v in vibe_candidate[0]]), 
+                               dislikes='', 
+                               start_cursor=start_cursor, 
+                               n_return=n_records)
         else:
             return {'art': None, 'cursor': None}
     else:

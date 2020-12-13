@@ -62,7 +62,6 @@ function SingleCarousel({endpoint, index, showFavoriteSelect, initialImages={ima
                             src={'https://storage.googleapis.com/artsnob-image-scrape/'+images}
                             style={{"pointerEvents": "all"}}
                             onClick={()=>{
-                                dispatch({type: 'ART_DETAIL', id: id, ref: state.scrollRef})
                                 navigate('/detail/'+id)
                                 }}
                             />
@@ -149,7 +148,6 @@ function ImgColumn ({art, navigate}) {
                         src={"https://storage.googleapis.com/artsnob-image-scrape/"+images}
                         style={{"pointerEvents": "all"}}
                         onClick={() => {
-                            dispatch({type: 'ART_DETAIL', id: id, ref: state.scrollRef});
                             navigate('/detail/'+id)
                             }}
                         />}
@@ -319,7 +317,6 @@ return (
             {artData.name}
             </div>
             <span className="material-icons md-36" onClick={() => {
-            dispatch({'type': 'ART_DETAIL', 'id': null});
             window.history.back();}
             }>keyboard_backspace</span>
         </div>
@@ -353,11 +350,10 @@ return (
             </div>
             <div className="detail-purchase-buttons">
             <button className="detail-button" onClick={()=>{dispatch({'type': 'POTENTIAL_ART', 'artData': artData});
-                                                            dispatch({'type': 'ART_DETAIL', 'id': null})
                                                             dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
                                                             dispatch({'type': 'CLOSE_ALL_MENUS'})
+                                                            navigate('/rooms/')
                                                             }}>Add to room</button>
-
 
             <button className="detail-button" style={{"backgroundColor":"#CED4DA"}} 
             onClick={()=>{dispatch({'type': 'LIKE_ART', 'art': artData})}}>{saveCopy()}</button>

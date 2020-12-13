@@ -78,7 +78,6 @@ function SingleArtSelect(show) {
                                                 PPI={3.0} 
                                                 artId={null}
                                                 artImage={null}
-                                                setArtDetailShow={null}
                                                 artDispatch={null}
                                                 potentialArt={null}
                                                 roomId={'room-single'+index.toString()}
