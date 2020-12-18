@@ -11,11 +11,22 @@ import {TasteFinder} from "./tasteFinder"
 import {ArtDetail, ArtCarousel} from "./detailView"
 import {RoomConfigurations} from "./roomConfiguration.js"
 import {ArtBrowse} from "./artBrowse"
-import { StateProvider, store } from './store.js';
+import { StateProvider, store, UserProvider } from './store.js';
+import {SignIn, SignUp, PasswordReset} from './userRoutes.js'
 import {PurchaseList} from "./purchasePage"
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
-import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+import { ThemeProvider, createMuiTheme, makeStyles } from '@material-ui/core/styles';
+import Drawer from '@material-ui/core/Drawer';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import HelpIcon from '@material-ui/icons/Help';
+import NewReleasesIcon from '@material-ui/icons/NewReleases';
+import AssignmentIcon from '@material-ui/icons/Assignment';
+import HomeIcon from '@material-ui/icons/Home';
+import FavoriteIcon from '@material-ui/icons/Favorite';
 
 
 const fontTheme = createMuiTheme({
@@ -51,21 +62,26 @@ function App() {
   useInfiniteScroll(feedBoundaryRef, setLoadMore);
 
   return (
-    <StateProvider>
-    <ThemeProvider theme={fontTheme}>
-    <Router>
-        <AppParent path="/" imgData={imgData} feedBoundaryRef={feedBoundaryRef}>
-          <SplashPage path="/" />
-          <TasteFinder path="/taste"/>
-          <RoomConfigurations path="/configure/:id"/>
-          <Rooms path="/rooms"/>
-          <ArtBrowse path="/browse/:id"/>
-          <ArtDetail path="/detail/:id"/>
-          <PurchaseList path="/purchase"/>
-        </AppParent>
-      </Router>
-      </ThemeProvider>
-    </StateProvider>
+    <UserProvider>
+      <StateProvider>
+      <ThemeProvider theme={fontTheme}>
+      <Router>
+          <AppParent path="/" imgData={imgData} feedBoundaryRef={feedBoundaryRef}>
+            <SplashPage path="/" />
+            <SignIn path="/signin" />
+            <SignUp path="/signup" />
+            <PasswordReset path="/passwordreset" />
+            <TasteFinder path="/taste"/>
+            <RoomConfigurations path="/configure/:id"/>
+            <Rooms path="/rooms"/>
+            <ArtBrowse path="/browse/:id"/>
+            <ArtDetail path="/detail/:id"/>
+            <PurchaseList path="/purchase/:id"/>
+          </AppParent>
+        </Router>
+        </ThemeProvider>
+      </StateProvider>
+    </UserProvider>
   )
 }
 
@@ -89,7 +105,7 @@ function AppParent({children, imgData, feedBoundaryRef }) {
           <TopHeader imgData={imgData} feedBoundaryRef={feedBoundaryRef}/>
           <LandingPage />
           {children}
-          {(!state.landingState.open) && <Footer/>}
+          {<Footer/>}
         </div>
       </main>
     </div>
@@ -277,7 +293,64 @@ return (
 
 }
 
+
+function TopMenuDrawer({drawerOpen, setDrawerOpen, toggleDrawer}) {
+
+  const list = () => (
+    <div
+      // className={''}
+      role="presentation"
+      onClick={toggleDrawer(false)}
+      onKeyDown={toggleDrawer(false)}
+    >
+      <List>
+          <ListItem button key='Sign In' onClick={() => navigate('/signin')}>
+            <ListItemIcon>{<AssignmentIcon style={{'color': 'black'}}/>}</ListItemIcon>
+            <ListItemText primary='Sign In' />
+          </ListItem>
+          <ListItem button key='Take taste finder' onClick={() => navigate('/taste')}>
+            <ListItemIcon>{<NewReleasesIcon style={{'color': 'black'}}/>}</ListItemIcon>
+            <ListItemText primary='Take taste finder' />
+          </ListItem>
+          <ListItem button key='Rooms' onClick={() => navigate('/rooms')}>
+            <ListItemIcon>{<HomeIcon style={{'color': 'black'}}/>}</ListItemIcon>
+            <ListItemText primary='Rooms' />
+          </ListItem>
+          <ListItem button key='About' onClick={() => navigate('/about')}>
+            <ListItemIcon>{<HelpIcon style={{'color': 'black'}}/>}</ListItemIcon>
+            <ListItemText primary='About' />
+          </ListItem>
+          <ListItem button key='Favorites' onClick={() => navigate('/browse')}>
+            <ListItemIcon>{<FavoriteIcon style={{'color': 'black'}}/>}</ListItemIcon>
+            <ListItemText primary='Favorites' />
+          </ListItem>
+      </List>
+    </div>
+  );
+
+  return (
+    <>
+      {
+        <Drawer anchor={'left'} open={drawerOpen} onClose={toggleDrawer(false)}>
+            {list()}
+          </Drawer>
+      }
+    </>
+  );
+}
+
+
+
 function MainHeader() {
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const toggleDrawer = (open) => (event) => {
+    if (event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) {
+      return;
+    }
+    setDrawerOpen(!drawerOpen);
+  };
 
   const header = {
     boxSizing: "border-box",
@@ -308,10 +381,12 @@ function MainHeader() {
   return (
     <div style={header}>
       <div style={headerStack}>
-      <div className="deco-header">Deco</div>
-      <span className="material-icons md-36" style={{color: 'black'}}>menu</span>
+      <div className="deco-header" onClick={() => navigate('/')}>Deco</div>
+      <span className="material-icons md-36" style={{color: 'black'}} onClick={toggleDrawer(true)}>menu</span>
+      <TopMenuDrawer drawerOpen={drawerOpen} setDrawerOpen={setDrawerOpen} toggleDrawer={toggleDrawer}/>
       </div>
     </div>
+
   )
 }
 

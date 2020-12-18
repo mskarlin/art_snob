@@ -35,14 +35,14 @@ function LinearProgressWithLabel(props) {
     );
   }
 
-  const imgColumn = (art, imgCheck) => {
+  const imgColumn = (art, imgCheck, size='large') => {
 
     return (
       <div className='vert-column'>
         {art.map((image, index) => {
                 const { name, images, id } = image
                 return (
-                <div key={'art-'+index.toString()+index.toString() } className={'imgholder large'}>
+                <div key={'art-'+index.toString()+index.toString() } className={'imgholder '+size}>
                         
                         {(imgCheck(id)==='selected')?<span className="material-icons md-48" style={{'position': 'absolute',
                         'color': '#018E42', zIndex: 2}}>check_circle_outline</span>:<></>}
@@ -182,29 +182,33 @@ function VibeView({vibe}) {
         }, [setVibeImages])
 
     return (
-        <Card variant="outlined">
-        <CardContent>
-            <Typography color="textSecondary" gutterBottom>
-            {vibe.Vibes}
-            </Typography>
-            <Typography variant="body2" component="p">
-            {vibe.Tagline}
-            </Typography>
-            <div className='preference-flex'>
-                {imgColumn(vibeImages.slice(0, 2), ()=>{})}
-                {imgColumn(vibeImages.slice(2, vibeImages.length), ()=>{})}
-            </div>
+        <div style={{'marginTop': "15px"}}>
+            <Card variant="outlined">
+            <CardContent>
+                <Typography color="textSecondary" gutterBottom>
+                {vibe.Vibes}
+                </Typography>
+                <Typography variant="body2" component="p">
+                {vibe.Tagline}
+                </Typography>
+                <div className='preference-flex'>
+                    {imgColumn(vibeImages.slice(0, 2), ()=>{}, '')}
+                    {imgColumn(vibeImages.slice(2, vibeImages.length), ()=>{}, '')}
+                </div>
 
-        </CardContent>
-        
-        <CardActions>
-            <Button size="small" variant="outlined" color="secondary"
-            onClick={() => {
-            }}
-            >Select!</Button>
-        </CardActions>
-        </Card>
+            </CardContent>
             
+            <CardActions>
+                <Button size="small" variant="outlined" color="secondary"
+                onClick={() => {dispatch({type: "ADD_VIBE", vibe: vibe});
+                dispatch({type: 'ADD_ROOM', 'room': state.newRoomShow.selectionRoom});
+                dispatch({type: 'TOGGLE_VIBE_SELECT'});
+                navigate('/rooms/');
+                }}
+                >Select!</Button>
+            </CardActions>
+            </Card>
+        </div>
         )
 
 }
@@ -337,7 +341,7 @@ export function TasteFinder() {
                             >Retake Taste Finder</Button>
                         </CardActions>
                     </Card>
-                    <Typography variant="h5" component="p">
+                    <Typography variant="h5" component="p" align="center">
                             OR
                     </Typography>
                     <Card variant="outlined">
@@ -350,7 +354,9 @@ export function TasteFinder() {
                             </Typography>
                         </CardContent>
                         <CardActions>
-                            <Button size="small" variant="outlined" color="secondary" onClick={ () => dispatch({type: 'TOGGLE_VIBE_SELECT'}) }>Continue</Button>
+                            <Button size="small" variant="outlined" color="secondary" onClick={ () => {
+                            maybeNewRoomCreate(true);
+                            dispatch({type: 'TOGGLE_VIBE_SELECT'}) }}>Continue</Button>
                         </CardActions>
                     </Card>
                     </div>

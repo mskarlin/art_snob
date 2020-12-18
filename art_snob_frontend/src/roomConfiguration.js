@@ -63,13 +63,15 @@ function SingleArtSelect(show) {
                 <div className='single-work-art-stack'>
                 {Object.entries(state.priceRange).map(([size, {price, name, sizeDesc}], index)=>{
                     return (<div className={'single-work-view '+currentSizeLabel(size)} 
-                    onClick={() => dispatch({type: "ADD_ARRANGEMENT",
+                    onClick={() => {dispatch({type: "ADD_ARRANGEMENT",
                             art: [{id:1, size: size, artId: null}],
                             arrangement: {rows: 1},
                             arrangementSize: 1,
                             id: state.newRoomShow.selectionRoom.id, 
                             roomType: state.newRoomShow.selectionRoom.roomType, 
-                            showingMenu: false})} key={size+name}>
+                            showingMenu: false})
+                            navigate('/rooms')
+                            }} key={size+name}>
                             {(currentSizeLabel(size)==='selected')?<span className="material-icons md-36" style={{'position': 'absolute',
                             'top': '5px', 'left': '5px', 'color': '#018E42', zIndex: 2}}>check_circle_outline</span>:<></>}
                               <div className="work-desc-text">{name}</div>

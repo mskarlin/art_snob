@@ -314,18 +314,23 @@ def likes(session: str, n: int = 10):
 
 
 @app.get('/art/{art_id}')
-def art(art_id: int, session_id=None, max_tags=5):
+def art(art_id: int, session_id=None, max_tags=5, return_clusters=True):
     
     if not session_id:
         session_id = str(uuid.uuid4())
 
     work = dsi.read(ids=[art_id], kind=data.INFO_KIND, sorted_list=True)[0]
+    
+    if return_clusters: 
+        cluster_info = dsi.read(ids=[art_id], kind=data.CLUSTER_INDEX, sorted_list=False)
+        work['metadata'] = cluster_info[art_id]
+
     tag_scores = data.tag_scores([w.lower() for w in work['standard_tags']])
     
     # re-assign the standard tags to only the top 5 scores with over 10 links
     tag_scores = sorted([ts for ts in tag_scores if ts['count'] >= 10], key=lambda x: x['weighted_score'])
 
-    tag_scores = ['-'.join([t.capitalize() for t in ts.key.id_or_name.split('-')]) for ts in tag_scores[:max_tags]]
+    tag_scores = ['-'.join([t.capitalize() for t in ts.key.id_or_name.split('-')]) for ts in tag_scores[:int(max_tags)]]
 
     work['standard_tags'] = tag_scores
 

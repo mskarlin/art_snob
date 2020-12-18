@@ -21,6 +21,7 @@ export const useArtData = (artId, dispatch, handleScrollClick) => {
       size_price_list: [], 
       standard_tags: [], 
       artist: "",
+      metadata: "",
       images: ""});
       handleScrollClick();
     })
@@ -360,8 +361,11 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
       </div>
       <div className="room-price-and-add-button">
       <span className="material-icons md-36" onClick={()=>{
-                          dispatch({type: "ADD_ARRANGEMENT", art: room.art,
-                          arrangement: room.arrangement, arrangementSize: room.arrangementSize});
+                          dispatch({type: "ADD_ARRANGEMENT", art: room.art, id: state.newRoomShow.selectionRoom.id,
+                          arrangement: room.arrangement, arrangementSize: room.arrangementSize,
+                          showingMenu: false
+                          });
+                            navigate('/rooms')
                             }} style={{"pointerEvents": "all",
                                        "color": (isCurrentSelection())?"rgb(1, 142, 66)":"#888"}}
                             >{(isCurrentSelection())?'check_circle_outline':
@@ -417,21 +421,23 @@ function RoomMenu ({art, room}) {
 return (<div className="menu-box">
           <div className="room-menu-single-item"> 
             <span className="material-icons md-36" onClick={() => 
-            
+            {
             dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: room})
-            
+            navigate('/browse/'+room.id)
+          }
             }>search</span>
             <div className="room-menu-text">Find art...</div>
           </div>
           <div className="room-menu-single-item"> 
             <span className="material-icons md-36" onClick={() => {
               dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: room.name, selectionRoom: {...room, showingMenu: false}, show: true}})
+              navigate('/configure/'+room.id)
               }}>edit</span>
             <div className="room-menu-text">Change room...</div>
           </div>
           <div className="room-menu-single-item"> 
             <span className="material-icons md-36" onClick={() => {
-              dispatch({type: 'PURCHASE_LIST', purchaseList: [room]})
+              navigate('/purchase/'+room.id)
               }}>shopping_cart</span>
             <div className="room-menu-text">Purchase room...</div>
           </div>
@@ -470,17 +476,6 @@ return (<div className="menu-box">
     }
 
     const roomFeed = () => {
-      // if (state.rooms.length === 0) {
-      //   let tmpRoom = {}
-      //   if (!('id' in state.newRoomShow.selectionRoom)) {
-      //    tmpRoom = {...state.newRoomShow.selectionRoom, id: uuidv4()}
-      //   }
-      //   else {
-      //     tmpRoom = state.newRoomShow.selectionRoom
-      //   }
-      //   dispatch({type:'ADD_ROOM', 'room': tmpRoom})
-      // }
-
         return (state.rooms.map((room, _) => {
           return (
                   <div className="room-menu-box" key={'rmb'+room.id}>

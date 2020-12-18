@@ -74,9 +74,9 @@ export function ArtBrowse({children, navigate}) {
     }
 
     const getMargin = () => {
-        let margin = 40+77
+        let margin = 65
         if (autoCompleteBox.current){
-                margin = 40 + autoCompleteBox.current.clientHeight;
+                margin = autoCompleteBox.current.clientHeight-10;
             }        
         return margin + 'px'
     }
@@ -90,7 +90,9 @@ export function ArtBrowse({children, navigate}) {
                 <div className="browse-feed ">
                     <div className="works-select-menu">
                         <div className="explain-menu">
-                            <span className="material-icons md-36" onClick={() => {dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: null})}}>keyboard_backspace</span>
+                            <span className="material-icons md-36" onClick={() => {
+                                navigate('/rooms');
+                                }}>keyboard_backspace</span>
                             <div className="explain-text">Choose any work to fill your rooms</div>
                         </div>
                         <Tabs

@@ -1,7 +1,6 @@
 import React, { useState, useReducer, useEffect, useRef, useContext } from 'react';
 import { useTagFetch, useInfiniteScroll } from './feedHooks'
 import {useArtData} from './artComponents'
-import { addPropertyControls } from 'framer';
 import { store } from './store.js';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
@@ -205,11 +204,11 @@ export function ArtColumns({title, endpoint, navigate, numColumns=2, show=true})
     const showControl = () => {
         if (show) {
             return (<>
-                <div className='select-explain'>
+                {/* <div className='select-explain'>
                     <Typography variant="h5" align="center">
                     {title}
                     </Typography>
-                </div>
+                </div> */}
     
                 <div className='preference-flex'>
                     {_.range(numColumns).map((i) => {
@@ -241,17 +240,16 @@ export function LikesColumns({art, numColumns=2, showFavoriteSelect, show}) {
         if (show) {
             return (
             <>  
-                <div className='select-explain'>
+                {/* <div className='select-explain'>
                     <Typography variant="h5" align="center">
                     {'Saved Art'}
                     </Typography>
-                </div>
+                </div> */}
 
                 <div className={'imgholder large'}> 
                     <span className="material-icons md-36" style={{'color': 'black'}}>save_alt</span> 
                     <div className='browse-imgtext'>Save art to find it here</div>
                 </div>
-                {console.log('ART', art)}
                 <div className='preference-flex'>
                     {_.range(numColumns).map((i) => {
                         return <ImgColumn key={'pArtCol-'+i.toString()} navigate={navigate} art={art.slice(i*art.length/numColumns, 
@@ -293,7 +291,9 @@ export function ArtDetail({nTags, id}) {
                                             size_price_list: [], 
                                             standard_tags: [], 
                                             artist: "",
-                                            images: ""});
+                                            images: "",
+                                            metadata: ""    
+                                            });
     useArtData(id, setArtData, handleScrollClick)
 
     let artTags = ['/similar_works/'+id]
@@ -315,6 +315,7 @@ return (
         <div className="detail-title">
             <div className="detail-name">
             {artData.name}
+            {artData.metadata.cluster_id}
             </div>
             <span className="material-icons md-36" onClick={() => {
             window.history.back();}

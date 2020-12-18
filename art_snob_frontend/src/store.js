@@ -1,5 +1,6 @@
-import React, {createContext, useReducer} from 'react';
+import React, {Component, createContext, useReducer} from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { auth } from "./firebase.js";
 
 async function postData(url = '', data = {}) {
     // Default options are marked with *
@@ -35,7 +36,7 @@ const initialState = {
     'blankRoom': blankRoom,
     'artBrowseSeed': null, 
     'purchaseList': null,
-    'vibeSelect': true,
+    'vibeSelect': false,
     'searchTagSet': [],
     'likedArt': [],
     'priceRange': {'p_xsmall': {'price': '$40-60', 'name': 'Extra Small', 'sizeDesc': '12" x 14"', artSize: [12, 14], 'priceTextSize': '10px'},
@@ -77,7 +78,7 @@ const StateProvider = ( { children } ) => {
             })}
         }
         else {
-            return {...state, rooms: state.rooms.concat(action.room)}
+            return {...state, rooms: state.rooms.concat({...action.room, name: action.room.name + ' ' +(state.rooms.length+1).toString()})}
         }
       case 'CLUSTER_LIKE':
         if (state.newRoomShow.selectionRoom.clusterData.likes.includes(action.like)) {
@@ -129,15 +130,15 @@ const StateProvider = ( { children } ) => {
       case 'TOGGLE_VIBE_SELECT':
         return {...state, vibeSelect: !state.vibeSelect}
 
-      case 'TOGGLE_VIBE':
+      case 'ADD_VIBE':
       // add vibes to the pending (or current) room selection
-        if (state.newRoomShow.selectionRoom.vibes.map(v => v.Vibes).includes(action.vibe.Vibes)) {
-            const removedVibe = state.newRoomShow.selectionRoom.vibes.filter(v => v.Vibes !== action.vibe.Vibes)
-            return {...state, newRoomShow: {...state.newRoomShow, selectionRoom: {...state.newRoomShow.selectionRoom, vibes: removedVibe}}}
-        }
-        else {
-            return {...state, newRoomShow: {...state.newRoomShow, selectionRoom: {...state.newRoomShow.selectionRoom, vibes: state.newRoomShow.selectionRoom.vibes.concat(action.vibe)}}}
-        }
+        return {...state, newRoomShow: {...state.newRoomShow, 
+          selectionRoom: {...state.newRoomShow.selectionRoom, 
+            clusterData: {...state.newRoomShow.selectionRoom.clusterData, 
+              skipN: 0, 
+              startN: 0,
+              likes: action.vibe.Clusters}}}}
+    
       case 'TOGGLE_SEED_TAG':
         if (state.newRoomShow.selectionRoom.seedTags.includes(action.seedTag)) {
             const removedTag = state.newRoomShow.selectionRoom.seedTags.filter(t => t !== action.seedTag)
@@ -218,8 +219,20 @@ const StateProvider = ( { children } ) => {
                 arrangement: action.arrangement,
                 arrangementSize: action.arrangementSize,
                 art: artRenumbered
-                }}}
+                }},
+              rooms: state.rooms.map(r => {
+                if (r.id === action.id) {
+                    return {...r, 
+                      art: artRenumbered, arrangement: action.arrangement, arrangementSize: action.arrangementSize, showingMenu: action.showingMenu}
+                }
+                else {
+                    return r
+                }
+
+              })
+              }
       case 'ADD_ROOMTYPE':
+        // TODO: this implementatino is bugged... need to include whole state in return
         return state.rooms.map((room, _) => {
           const {id} = room
           if (id == action.id) {
@@ -272,3 +285,70 @@ const StateProvider = ( { children } ) => {
 };
 
 export { store, StateProvider }
+
+// TODO: add the state here pulled from the backend... 
+
+// export const generateUserDocument = async (user, additionalData) => {
+//   if (!user) return;
+  
+//   const userRef = firestore.doc(`users/${user.uid}`);
+//   const snapshot = await userRef.get();
+
+//   if (!snapshot.exists) {
+//     const { email, displayName, photoURL } = user;
+//     try {
+//       await userRef.set({
+//         displayName,
+//         email,
+//         photoURL,
+//         ...additionalData
+//       });
+//     } catch (error) {
+//       console.error("Error creating user document", error);
+//     }
+//   }
+//   return getUserDocument(user.uid);
+// };
+// const getUserDocument = async uid => {
+//   if (!uid) return null;
+//   try {
+//     const userDocument = await firestore.doc(`users/${uid}`).get();
+//     return {
+//       uid,
+//       ...userDocument.data()
+//     };
+//   } catch (error) {
+//     console.error("Error fetching user", error);
+//   }
+// };
+
+
+
+export const UserContext = createContext({ user: null });
+
+export class UserProvider extends Component {
+  state = {
+    user: null
+  };
+
+  // componentDidMount = async () => {
+  //   auth.onAuthStateChanged(async userAuth => {
+  //     const user = await generateUserDocument(userAuth);
+  //     this.setState({ user });
+  //   });
+  // };
+  componentDidMount = () => {
+    auth.onAuthStateChanged(userAuth => {
+      this.setState({ user: userAuth});
+    });
+  };
+
+
+  render() {
+    return (
+      <UserContext.Provider value={this.state.user}>
+        {this.props.children}
+      </UserContext.Provider>
+    );
+  }
+}
