@@ -92,7 +92,7 @@ export function ArtBrowse({children, navigate}) {
                         <div className="explain-menu">
                             <span className="material-icons md-36" onClick={() => {
                                 navigate('/rooms');
-                                }}>keyboard_backspace</span>
+                                }}>arrow_back_ios</span>
                             <div className="explain-text">Choose any work to fill your rooms</div>
                         </div>
                         <Tabs

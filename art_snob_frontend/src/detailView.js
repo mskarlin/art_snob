@@ -31,6 +31,17 @@ function SingleCarousel({endpoint, index, showFavoriteSelect, initialImages={ima
     }
     const [feedData, feedDataDispatch] = useReducer(feedReducer, initialImages)
     const [loadMore, setLoadMore] = useState(false);
+
+    // initialize array
+    // var refArray = [];
+    
+    // // append new value to the array
+    // for (var i = 0; i < feedData.images.length; i++) {
+    //     refArray.push(React.createRef())
+    // }
+
+    // const refs = useRef(refArray);
+
     // this changes every single render (since the cursor changes...) huge bug that took days to fix...
     const endpointBuilder  = (endpoint) => {
         if (endpoint.search('\\?') !== -1) {
@@ -53,7 +64,9 @@ function SingleCarousel({endpoint, index, showFavoriteSelect, initialImages={ima
                 {feedData.images.map((image, index) => {
                     const { name, images, id } = image
                     return (
-                    <div key={'art-'+index.toString()+index.toString() } className={'imgholder ' + imgSize}>
+                    <div key={'art-'+index.toString()+index.toString() } className={'imgholder ' + imgSize} 
+                    // ref={refs.current[index]}
+                    >
                             <img
                             alt={name}
                             data-src={'https://storage.googleapis.com/artsnob-image-scrape/'+images}

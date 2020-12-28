@@ -70,6 +70,7 @@ Start of Framer elements
 */
 
 @import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Raleway&display=swap');
 @import url('https://fonts.googleapis.com/css?family=Poiret+One&display=swap');
 @import url('https://fonts.googleapis.com/css?family=Italiana&display=swap');
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
@@ -165,6 +166,13 @@ main {
   /* color: #888;  */
 }
 
+.material-icons.md-28 { 
+  cursor: pointer;
+  font-size: 28px; 
+  color: #888; 
+}
+
+
 .material-icons.md-48 { 
   cursor: pointer;
   font-size: 48px; 
@@ -203,6 +211,11 @@ main {
 .art-feed-small.large {
   height: 175px;
 }
+
+.art-feed-small.small {
+  height: 100px;
+}
+
 
 .art-feed::-webkit-scrollbar {    display: none;}
 .art-feed-small::-webkit-scrollbar { display: none;}
@@ -251,6 +264,10 @@ main {
   height: 175px;
 }
 
+.carousal-spacing.main-feed.small {
+  height: 100px;
+}
+
 .carousal-spacing.main-feed::-webkit-scrollbar {    display: none;}
 
 
@@ -283,6 +300,11 @@ main {
 .imgholder.large {
   width: 175px;
   height: 175px;
+}
+
+.imgholder.small {
+  width: 100px;
+  height: 100px;
 }
 
 .imgholder img {
@@ -1112,8 +1134,8 @@ main {
   align-items: center;
   overflow: hidden;
   background-color: white;
-  padding-top: 30px;
-  padding-bottom: 30px;
+  padding-top: 45px;
+  padding-bottom: 45px;
 }
 
 .footer {

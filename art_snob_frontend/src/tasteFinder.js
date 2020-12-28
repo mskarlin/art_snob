@@ -7,7 +7,7 @@ import ButtonGroup from '@material-ui/core/ButtonGroup';
 import Box from '@material-ui/core/Box';
 import ThumbUpAltOutlinedIcon from '@material-ui/icons/ThumbUpAltOutlined';
 import ThumbDownAltOutlinedIcon from '@material-ui/icons/ThumbDownAltOutlined';
-import ClearOutlinedIcon from '@material-ui/icons/ClearOutlined';
+import CachedIcon from '@material-ui/icons/Cached';
 import FindReplaceOutlinedIcon from '@material-ui/icons/FindReplaceOutlined';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Card from '@material-ui/core/Card';
@@ -22,7 +22,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 function LinearProgressWithLabel(props) {
     return (
-      <Box display="flex" alignItems="center" width="100%" height="40px" style={{width: "75%", paddingBottom: "15px"}}>
+      <Box display="flex" alignItems="center" width="100%" height="40px" style={{width: "75%", paddingTop: "15px"}}>
         <Box width="100%" mr={1}>
           <LinearProgress variant="determinate" {...props} />
         </Box>
@@ -78,10 +78,11 @@ function ClusterView({art, exploreCluster}) {
 
     return (
         <>
-        <LinearProgressWithLabel value={Math.min(100 * state.newRoomShow.selectionRoom.clusterData.likes.length / 4.0, 100)}/>
         <div className='select-explain'>
           <Typography variant="body1" align="center">
-            {'What do you think of '+ exploreCluster.description.toLowerCase() +' art, like those below?'}
+            {'What do you think of the below '}
+            <b> {exploreCluster.description.toLowerCase()}</b>
+            {' art?'}
           </Typography>
         </div>
         <div className='preference-flex'>
@@ -91,17 +92,19 @@ function ClusterView({art, exploreCluster}) {
         <ButtonGroup aria-label="outlined primary button group" style={{paddingTop: "15px"}}>
             <Button onClick={() => {
               dispatch({type: 'CLUSTER_LIKE', like: exploreCluster.cluster});
-            }}>Like{<ThumbUpAltOutlinedIcon/>}</Button>
+            }}>{<ThumbUpAltOutlinedIcon/>}</Button>
             <Button onClick={() => {
               dispatch({type: 'CLUSTER_SKIP'});
-              }}>Skip{<ClearOutlinedIcon/>}</Button>
+              }}>Skip</Button>
             <Button onClick={() => {
               dispatch({type: 'CLUSTER_DISLIKE', dislike: exploreCluster.cluster});
-            }}>Dislike{<ThumbDownAltOutlinedIcon/>}</Button>
+            }}>{<ThumbDownAltOutlinedIcon/>}</Button>
         </ButtonGroup>
         <Button onClick={() => {
               dispatch({type: 'CLUSTER_MORE'});
-            }}>See more{<FindReplaceOutlinedIcon/>}</Button>
+            }}>See more{<CachedIcon/>}</Button>
+
+        <LinearProgressWithLabel value={Math.min(100 * state.newRoomShow.selectionRoom.clusterData.likes.length / 4.0, 100)}/>
         </>
       )
 }
@@ -137,7 +140,7 @@ function TasteBrowse() {
             // const tasteComplete = () => {
                 dispatch({type: 'ADD_ROOM', 'room': state.newRoomShow.selectionRoom});
                 dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: state.newRoomShow.selectionRoom});
-                dispatch({type: 'TOGGLE_NEW_ROOM_SHOW'});
+                dispatch({type: 'TOGGLE_NEW_ROOM_SHOW', show: false});
                 navigate('/browse/'+state.newRoomShow.selectionRoom.id);
               }
 
@@ -276,22 +279,27 @@ export function TasteFinder() {
       }
     }
 
-    const maybeNewRoomCreate = (refresh=false) => {
+    const maybeNewRoomCreate = (refresh=false, keepClusters=false) => {
         if (!('id' in state.newRoomShow.selectionRoom) || refresh) {
-            const tmpRoom = {...state.blankRoom, id: uuidv4()}
+            let tmpRoom = {...state.blankRoom, id: uuidv4()}
+            // use the first room's cluster data if it exists
+            if (keepClusters) {
+              tmpRoom['clusterData'] = state.rooms[0].clusterData
+            }
             dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: '', selectionRoom: tmpRoom, show: state.newRoomShow.show}})
             return tmpRoom
         }
     }
 
     const roomFeed = () => {
+      console.log('NEWROOMSHOWSHOW', state.newRoomShow.show)
       if((state.rooms.length === 0) || (state.newRoomShow.show)){
         // if we didn't come from a room (to edit it) then we need to make a working room that we're going to be editing
         maybeNewRoomCreate()
         return (
             <div className="works-select-menu">
                 <div className="explain-menu">
-                  <span className="material-icons md-36" onClick={buttonCopy().backFunc}>keyboard_backspace</span>
+                  <span className="material-icons md-28" style={{'paddingLeft': "10px", 'paddingTop': "10px"}} onClick={buttonCopy().backFunc}>arrow_back_ios</span>
                   <div className="explain-text">{buttonCopy().backCopy}</div>
               </div>
               <TasteBrowse/>
@@ -302,7 +310,7 @@ export function TasteFinder() {
           return (
             <div className="works-select-menu">
                 <div className="explain-menu">
-                  <span className="material-icons md-36" onClick={ () => dispatch({type: 'TOGGLE_VIBE_SELECT'}) }>keyboard_backspace</span>
+                  <span className="material-icons md-28" style={{'paddingLeft': "10px", 'paddingTop': "10px"}} onClick={ () => dispatch({type: 'TOGGLE_VIBE_SELECT'}) }>arrow_back_ios</span>
                   <div className="explain-text"></div>
               </div>
               <VibeSelect/>
@@ -313,7 +321,7 @@ export function TasteFinder() {
       else {
         return (<div className="works-select-menu">
                 <div className="explain-menu">
-                <span className="material-icons md-36" onClick={buttonCopy(false).backFunc}>keyboard_backspace</span>
+                <span className="material-icons md-28" style={{'paddingLeft': "10px", 'paddingTop': "10px"}} onClick={buttonCopy(false).backFunc}>arrow_back_ios</span>
                 <div className="explain-text">{buttonCopy(false).backCopy}</div>
                 </div>
                     <div className='taste-card-select'>
@@ -328,7 +336,7 @@ export function TasteFinder() {
                         </CardContent>
                         <CardActions>
                             <Button size="small" variant="outlined" color="secondary"
-                            onClick={() => {let tmpRoom = maybeNewRoomCreate(true)
+                            onClick={() => {let tmpRoom = maybeNewRoomCreate(true, true)
                                 dispatch({type: 'ADD_ROOM', 'room': tmpRoom});
                                 navigate('/rooms/');
                             }}
@@ -336,7 +344,7 @@ export function TasteFinder() {
                             <Button size="small" variant="outlined"
                             onClick={() => {
                                 maybeNewRoomCreate(true)
-                                dispatch({type: 'TOGGLE_NEW_ROOM_SHOW'});
+                                dispatch({type: 'TOGGLE_NEW_ROOM_SHOW', show: true});
                             }}
                             >Retake Taste Finder</Button>
                         </CardActions>

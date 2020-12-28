@@ -204,8 +204,7 @@ class DataStoreInterface(object):
 
             return self.maybetolist({q.key.id_or_name: q for q in page}, None, tolist), next_cursor
 
-    @cachetools.cachedmethod(lambda self: self.cache, lock=lambda self: self.lock, key=partial(read_key, 'read'))
-    def read(self, ids: List[Union[int, str]], kind: str, filter_keys: List[str] = None, sorted_list: bool = False, cache_break: int = 0):
+    def read_nocache(self, ids: List[Union[int, str]], kind: str, filter_keys: List[str] = None, sorted_list: bool = False):
         """read filtered values from a list of ids within a particular datastore kind
 
         Args:
@@ -223,21 +222,47 @@ class DataStoreInterface(object):
         keys = [self.ds.key(kind, idx) for idx in ids]
         results = self.ds.get_multi(keys)
 
-        if filter_keys:
+        if results: 
 
-            results = {r.key.id_or_name: self.results_filter(r, filter_keys) for r in results}
+            if filter_keys:
 
+                results = {r.key.id_or_name: self.results_filter(r, filter_keys) for r in results}
+
+            else:
+
+                results = {r.key.id_or_name: r for r in results}
+
+            if sorted_list:
+                return [results[idx] for idx in ids if idx in results]
+
+            else:
+
+                return results
         else:
+            if sorted_list:
 
-            results = {r.key.id_or_name: r for r in results}
+                return []
 
-        if sorted_list:
+            else:
+                
+                return dict()
 
-            return [results[idx] for idx in ids]
+    @cachetools.cachedmethod(lambda self: self.cache, lock=lambda self: self.lock, key=partial(read_key, 'read'))
+    def read(self, ids: List[Union[int, str]], kind: str, filter_keys: List[str] = None, sorted_list: bool = False, cache_break: int = 0):
+        """read filtered values from a list of ids within a particular datastore kind
 
-        else:
+        Args:
+            ids (list[Union[int, str]]): list of ids to be read from datastore
+            kind (str): valid datastore kind name
+            filter_keys (List[str]): (optional) list of keys you'd like filtered before returning
+            sorted_list (bool): return as a sorted list rather than a dict
+            cache_break (int): value used to break cache if needed (0 default for all calls)
 
-            return results
+        Returns:
+            (dict) keyed to record id or sorted list by input ids
+
+        """
+        return self.read_nocache(ids=ids, kind=kind, filter_keys=filter_keys, sorted_list=sorted_list)
 
     def update(self, data_list: List[dict], kind: str, exclude_from_indexes: Tuple[str] = (), ids: List[Any] = None):
         """Update datastore kind keys with values in data_list

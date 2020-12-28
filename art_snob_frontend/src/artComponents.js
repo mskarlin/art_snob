@@ -5,7 +5,11 @@ import { store } from './store.js';
 import _ from 'lodash';
 
 import { navigate } from "@reach/router"
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import Popover from '@material-ui/core/Popover';
+import TextField from '@material-ui/core/TextField';
+
+
+// import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 
 export const useArtData = (artId, dispatch, handleScrollClick) => {
@@ -106,6 +110,12 @@ export function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, room
           fontWeight: 400,
           fontStyle: "normal",
           textAlign: "center",
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          backgroundColor: 'rgba(255, 250, 250, 0.85)'
         }
     // we need to check if (when unfilled) this work can support adding the potential art
    const isArtworkEligible = () => {
@@ -314,9 +324,14 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
     // TODO: memoize this function
     const artPriceExtractor = (art) => {
       if ("size_price_list" in art) {
-        let typeMatch = art.size_price_list.filter( a => a.type.trim() == art.size)
-        if (typeMatch.length > 0) {
-          return "$"+typeMatch[0].price
+        if (art.size_price_list) {
+          let typeMatch = art.size_price_list.filter( a => a.type.trim() == art.size)
+          if (typeMatch.length > 0) {
+            return "$"+typeMatch[0].price
+          }
+          else {
+            return "$0"
+          }
         }
         else {
           return "$0"
@@ -417,6 +432,30 @@ function RoomMenu ({art, room}) {
 
   const globalState = useContext(store);
   const { dispatch } = globalState;
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [name, setName] = React.useState(room.name);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const keyPress = (e) => {
+    if(e.keyCode == 13){
+      setAnchorEl(null);
+    }
+ }
+
+  const handleNameChange = (event) => {
+    setName(event.target.value);
+    dispatch({type: 'NAME_ROOM', id: room.id, name: event.target.value})
+  };
+
+  const open = Boolean(anchorEl);
+  const popoverId = open ? 'simple-popover' : undefined;
 
 return (<div className="menu-box">
           <div className="room-menu-single-item"> 
@@ -433,7 +472,7 @@ return (<div className="menu-box">
               dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: room.name, selectionRoom: {...room, showingMenu: false}, show: true}})
               navigate('/configure/'+room.id)
               }}>edit</span>
-            <div className="room-menu-text">Change room...</div>
+            <div className="room-menu-text">Arrangement...</div>
           </div>
           <div className="room-menu-single-item"> 
             <span className="material-icons md-36" onClick={() => {
@@ -441,6 +480,26 @@ return (<div className="menu-box">
               }}>shopping_cart</span>
             <div className="room-menu-text">Purchase room...</div>
           </div>
+          <div className="room-menu-single-item"> 
+            <span className="material-icons md-36" onClick={handleClick}>title</span>
+            <div className="room-menu-text">Rename...</div>
+          </div>
+          <Popover 
+              id={popoverId}
+              open={open}
+              anchorEl={anchorEl}
+              onClose={handleClose}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+          >
+          <TextField id="standard-name" label="Name" value={name} onChange={handleNameChange} onKeyDown={keyPress}/>
+          </Popover>
         </div>
         )
 }  

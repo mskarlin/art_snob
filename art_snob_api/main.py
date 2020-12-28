@@ -7,13 +7,15 @@ import time
 import random as rand
 import itertools
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Optional
+from uuid import UUID
+
 from pydantic import BaseModel
 
 sys.path.insert(0, '../')
 from utilities.datastore_helpers import DataStoreInterface
 from utilities.storage_helpers import download_gcs_local
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Depends, HTTPException
 # from google.cloud import logging
 
 # logging.basicConfig(level=logging.INFO)
@@ -25,6 +27,8 @@ import pickle
 import copy
 import google.cloud.logging # Don't conflict with standard logging
 from google.cloud.logging.handlers import CloudLoggingHandler
+from fastapi_cloudauth.firebase import FirebaseCurrentUser, FirebaseClaims
+
 client = google.cloud.logging.Client()
 handler = CloudLoggingHandler(client, name=os.environ.get('LOGGINGNAME', 'deco_api.dev'))
 cloud_logger = logging.getLogger('cloudLogger')
@@ -35,6 +39,7 @@ cloud_logger.addHandler(handler)
 from src.feed import PersonalizedArt, ExploreExploitClusters, DistanceClusterModel
 from src.art_configurations import ArtConfigurations
 from src.datastore_helpers import DatastoreInteractions, FriendlyDataStore
+from jose.exceptions import JWTError
 
 DISTANCE_CLUSTER_MODEL = os.environ.get('DISTANCE_CLUSTER_MODEL', '12012020-distance-cluster-model.pkl')
 DCM_ALPHA = os.environ.get('DCM_ALPHA', '1.0')
@@ -55,6 +60,13 @@ eec = ExploreExploitClusters(dcm,
 app = FastAPI()
 
 ac = ArtConfigurations(fileloc=os.environ.get('ART_CONFIG_FILE', 'art_configurations.csv'))
+
+# the below function won't actually catch... 
+def get_current_user():
+    try:
+        return FirebaseCurrentUser()
+    except:
+        raise HTTPException(status_code=400)
 
 @app.on_event("startup")
 async def startup_event():
@@ -323,7 +335,10 @@ def art(art_id: int, session_id=None, max_tags=5, return_clusters=True):
     
     if return_clusters: 
         cluster_info = dsi.read(ids=[art_id], kind=data.CLUSTER_INDEX, sorted_list=False)
-        work['metadata'] = cluster_info[art_id]
+        if art_id in cluster_info:
+            work['metadata'] = cluster_info[art_id]
+        else:
+            work['metadata'] = {'cluster_id': -1}
 
     tag_scores = data.tag_scores([w.lower() for w in work['standard_tags']])
     
@@ -365,9 +380,74 @@ class Action(BaseModel):
     action: str
     item: str
 
+class PriceSize(BaseModel):
+    size: str
+    price: str
+    type: str
+
+class Art(BaseModel):
+    standard_tags: List[str]
+    images: str
+    description: str
+    checksum: str
+    image_urls: List[str]
+    name: str
+    color_list: List[str]
+    artist: str
+    size_price_list: List[PriceSize]
+    page_url: str
+
+class RoomArt(Art):
+    id: int
+    size: str
+    artId: str = None
+    standard_tags: Optional[List[str]]
+    images: Optional[str]
+    description: Optional[str]
+    checksum: Optional[str]
+    image_urls: Optional[List[str]]
+    name: Optional[str]
+    color_list: Optional[List[str]]
+    artist: Optional[str]
+    size_price_list: Optional[List[PriceSize]]
+    page_url: Optional[str]
+
+class Room(BaseModel):
+    name: str
+    roomType: str
+    art: List[RoomArt]
+    arrangement: Dict
+    arrangementSize: int
+    clusterData: Dict
+    id: str
+
+
+class AppState(BaseModel):
+    sessionId: str
+    likedArt: List[Art]
+    rooms: List[Room]
+
+
+class SessionLogin(BaseModel):
+    sessionId: str
+    hashkey: str
+
 @app.post('/actions/')
 def actions(action: Action):
     data.write_action(action)
     log_exposure([{'tmp': None}], action.session, how=f"interaction:{action.action}", id=action.item)
     return action
 
+@app.post('/state/')
+def state(app_state: AppState, current_user: FirebaseClaims = Depends(get_current_user())):
+    data.write_state(app_state)
+    return 'posted!'
+
+@app.post('/sessionlogin/')
+def sessionlogin(login: SessionLogin, current_user: FirebaseClaims = Depends(get_current_user())) -> AppState:
+    data.write_login(login)
+    return data.get_state(login.hashkey)
+
+@app.get('/session_state/{session}')
+def session_state(session: str, current_user: FirebaseClaims = Depends(get_current_user())):
+    return data.get_state(hashkey=None, session=session)

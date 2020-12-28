@@ -37,6 +37,8 @@ class FriendlyDataStore():
     TAG_REVERSE_INDEX = '11202020-tag_reverse_index'
     CLUSTER_REVERSE_INDEX = '11292020-inverse-cluster-index'
     CLUSTER_INDEX = '12122020-cluster-index'
+    STATE_KIND = '12202020-state'
+    STATE_LOGIN = '12202020-login'
     # RAND_MIN = 4503653962481664  # used for scraped-image-data indices
     # RAND_MAX = 6755350696951808
     RAND_MIN = 1
@@ -52,6 +54,45 @@ class FriendlyDataStore():
         write_dict['item'] = action.item
         write_dict['time'] = datetime.datetime.now()
         self.dsi.update([write_dict], kind=self.ACTION_KIND)
+    
+    def write_state(self, state):
+        self.dsi.update([{'state': state.dict()}], 
+        exclude_from_indexes=('state',), kind=self.STATE_KIND,
+        ids=[state.sessionId])
+    
+    def write_login(self, login):
+        
+        # first find out if there's already a session for this user
+        session = self.dsi.read_nocache(ids=[login.hashkey], kind=self.STATE_LOGIN, sorted_list=True)
+        
+        if len(session) == 0:
+            print('NO SESSION FOUND, CREATING USER')
+            self.dsi.update([{'session_id': login.sessionId}],
+            kind=self.STATE_LOGIN, ids=[login.hashkey])
+        else:
+            print('SESSION FOUND, USING USER')
+            return session
+
+    def get_state(self, hashkey, session=[]):
+        
+        if len(session) == 0:
+            session = self.dsi.read_nocache(ids=[hashkey], kind=self.STATE_LOGIN, sorted_list=True)
+
+        if len(session) > 0:
+            
+            session = session[0]['session_id']
+
+            state = self.dsi.read_nocache(ids=[session], kind=self.STATE_KIND, sorted_list=True)
+
+            if len(state) > 0:
+                return state[0]['state']
+
+            else:
+
+                return None
+        else:
+            return None
+
 
     def get_user_likes(self, user, cutoff=10):
         """Get all objects that a user has liked"""

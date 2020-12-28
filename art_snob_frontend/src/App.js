@@ -5,13 +5,16 @@ import { Router, Link, navigate, useMatch } from "@reach/router"
 import { v4 as uuidv4 } from 'uuid';
 import './sidebar.scss';
 import './App.css';
+import { CookiesProvider, useCookies } from 'react-cookie';
 import { useFetch, useInfiniteScroll } from './feedHooks'
 import {Rooms} from "./artComponents"
 import {TasteFinder} from "./tasteFinder"
 import {ArtDetail, ArtCarousel} from "./detailView"
 import {RoomConfigurations} from "./roomConfiguration.js"
 import {ArtBrowse} from "./artBrowse"
-import { StateProvider, store, UserProvider } from './store.js';
+import {Privacy} from "./privacy.js"
+import {Terms} from "./terms.js"
+import { StateProvider, store, UserProvider, initialState } from './store.js';
 import {SignIn, SignUp, PasswordReset} from './userRoutes.js'
 import {PurchaseList} from "./purchasePage"
 import Button from '@material-ui/core/Button';
@@ -62,26 +65,30 @@ function App() {
   useInfiniteScroll(feedBoundaryRef, setLoadMore);
 
   return (
-    <UserProvider>
-      <StateProvider>
-      <ThemeProvider theme={fontTheme}>
-      <Router>
-          <AppParent path="/" imgData={imgData} feedBoundaryRef={feedBoundaryRef}>
-            <SplashPage path="/" />
-            <SignIn path="/signin" />
-            <SignUp path="/signup" />
-            <PasswordReset path="/passwordreset" />
-            <TasteFinder path="/taste"/>
-            <RoomConfigurations path="/configure/:id"/>
-            <Rooms path="/rooms"/>
-            <ArtBrowse path="/browse/:id"/>
-            <ArtDetail path="/detail/:id"/>
-            <PurchaseList path="/purchase/:id"/>
-          </AppParent>
-        </Router>
-        </ThemeProvider>
-      </StateProvider>
-    </UserProvider>
+    <CookiesProvider>
+      <UserProvider>
+        <StateProvider>
+        <ThemeProvider theme={fontTheme}>
+        <Router>
+            <AppParent path="/" imgData={imgData} feedBoundaryRef={feedBoundaryRef}>
+              <SplashPage path="/" />
+              <SignIn path="/signin" />
+              <SignUp path="/signup" />
+              <Privacy path="/privacy"/>
+              <Terms path="/terms"/>
+              <PasswordReset path="/passwordreset" />
+              <TasteFinder path="/taste"/>
+              <RoomConfigurations path="/configure/:id"/>
+              <Rooms path="/rooms"/>
+              <ArtBrowse path="/browse/:id"/>
+              <ArtDetail path="/detail/:id"/>
+              <PurchaseList path="/purchase/:id"/>
+            </AppParent>
+          </Router>
+          </ThemeProvider>
+        </StateProvider>
+      </UserProvider>
+    </CookiesProvider>
   )
 }
 
@@ -120,9 +127,9 @@ function LandingPage() {
   if (baseMatch) {
   return (
   <div style={{marginTop: "77px"}}>
-  <ArtCarousel endpoints={['/random/']} showTitle={false}/>
+  <ArtCarousel endpoints={['/random/']} showTitle={false} imgSize={'large'}/>
   <div className='welcome-banner'>
-    <Typography variant="h5" align="center" style={{fontWeight: 800, paddingBottom: "15px"}}>Complete your home with the perfect wall art.</Typography>
+    <Typography variant="h5" align="center" style={{fontWeight: 800, paddingBottom: "15px"}}>Find art that matches your taste</Typography>
     <Button variant="contained" color="secondary" onClick={()=>{
                             const tmpRoom = {...state.blankRoom, id: uuidv4()}
                             dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: '', selectionRoom: tmpRoom, show: true}});
@@ -133,7 +140,7 @@ function LandingPage() {
      Start the taste finder
     </Button>
   </div>
-  <ArtCarousel endpoints={['/random/']} showTitle={false}/>
+  <ArtCarousel endpoints={['/random/']} showTitle={false} imgSize={'small'}/>
   <LandingCopy/>
   </div>
   )}
@@ -145,10 +152,10 @@ function LandingPage() {
 function LandingCopy() {
   return (
     <div className="landing-copy">
-      <Typography variant="h6" align="center">
-        Find the art that matches your taste.
+      <Typography variant="h6" align="center" paragraph={true} style={{ fontWeight: 600}}>
+       Enliven your home with the perfect wall art
       </Typography>
-      <Typography variant="body1" align="center">
+      <Typography variant="body1" align="center" style={{ fontSize: "0.8rem"}}>
         We partner with the largest art print providers while providing advanced recommendation algorithms that
         find the best match for your home out of 100,000+ works.
       </Typography>
@@ -296,6 +303,20 @@ return (
 
 function TopMenuDrawer({drawerOpen, setDrawerOpen, toggleDrawer}) {
 
+  const globalState = useContext(store);
+  const { state, dispatch } = globalState;
+  const [cookies, setCookie, removeCookie] = useCookies(['fbToken']);
+
+  const logOut = () => {
+
+    removeCookie('fbToken')
+    dispatch({type: 'TOGGLE_LOG_STATE', state: false})
+    dispatch({type: 'ASSIGN_STATE', state: initialState})
+    navigate('/rooms')
+
+  }
+
+
   const list = () => (
     <div
       // className={''}
@@ -304,14 +325,32 @@ function TopMenuDrawer({drawerOpen, setDrawerOpen, toggleDrawer}) {
       onKeyDown={toggleDrawer(false)}
     >
       <List>
+          { state.loggedIn ? 
+          <ListItem button key='Log out' onClick={() => logOut()}>
+            <ListItemIcon>{<AssignmentIcon style={{'color': 'black'}}/>}</ListItemIcon>
+            <ListItemText primary='Log out' />
+          </ListItem> :
           <ListItem button key='Sign In' onClick={() => navigate('/signin')}>
             <ListItemIcon>{<AssignmentIcon style={{'color': 'black'}}/>}</ListItemIcon>
             <ListItemText primary='Sign In' />
-          </ListItem>
+          </ListItem>}
+          {
+          state.newRoomShow.show ?
           <ListItem button key='Take taste finder' onClick={() => navigate('/taste')}>
             <ListItemIcon>{<NewReleasesIcon style={{'color': 'black'}}/>}</ListItemIcon>
             <ListItemText primary='Take taste finder' />
+          </ListItem> :
+          <ListItem button key='Browse art' onClick={() => {
+                                                            dispatch({type: 'ART_BROWSE_SEED',
+                                                            artBrowseSeed: state.rooms[0]});
+
+                                                            navigate(`/browse/${state.rooms[0].id}`)
+
+                                                            }}>
+            <ListItemIcon>{<NewReleasesIcon style={{'color': 'black'}}/>}</ListItemIcon>
+            <ListItemText primary='Browse art' />
           </ListItem>
+          }
           <ListItem button key='Rooms' onClick={() => navigate('/rooms')}>
             <ListItemIcon>{<HomeIcon style={{'color': 'black'}}/>}</ListItemIcon>
             <ListItemText primary='Rooms' />

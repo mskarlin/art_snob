@@ -1,22 +1,28 @@
-import React, {Component, createContext, useReducer} from 'react';
+import React, {Component, createContext, useReducer, useEffect} from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { auth } from "./firebase.js";
+import { useCookies } from 'react-cookie';
 
-async function postData(url = '', data = {}) {
+
+async function postData(url = '', data = {}, token=null) {
     // Default options are marked with *
+    let myHeaders = {'Content-Type': 'application/json'}
+
+    if (token) {
+      myHeaders['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(url, {
       method: 'POST', // *GET, POST, PUT, DELETE, etc.
-      mode: 'no-cors', // no-cors, *cors, same-origin
+      mode: 'cors', // no-cors, *cors, same-origin
       cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
       credentials: 'same-origin', // include, *same-origin, omit
-      headers: {
-        'Content-Type': 'application/json'
-        // 'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: myHeaders,
       redirect: 'follow', // manual, *follow, error
       referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
       body: JSON.stringify(data) // body data type must match "Content-Type" header
     });
+
     return response.json(); // parses JSON response into native JavaScript objects
   }
   
@@ -24,17 +30,55 @@ async function postData(url = '', data = {}) {
     //   console.log(data); // JSON data parsed by `data.json()` call
     // });
 
+  String.prototype.hashCode = function(){
+      var hash = 0;
+      for (var i = 0; i < this.length; i++) {
+          var character = this.charCodeAt(i);
+          hash = ((hash<<5)-hash)+character;
+          hash = hash & hash; // Convert to 32bit integer
+      }
+      return hash;
+  }
+
+export async function logIn(email, sessionId, state, dispatch, token) {
+  // get the session back if it exists, and writes session if no session exists
+  if (!email) return;
+
+  const maybeSession = await postData('/sessionlogin/',
+    {hashkey: email.hashCode().toString(), sessionId: sessionId.toString()},
+    token)
+
+  if (maybeSession) {
+      // return if auth failed
+      if ('detail' in maybeSession) {
+        return;
+      }
+      else{
+        dispatch({type: 'TOGGLE_LOG_STATE', state: true})
+      }
+    console.log('Pulled session', maybeSession.sessionId);
+    dispatch({type: 'ASSIGN_STATE', state: maybeSession})
+  }
+  else{
+    dispatch({type: 'TOGGLE_LOG_STATE', state: true})
+    postData('/state/', state, token)
+  }
+    
+  return maybeSession
+}
+
 // todo: write a session ID to the cookies, and write the state every so often? maybe every update??
 // todo: then that way for logins or whatever, we could just load the state? 
 const blankRoom= {reload: true, feed: [], feedCursor: null, roomType: 'blank', 'name': 'My new room', 'showingMenu': false, art: [{id:1, size: 'medium', artId: null}], arrangement: {rows:1}, arrangementSize: 1, clusterData:{likes:[], dislikes:[], skipN:0, startN:0}, vibes: [], 'seedTags': [], 'seedArt': []}
 
 
-const initialState = {
+export const initialState = {
     'landingState': {'open': true},
     'sessionId': uuidv4(),
     'potentialArt': null,
     'blankRoom': blankRoom,
     'artBrowseSeed': null, 
+    'loggedIn': false,
     'purchaseList': null,
     'vibeSelect': false,
     'searchTagSet': [],
@@ -54,19 +98,38 @@ const initialState = {
     'rooms': []
 };
 
+const localState = JSON.parse(localStorage.getItem("deco-state"));
+
 const store = createContext(initialState);
 const { Provider } = store;
 
 const StateProvider = ( { children } ) => {
+  
+  const [cookies, setCookie, removeCookie] = useCookies(['fbToken']);
+
   const [state, dispatch] = useReducer(
       (state, action) => {
     // TODO: delete rooms 
     console.log('StateProvider:ACTION', action)
     console.log('StateProvider:STATE', state)
+    let newState={}
     switch(action.type){
+      case 'ASSIGN_STATE':
+        // need to fill in some non-backend stored state variables, fill with the blank room stuff
+        const addedRooms = action.state.rooms.map(r => {return {...blankRoom, name: r.name, roomType: r.roomType, 
+          art: r.art, arrangement: r.arrangement, arrangementSize: r.arrangementSize, clusterData: r.clusterData, 
+          id: r.id
+        }})
+        return {...state, sessionId: action.state.sessionId, 
+            likedArt: action.state.likedArt, rooms: addedRooms,
+          newRoomShow: {...state.newRoomShow, show: false}}
+      case 'TOGGLE_LOG_STATE':
+        return {...state, loggedIn: action.state}
       case 'ADD_ROOM':
         if (state.rooms.map(r=>r.id).includes(action.room.id)) {
-            return {...state, rooms: state.rooms.map(r => {
+            newState = {...state, 
+              newRoomShow: {...state.newRoomShow, show: false},
+              rooms: state.rooms.map(r => {
                 
                 if (r.id === action.room.id) {
                     return action.room
@@ -76,9 +139,20 @@ const StateProvider = ( { children } ) => {
                 }
 
             })}
+            if (state.loggedIn){
+              postData('/state/', newState, cookies.fbToken)
+            }
+            
+            return newState
         }
         else {
-            return {...state, rooms: state.rooms.concat({...action.room, name: action.room.name + ' ' +(state.rooms.length+1).toString()})}
+            newState={...state, 
+              newRoomShow: {...state.newRoomShow, show: false}, 
+            rooms: state.rooms.concat({...action.room, name: action.room.name + ' ' +(state.rooms.length+1).toString()})}
+            if (state.loggedIn){
+              postData('/state/', newState, cookies.fbToken)
+            }
+            return newState
         }
       case 'CLUSTER_LIKE':
         if (state.newRoomShow.selectionRoom.clusterData.likes.includes(action.like)) {
@@ -159,14 +233,18 @@ const StateProvider = ( { children } ) => {
         return {...state, landingState: {'open': !state.landingState.open}}
       case 'TOGGLE_NEW_ROOM_SHOW':
         // also clear the state so there's no hanging newRoomShow potential room
-        return {...state, newRoomShow: {...state.newRoomShow, show: !state.newRoomShow.show}}
+        return {...state, newRoomShow: {...state.newRoomShow, show: action.show}}
       case 'ASSIGN_NEW_ROOM_SHOW':
         return {...state, newRoomShow: action.newRoomShow}
       case 'POTENTIAL_ART':
         return {...state, potentialArt: action.artData}
       case 'LIKE_ART':
         postData('/actions/', { session: state.sessionId, action: 'liked', item: action.art.artId})
-        return {...state, likedArt: state.likedArt.concat(action.art)}
+        newState = {...state, likedArt: state.likedArt.concat(action.art)}
+        if (state.loggedIn){
+          postData('/state/', newState, cookies.fbToken)
+        }
+        return newState
       case 'PURCHASE_LIST':
           return {...state, purchaseList: action.purchaseList}
       case 'ART_BROWSE_SEED':
@@ -214,7 +292,7 @@ const StateProvider = ( { children } ) => {
             }
           })
         // filter for arrangement in the room equal to action.id
-        return {...state, newRoomShow: {...state.newRoomShow, 
+        newState={...state, newRoomShow: {...state.newRoomShow, 
             selectionRoom: {...state.newRoomShow.selectionRoom, 
                 arrangement: action.arrangement,
                 arrangementSize: action.arrangementSize,
@@ -231,6 +309,10 @@ const StateProvider = ( { children } ) => {
 
               })
               }
+        if (state.loggedIn){
+          postData('/state/', newState, cookies.fbToken)
+        }
+        return newState
       case 'ADD_ROOMTYPE':
         // TODO: this implementatino is bugged... need to include whole state in return
         return state.rooms.map((room, _) => {
@@ -244,7 +326,7 @@ const StateProvider = ( { children } ) => {
         })
       case 'ADD_ART':
         postData('/actions/', { session: state.sessionId, action: 'addtoroom:'+action.roomId, item: action.artId})
-        return {...state, rooms: state.rooms.map((room, _) => {
+        newState = {...state, rooms: state.rooms.map((room, _) => {
           const {id} = room
           if (id == action.roomId) {
               const updatedArtwork = room.art.map((work, _) => {
@@ -272,15 +354,48 @@ const StateProvider = ( { children } ) => {
             return room
           }
         })}
+        if (state.loggedIn){
+          postData('/state/', newState, cookies.fbToken)
+        }
+        return newState
       case 'ADD_NAME':
         return {...state, newRoomShow: {...state.newRoomShow, 
             selectionRoom: {...state.newRoomShow.selectionRoom, 
                 name: action.name
                 }}}
+      
+      case 'NAME_ROOM':
+        if (state.rooms.map(r=>r.id).includes(action.id)) {
+          
+          newState = {...state, 
+            rooms: state.rooms.map(r => {
+              
+              if (r.id === action.id) {
+                  return {...r, name: action.name}
+              }
+              else {
+                  return r
+              }
+
+          })}
+
+          if (state.loggedIn){
+            postData('/state/', newState, cookies.fbToken)
+          }
+          
+          return newState
+      }
+
       default:
         return state;
     }
-  }, initialState);
+  }, localState || initialState); // try the local state first, then back up to the intialState...
+  
+  // TODO: move state posts for logged in users into the effect... where they probably belong
+  useEffect(() => {
+    localStorage.setItem("deco-state", JSON.stringify(state));
+    }, [state]);
+
   return <Provider value={{ state, dispatch }}>{children}</Provider>;
 };
 

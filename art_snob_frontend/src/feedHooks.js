@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, setInterval } from 'react';
 
 export const useFetch = (loadMore, dispatch, setLoadMore) => {
     useEffect(() => {
@@ -35,6 +35,15 @@ export const useTagFetch = (loadMore, dispatch, setLoadMore, endpoint, formatEnd
             setLoadMore(false)
             return e
         })
+
+        // const intervalId = setInterval( () => {
+        // if (refs){
+        //   fieldRef.current.scrollIntoView(refs);
+        // }}, 5000)
+
+        // return () => {clearInterval(intervalId);
+        //   isMounted = false // Let's us know the component is no longer mounted.
+        // }
         // clean up - clear the images
         // return () => {
         //   dispatch({ type: 'RESET', new_feed: {images:[], cursor: null, fetching: true}})
