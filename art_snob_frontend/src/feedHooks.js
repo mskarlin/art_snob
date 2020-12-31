@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef, setInterval } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 
 export const useFetch = (loadMore, dispatch, setLoadMore) => {
     useEffect(() => {

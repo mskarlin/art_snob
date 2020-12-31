@@ -1,4 +1,4 @@
-import React, { useState,  useContext, useReducer, useRef, useCallback } from 'react';
+import React, { useState,  useContext } from 'react';
 import { Router, Link, navigate, useMatch } from "@reach/router"
 
 // import logo from './logo.svg';
@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 import './sidebar.scss';
 import './App.css';
 import { CookiesProvider, useCookies } from 'react-cookie';
-import { useTagFetch, useInfiniteScroll } from './feedHooks'
 import {Rooms} from "./artComponents"
 import {TasteFinder} from "./tasteFinder"
 import {About} from "./about.js"
@@ -20,7 +19,7 @@ import {SignIn, SignUp, PasswordReset} from './userRoutes.js'
 import {PurchaseList} from "./purchasePage"
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
-import { ThemeProvider, createMuiTheme, makeStyles } from '@material-ui/core/styles';
+import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -30,7 +29,6 @@ import HelpIcon from '@material-ui/icons/Help';
 import NewReleasesIcon from '@material-ui/icons/NewReleases';
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import HomeIcon from '@material-ui/icons/Home';
-import FavoriteIcon from '@material-ui/icons/Favorite';
 
 
 const fontTheme = createMuiTheme({
@@ -77,7 +75,7 @@ function App() {
 function TopHeader () {
   
   const globalState = useContext(store);
-  const { dispatch, state } = globalState;
+  const { state } = globalState;
 
   const recommendedEndpoints = () => {
     // get seed art ids to send to the backend
@@ -104,9 +102,6 @@ function TopHeader () {
 
 
 function AppParent({children}) {
-
-  const globalState = useContext(store);
-  const { state } = globalState;
 
   return (
     <div className="App">
@@ -181,50 +176,6 @@ function Footer() {
 }
 
 
-function TopArtFeed({imgData, feedBoundaryRef, menuHide}){
-const globalState = useContext(store);
-const { dispatch, state } = globalState;
-
-  const detailMatch = useMatch('/detail:id')
-  const roomMatch = useMatch('/rooms')
-  // const baseMatch = useMatch('/')
-
-if (detailMatch || roomMatch )
-{ // sizing was: style={{'width': imgData.images.length*126+15+'px'}}
-return (
-        <div className='art-feed'>
-            <div className='carousal-spacing main-feed'>
-              {imgData.images.map((image, index) => {
-                const { artist, images, id } = image
-                return (
-                  <div key={index} className='imgholder'>
-                        <img
-                          alt={artist}
-                          data-src={'https://storage.googleapis.com/artsnob-image-scrape/'+images}
-                          className="imgholder img"
-                          src={'https://storage.googleapis.com/artsnob-image-scrape/'+images}
-                          style={{"pointerEvents": "all"}}
-                          onClick={()=>{
-                            dispatch({type: 'POTENTIAL_ART', artData: null})
-                            navigate('/detail/'+id)
-                            }}
-                        />
-                  </div>
-                )
-              })}
-              {imgData.fetching && (
-              <div className='loadingbox'>
-                <p>...</p>
-              </div>
-                )}
-                <div id='feed-boundary' style={{ border: '1px solid black' }} ref={feedBoundaryRef}></div>
-            </div>
-          </div>
-)}
-else {return <div id='feed-boundary' style={{ display: 'none' }} ref={feedBoundaryRef}></div>}
-}
-
-
 
 function SplashPage() {
   // NOTE THIS IS BEING CALLED MANY TIMES SO FOR EACH IMAGE LOAD OF THE ABOVE..
@@ -264,15 +215,6 @@ function WelcomeMessage() {
   const globalState = useContext(store);
   const { dispatch } = globalState;
 
-  const firstLine = {
-    width: 327,
-    height: 50,
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    alignItems: "flex-end",
-    overflow: "hidden",
-  }
   const welcomeMessage = {
     width: "75vw",
     height: "100vh",

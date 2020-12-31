@@ -1,6 +1,5 @@
-import React, { useState, useReducer, useEffect, useRef, useContext } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 
-import { navigate } from "@reach/router"
 import { store } from './store.js';
 import { ArtColumns, LikesColumns } from './detailView'
 import { tag_suggestions } from './tag_suggestions'
@@ -131,8 +130,8 @@ export function ArtBrowse({children, navigate}) {
                     </div>
                     <div style={{'marginTop': getMargin()}}>
                     
-                    <LikesColumns navigate={navigate} art={state.likedArt} showFavoriteSelect={(state.likedArt.length === 0)} show={(selectBrowseType == 1) && (state.searchTagSet === '')}/>
-                    <ArtColumns key={"recommended-carousel"} title='Recommended Art' navigate={navigate} endpoint={recommendedEndpoints()} show={(selectBrowseType == 0) && (state.searchTagSet === '')}/>
+                    <LikesColumns navigate={navigate} art={state.likedArt} showFavoriteSelect={(state.likedArt.length === 0)} show={(selectBrowseType === 1) && (state.searchTagSet === '')}/>
+                    <ArtColumns key={"recommended-carousel"} title='Recommended Art' navigate={navigate} endpoint={recommendedEndpoints()} show={(selectBrowseType === 0) && (state.searchTagSet === '')}/>
                     <ArtColumns key={"tag-carousel"} title='Tag Results...' endpoint={state.searchTagSet} show={state.searchTagSet !== ''}/>
 
                     </div>

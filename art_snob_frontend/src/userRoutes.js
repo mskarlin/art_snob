@@ -3,11 +3,9 @@ import { Link } from "@reach/router";
 import { logIn, store } from "./store.js"
 import firebase from "firebase/app"
 import "firebase/auth" 
-import { signInWithGoogle, auth } from "./firebase.js";
+import { auth } from "./firebase.js";
 import Typography from '@material-ui/core/Typography';
 import FormControl from '@material-ui/core/FormControl';
-import FormHelperText from '@material-ui/core/FormHelperText';
-import Input from '@material-ui/core/Input';
 import InputLabel from '@material-ui/core/InputLabel';
 import OutlinedInput from '@material-ui/core/OutlinedInput';
 import Button from '@material-ui/core/Button';

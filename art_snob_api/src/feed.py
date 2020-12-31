@@ -72,7 +72,6 @@ class ExploreExploitClusters():
         masked_exp = np.multiply(self.exponential_drop(self.distance_mat), total_mask).sum(axis=0)
     
         if random.random() < self.exp_exl:
-            print('EXPLOIT')
             sorted_mask = np.argsort(-1*masked_exp)
             for item in sorted_mask:
                 if item not in likes:
@@ -81,7 +80,6 @@ class ExploreExploitClusters():
                     else:
                         skip_n -= 1
         else:
-            print('EXPLORE')
             sorted_mask = np.argsort(np.abs(masked_exp))
             for item in sorted_mask:
                 if item not in likes:
@@ -91,14 +89,21 @@ class ExploreExploitClusters():
                         skip_n -= 1
     
     def predict_next(self, likes=[], dislikes=[], skip_n=0, art_ids=True, n_ids=5, n_start=0):
-        
+        # when no likes or dislikes, we allow for a random choice, eventually we'd like this 
+        # to be popular...
         mask = self.preference_mask(likes)
         neg_mask = self.preference_mask(dislikes)
         total_mask = mask - neg_mask
         
         if art_ids:
-            item = self.next_item(total_mask, likes, skip_n)
+            
+            if not likes and not dislikes:
+                item = random.randint(0, len(self.cluster_centers)-1)
+            else:
+                item = self.next_item(total_mask, likes, skip_n)
+
             dist, n_idx = self.nn_tree.query([self.cluster_centers[item]], k=n_ids)
+            
             return {'cluster': int(item), 'description': self.art_cluster_def[item]}, self.key_map[n_idx[:,n_start:n_ids]][0]
         else:
             return self.next_item(total_mask, likes, skip_n)

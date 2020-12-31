@@ -1,5 +1,5 @@
-import React, { useState, useReducer, useEffect, useRef, useContext } from 'react';
-import { useTagFetch, useInfiniteScroll } from './feedHooks'
+import React, { useState, useReducer, useEffect, useContext } from 'react';
+import { useTagFetch } from './feedHooks'
 import {useArtData} from './artComponents'
 import { store } from './store.js';
 import Button from '@material-ui/core/Button';
@@ -18,7 +18,7 @@ export const openInNewTab = (url) => {
 
 export function SingleCarousel({endpoint, index, showFavoriteSelect, initialImages={images:[], cursor: null, fetching: true}, imgSize=''}) {
     const globalState = useContext(store);
-    const { dispatch, state } = globalState;
+    const { state } = globalState;
 
     const feedReducer = (state, action) => {
     switch (action.type) {
@@ -60,9 +60,6 @@ export function SingleCarousel({endpoint, index, showFavoriteSelect, initialImag
 
     useTagFetch(loadMore, feedDataDispatch, setLoadMore, endpoint, formatEndpoint, renderLikes)
 
-    const displayWidths = {'': 126, 'large': 175}
-    const initialWidth = (feedData.images.length + 1 + showFavoriteSelect)*displayWidths[imgSize]+15+'px'
-
     return (<div key={'feed-'+index.toString()} className={'carousal-spacing main-feed '+imgSize}>
                 {feedData.images.map((image, index) => {
                     const { name, images, id } = image
@@ -103,17 +100,17 @@ export function ArtCarousel({endpoints, imgSize='', showTitle=true}) {
 
     // lists of carousels for each type of art
     const makeTitle = (endpoint) => {
-        if (endpoint.substring(1, 14) == "similar_works") {
+        if (endpoint.substring(1, 14) === "similar_works") {
             return "Similar works for you"
         }
-        else if (endpoint.substring(1,5) == "tags") {
+        else if (endpoint.substring(1,5) === "tags") {
             let tagName = endpoint.substring(6)
             return tagName.charAt(0).toUpperCase() + tagName.slice(1) + " works"
         }
-        else if (endpoint.substring(1,6) == "likes") {
+        else if (endpoint.substring(1,6) === "likes") {
             return "My saved art"
         }
-        else if (endpoint.substring(1,5) == "feed") {
+        else if (endpoint.substring(1,5) === "feed") {
             return "Recommended Art"
         }
     }
@@ -128,7 +125,7 @@ export function ArtCarousel({endpoints, imgSize='', showTitle=true}) {
                     <div className='detail-name'>
                     {makeTitle(endpoint)}
                     </div>
-                    {((endpoint.substring(1,5) == "tags") && (state.rooms.length > 0))?
+                    {((endpoint.substring(1,5) === "tags") && (state.rooms.length > 0))?
                     <span className="material-icons md-28" style={{"paddingLeft": "5px"}} 
                     onClick={() => {let tagName = endpoint.substring(6);
                                     tagName = tagName.charAt(0).toUpperCase() + tagName.slice(1) 
@@ -138,7 +135,7 @@ export function ArtCarousel({endpoints, imgSize='', showTitle=true}) {
                     <></>}
                 </div>: <></>}
                 <div className={'art-feed-small ' + imgSize}>
-                    <SingleCarousel imgSize={imgSize} endpoint={endpoint} showFavoriteSelect={endpoint.substring(1,6) == "likes"} index={eindex} key={'sc-'+endpoint}/>
+                    <SingleCarousel imgSize={imgSize} endpoint={endpoint} showFavoriteSelect={endpoint.substring(1,6) === "likes"} index={eindex} key={'sc-'+endpoint}/>
                 </div>
             </div>
             )
@@ -149,11 +146,6 @@ export function ArtCarousel({endpoints, imgSize='', showTitle=true}) {
 }
 
 function ImgColumn ({art}) {
-
-    const globalState = useContext(store);
-    const { dispatch, state } = globalState;
-
-    const location = useLocation();
     
     return (
       <div className='vert-column'>
@@ -213,7 +205,7 @@ export function ArtColumns({title, endpoint, navigate, numColumns=2, show=true})
         if (endpoint.search('\\?') !== -1) {
             return state.artBrowseSeed.feedCursor ? endpoint+'&start_cursor='+state.artBrowseSeed.feedCursor: endpoint
         }
-        else if (endpoint == '') {
+        else if (endpoint === '') {
             return null
         }
         else {
@@ -224,8 +216,6 @@ export function ArtColumns({title, endpoint, navigate, numColumns=2, show=true})
     const formatEndpoint = endpointBuilder(endpoint)
 
     useArtColumnFetch(state.artBrowseSeed.reload, dispatch, endpoint, formatEndpoint, show)
-
-    const displayWidths = {'': 126, 'large': 175}
 
     const showControl = () => {
         if (show) {
@@ -335,7 +325,6 @@ export function ArtDetail({nTags, id}) {
         window.scrollTo(0, 0)
     }
     
-    const ntags = nTags ? nTags : 10
     const [artData, setArtData] = useState({name: "", 
                                             size_price_list: [], 
                                             standard_tags: [], 

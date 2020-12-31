@@ -1,4 +1,4 @@
-import React, { useState,  useEffect, useRef, useContext } from 'react';
+import React, { useState,  useEffect, useContext } from 'react';
 import { navigate } from "@reach/router"
 
 import LinearProgress from '@material-ui/core/LinearProgress';
@@ -8,7 +8,6 @@ import Box from '@material-ui/core/Box';
 import ThumbUpAltOutlinedIcon from '@material-ui/icons/ThumbUpAltOutlined';
 import ThumbDownAltOutlinedIcon from '@material-ui/icons/ThumbDownAltOutlined';
 import CachedIcon from '@material-ui/icons/Cached';
-import FindReplaceOutlinedIcon from '@material-ui/icons/FindReplaceOutlined';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
@@ -63,6 +62,25 @@ function LinearProgressWithLabel(props) {
     )
   }
 
+
+const tasteCompletion = (clusterData) => {
+  // need at least 1 like, so we keep going but
+  // each like is 25% and there are a max of 25 actions, but you need one like
+  // constants determined from google sheet
+  let baseRate = clusterData.likes.length / 5.0
+  let expTerm = (1-Math.exp(-clusterData.nActions/1000.)) * clusterData.nActions
+  if (baseRate === 0) {
+    return 100 * clusterData.nActions / 50
+  }
+  else if (baseRate >= 1.1) {
+    return 100
+  }
+  else {
+    return 100 * baseRate * 4.0 * ( 40.5 * expTerm / 25)
+  }
+}
+
+
 function ClusterView({art, exploreCluster}) {
     const globalState = useContext(store);
     const { dispatch, state } = globalState;
@@ -104,7 +122,7 @@ function ClusterView({art, exploreCluster}) {
               dispatch({type: 'CLUSTER_MORE'});
             }}>See more{<CachedIcon/>}</Button>
 
-        <LinearProgressWithLabel value={Math.min(100 * state.newRoomShow.selectionRoom.clusterData.likes.length / 4.0, 100)}/>
+        <LinearProgressWithLabel value={Math.min(tasteCompletion(state.newRoomShow.selectionRoom.clusterData), 100)}/>
         </>
       )
 }
@@ -115,13 +133,13 @@ function TasteBrowse() {
     const { dispatch, state } = globalState;
     const [art, setArt] = useState([{'id': null},{'id': null},{'id': null},{'id': null}])
     const exploreEndpoint = '/explore/'+state.sessionId 
-    + '?' + 'likes='+encodeURIComponent(state.newRoomShow.selectionRoom.clusterData.likes.join(','))
-    + '&' + 'dislikes='+encodeURIComponent(state.newRoomShow.selectionRoom.clusterData.dislikes.join(','))
-    + '&' + 'skip_n='+encodeURIComponent(state.newRoomShow.selectionRoom.clusterData.skipN)
-    + '&' + 'n_return='+(state.newRoomShow.selectionRoom.clusterData.startN*4+4).toString()
-    + '&' + 'n_start='+(state.newRoomShow.selectionRoom.clusterData.startN*4).toString()
+    + '?likes='+encodeURIComponent(state.newRoomShow.selectionRoom.clusterData.likes.join(','))
+    + '&dislikes='+encodeURIComponent(state.newRoomShow.selectionRoom.clusterData.dislikes.join(','))
+    + '&skip_n='+encodeURIComponent(state.newRoomShow.selectionRoom.clusterData.skipN)
+    + '&n_return='+(state.newRoomShow.selectionRoom.clusterData.startN*4+4).toString()
+    + '&n_start='+(state.newRoomShow.selectionRoom.clusterData.startN*4).toString()
     const [exploreCluster, setExploreCluster] = useState({description: '', cluster: null})
-    const length = state.newRoomShow.selectionRoom.clusterData.likes.length
+    const completion = tasteCompletion(state.newRoomShow.selectionRoom.clusterData)
 
     useEffect(() => {
     
@@ -136,7 +154,7 @@ function TasteBrowse() {
             return e
         })
 
-        if ( length / 4.0 >= 1.0) {
+        if ( completion >= 100) {
             // const tasteComplete = () => {
                 dispatch({type: 'ADD_ROOM', 'room': state.newRoomShow.selectionRoom});
                 dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: state.newRoomShow.selectionRoom});
@@ -149,7 +167,7 @@ function TasteBrowse() {
             setArt([{'id': null},{'id': null},{'id': null},{'id': null}])
         }
     
-        }, [setArt, setExploreCluster, exploreEndpoint, length])
+        }, [setArt, setExploreCluster, exploreEndpoint, completion, dispatch, state.newRoomShow.selectionRoom])
     
     return (
             <div style={{"marginTop": "45px", "height": "100%"}}>
@@ -239,7 +257,7 @@ function VibeSelect() {
             return e
         })
     
-        }, [setVibes])
+        }, [setVibes, state.sessionId])
 
 
     return (<div style={{"marginTop": "45px", "height": "100%"}}>
@@ -262,7 +280,6 @@ export function TasteFinder() {
     const { dispatch, state } = globalState;
 
     let roomStyle = {marginTop: '78px'}
-    let showPrices = false
 
     // TODO: need to grey out buttons when a selection has yet to be made, then solidify when ready
     const buttonCopy = (isNewRoom=true) =>{

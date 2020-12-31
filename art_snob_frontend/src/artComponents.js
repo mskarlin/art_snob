@@ -78,7 +78,7 @@ export function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, room
           height: round(height)+'px',
           overflow: "hidden",
           backgroundColor: "#F8F9FA",
-          border: round(1*PPI) + "px"+" dashed #222",
+          border: round(1*PPI) + "px dashed #222",
           margin: margin,
           padding: showprice ? 0 : round(2*PPI) + "px",
           userSelect: "all",
@@ -95,7 +95,7 @@ export function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, room
     
     if (artImage) {
         frame = {...frame,
-                border: round(1*PPI) + "px"+" solid #222"}
+                border: round(1*PPI) + "px solid #222"}
         
         imagePaper = {...imagePaper,
             backgroundImage: "url(https://storage.googleapis.com/artsnob-image-scrape/" + artImage + ")",
@@ -148,7 +148,7 @@ export function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, room
    const artPriceExtractor = () => {
     if (state.potentialArt) {
       if ("size_price_list" in state.potentialArt) {
-        let typeMatch = state.potentialArt.size_price_list.filter( a => a.type.trim() == size)
+        let typeMatch = state.potentialArt.size_price_list.filter( a => a.type.trim() === size)
         if (typeMatch.length > 0) {
           return "$"+typeMatch[0].price
         }
@@ -214,7 +214,7 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
                                    artImage={art[arrangement[property]-1].images}
                                    roomId={id}
                                    roomArtId={arrangement[property]}
-                                   nullFrame={(art[arrangement[property]-1].artId=="NULLFRAME")}
+                                   nullFrame={(art[arrangement[property]-1].artId==="NULLFRAME")}
                                    showprice={showPrices}
                                    > </ArtWork>)
             continue
@@ -263,9 +263,6 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
   
 
   export function RoomView({room, showPrices}){
-
-    const globalState = useContext(store);
-    const { state } = globalState;
 
     const ref = useRef(null);
     const [dimensions, setDimensions] = useState({ width:0, height: 0 });
@@ -350,7 +347,7 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
     const artPriceExtractor = (art) => {
       if ("size_price_list" in art) {
         if (art.size_price_list) {
-          let typeMatch = art.size_price_list.filter( a => a.type.trim() == art.size)
+          let typeMatch = art.size_price_list.filter( a => a.type.trim() === art.size)
           if (typeMatch.length > 0) {
             return "$"+typeMatch[0].price
           }
@@ -501,7 +498,7 @@ function RoomMenu ({art, room}) {
   };
 
   const keyPress = (e) => {
-    if(e.keyCode == 13){
+    if(e.keyCode === 13){
       setAnchorEl(null);
     }
  }
@@ -568,7 +565,6 @@ return (<div className="menu-box">
   export function Rooms() {
     const globalState = useContext(store);
     const { dispatch, state } = globalState;
-    const [activeStep, setActiveStep] = useState(0);
 
     let showPrices = false
     let headerClassModifier = ''
@@ -600,7 +596,7 @@ return (<div className="menu-box">
                     {(room.showingMenu) ? (<RoomMenu art={room.art} room={room}/>):''}
                     <div className="room" id={room.id} key={room.id}>
 
-                      <RoomDescription key={'rd'+room.id} name={room.name} artNumFilled={room.art.filter(a => (a.artId != null) & (a.artId != 'NULLFRAME')).length} artNumTotal={room.arrangementSize} artDispatch={dispatch} showingMenu={room.showingMenu} room={room}></RoomDescription>
+                      <RoomDescription key={'rd'+room.id} name={room.name} artNumFilled={room.art.filter(a => (a.artId !== null) & (a.artId !== 'NULLFRAME')).length} artNumTotal={room.arrangementSize} artDispatch={dispatch} showingMenu={room.showingMenu} room={room}></RoomDescription>
                       
                       <RoomView key={'rv'+room.id} room={room} showPrices={showPrices}></RoomView>
 

@@ -1,7 +1,6 @@
-import React, { useState,  useEffect, useRef, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import { store } from './store.js';
 import {ArtWork, RoomDescription, RoomView, useArrangementData} from './artComponents.js'
-import Slider from '@material-ui/core/Slider';
 
 import { navigate } from "@reach/router"
 import { v4 as uuidv4 } from 'uuid';
@@ -25,9 +24,7 @@ export function RoomConfigurations() {
 function SingleArtSelect(show) {
     const globalState = useContext(store);
     const { dispatch, state } = globalState;
-  
-    const selectionType = state.newRoomShow.selectionRoom.roomType ? state.newRoomShow.selectionRoom.roomType : ''
-  
+    
     const includeTest = () => {
       if (state.newRoomShow.selectionRoom.arrangementSize === 1) { return "Selected!"} else { return "Not Selected (tap to select)"}
     }
@@ -108,18 +105,14 @@ function SingleArtSelect(show) {
   
   function MultiArtSelect(show) {
     const globalState = useContext(store);
-    const { dispatch, state } = globalState;
+    const { state } = globalState;
     const [numMultiWorks, setNumMultiWorks] = useState(2);
-    const [numVisibleMultiWorks, setNumVisibleMultiWorks] = useState(2);
     const [priceFilter, setPriceFilter] = useState({'min': 20, 'max': 1200});
-    const [visiblePriceFilter, setVisiblePriceFilter] = useState({'min': 20, 'max': 1200});
     const [roomSelect, setRoomSelect] = useState([{'name': null, 
                                                 'art': {id:1, size: 'xsmall', artId: null}, 
                                                 'arrangements': {'rows': [1], 
                                                 'arrangementSize': 1}}])
   
-    const selectionType = state.newRoomShow.selectionRoom.roomType ? state.newRoomShow.selectionRoom.roomType : ''
-
     useArrangementData(numMultiWorks, priceFilter, setRoomSelect)
     const includeTest = () => {
         if (state.newRoomShow.selectionRoom.arrangementSize > 1) { return "Selected!"} else { return "Not Selected (tap to select)"}

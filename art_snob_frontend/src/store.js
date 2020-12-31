@@ -69,7 +69,7 @@ export async function logIn(email, sessionId, state, dispatch, token) {
 
 // todo: write a session ID to the cookies, and write the state every so often? maybe every update??
 // todo: then that way for logins or whatever, we could just load the state? 
-const blankRoom= {reload: true, feed: [], feedCursor: null, roomType: 'blank', 'name': 'My new room', 'showingMenu': false, art: [{id:1, size: 'medium', artId: null}], arrangement: {rows:1}, arrangementSize: 1, clusterData:{likes:[], dislikes:[], skipN:0, startN:0}, vibes: [], 'seedTags': [], 'seedArt': []}
+const blankRoom= {reload: true, feed: [], feedCursor: null, roomType: 'blank', 'name': 'My new room', 'showingMenu': false, art: [{id:1, size: 'medium', artId: null}], arrangement: {rows:1}, arrangementSize: 1, clusterData:{likes:[], dislikes:[], skipN:0, startN:0, nActions:0}, vibes: [], 'seedTags': [], 'seedArt': []}
 
 
 export const initialState = {
@@ -179,6 +179,7 @@ const StateProvider = ( { children } ) => {
               clusterData: {...state.newRoomShow.selectionRoom.clusterData, 
                 skipN: 0, 
                 startN: 0,
+                nActions: state.newRoomShow.selectionRoom.clusterData.nActions + 1,
                 likes: state.newRoomShow.selectionRoom.clusterData.likes.concat(action.like)}}}}
       }
       case 'CLUSTER_DISLIKE':
@@ -191,6 +192,7 @@ const StateProvider = ( { children } ) => {
               clusterData: {...state.newRoomShow.selectionRoom.clusterData, 
                 skipN: 0, 
                 startN: 0,
+                nActions: state.newRoomShow.selectionRoom.clusterData.nActions + 1,
                 dislikes: state.newRoomShow.selectionRoom.clusterData.dislikes.concat(action.dislike)}}}}
       }
       case 'CLUSTER_SKIP':
@@ -198,14 +200,17 @@ const StateProvider = ( { children } ) => {
         return {...state, newRoomShow: {...state.newRoomShow, 
           selectionRoom: {...state.newRoomShow.selectionRoom, 
             clusterData: {...state.newRoomShow.selectionRoom.clusterData, 
-              skipN: currentSkip+1}}}}
+              skipN: currentSkip+1,
+              nActions: state.newRoomShow.selectionRoom.clusterData.nActions + 1
+            }}}}
 
       case 'CLUSTER_MORE':
           const currentStart = state.newRoomShow.selectionRoom.clusterData.startN
           return {...state, newRoomShow: {...state.newRoomShow, 
             selectionRoom: {...state.newRoomShow.selectionRoom, 
               clusterData: {...state.newRoomShow.selectionRoom.clusterData, 
-                startN: currentStart+1}}}}
+                startN: currentStart+1
+              }}}}
       
       case 'ADD_FEED_IMAGES':
         return {...state, artBrowseSeed: {...state.artBrowseSeed, feed: state.artBrowseSeed.feed.concat(action.images), feedCursor: action.cursor}}
@@ -298,7 +303,7 @@ const StateProvider = ( { children } ) => {
         // filter for arrangement in the room equal to action.id
         return {...state, 'rooms': state.rooms.map((room, _) => {
           const {id} = room
-          if (id == action.id) {
+          if (id === action.id) {
             // TODO: add validation that the art exists for this
               return {...room, 
                 showingMenu: action.menu
@@ -317,7 +322,7 @@ const StateProvider = ( { children } ) => {
       case 'ADD_ARRANGEMENT':
         const popArt =  JSON.parse(JSON.stringify(state.newRoomShow.selectionRoom.art));
         const artRenumbered = action.art.map((a, _) => {
-            if (a.artId != 'NULLFRAME') {
+            if (a.artId !== 'NULLFRAME') {
               
               let loopArt = popArt.shift()
               let sPopArt = {}
@@ -371,7 +376,7 @@ const StateProvider = ( { children } ) => {
         // TODO: this implementatino is bugged... need to include whole state in return
         return state.rooms.map((room, _) => {
           const {id} = room
-          if (id == action.id) {
+          if (id === action.id) {
             return {...room, room_type: action.room_type}
           }
           else{
@@ -382,9 +387,9 @@ const StateProvider = ( { children } ) => {
         postData('/actions/', { session: state.sessionId, action: 'addtoroom:'+action.roomId, item: action.artId})
         newState = {...state, rooms: state.rooms.map((room, _) => {
           const {id} = room
-          if (id == action.roomId) {
+          if (id === action.roomId) {
               const updatedArtwork = room.art.map((work, _) => {
-              if (work.id == action.roomArtId) {
+              if (work.id === action.roomArtId) {
                 return {...work, 
                           artId: action.artId,
                           page_url: action.page_url,

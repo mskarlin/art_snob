@@ -1,4 +1,4 @@
-import React, { useState, useReducer, useEffect, useRef, useContext } from 'react';
+import React, { useContext } from 'react';
 import { store } from './store.js';
 import {openInNewTab} from './detailView.js';
 import {ArtWork} from './artComponents.js'
@@ -21,7 +21,7 @@ const useStyles = makeStyles({
 function RoomSummary({art}){
 
     const globalState = useContext(store);
-    const { state, dispatch } = globalState;
+    const { state } = globalState;
     const classes = useStyles();
 
 
@@ -29,7 +29,7 @@ function RoomSummary({art}){
     // TODO: memoize this function
     const artMatchExtractor = (art, value) => {
       if ("size_price_list" in art) {
-        let typeMatch = art.size_price_list.filter( a => a.type.trim() == art.size)
+        let typeMatch = art.size_price_list.filter( a => a.type.trim() === art.size)
         if (typeMatch.length > 0) {
           return typeMatch[0][value]
         }
@@ -41,12 +41,6 @@ function RoomSummary({art}){
         return "0"
       }
 
-    }
-
-    const openAllWindows = () => {
-        state.purchaseList[0].art.forEach( a => {
-            openInNewTab(a.page_url+'?curator=mskarlin');
-        })
     }
 
     return(
@@ -88,7 +82,7 @@ function RoomSummary({art}){
   // show on the basis of the state for purchase rooms...
   export function PurchaseList({id}) {
     const globalState = useContext(store);
-    const { dispatch, state } = globalState;
+    const { state } = globalState;
     let roomStyle = {}
 
     if (!(state.rooms.map(x => x.id).includes(id))) {
