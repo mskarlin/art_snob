@@ -143,7 +143,7 @@ function TasteBrowse() {
 
     useEffect(() => {
     
-        fetch(exploreEndpoint)
+        fetch(process.env.REACT_APP_API_PROXY+exploreEndpoint)
         .then(data => data.json())
         .then(json => {
           setArt(json.art)
@@ -190,7 +190,7 @@ function VibeView({vibe}) {
 
     useEffect(() => {
     
-        fetch('/vibes/' + state.sessionId + '?vibe=' +  encodeURIComponent(vibe.Vibes) + '&n_records=4')
+        fetch(process.env.REACT_APP_API_PROXY+'/vibes/' + state.sessionId + '?vibe=' +  encodeURIComponent(vibe.Vibes) + '&n_records=4')
         .then(data => data.json())
         .then(json => {
             setVibeImages(json.art)
@@ -247,7 +247,7 @@ function VibeSelect() {
 
     useEffect(() => {
     
-        fetch('/vibes/'+state.sessionId)
+        fetch(process.env.REACT_APP_API_PROXY+'/vibes/'+state.sessionId)
         .then(data => data.json())
         .then(json => {
           setVibes(json.vibes)

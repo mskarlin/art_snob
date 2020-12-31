@@ -2,6 +2,8 @@
 import sys
 import os
 # import logging
+from starlette.middleware.cors import CORSMiddleware
+import uvicorn
 import uuid 
 import time
 import random as rand
@@ -16,12 +18,7 @@ sys.path.insert(0, '../')
 from utilities.datastore_helpers import DataStoreInterface
 from utilities.storage_helpers import download_gcs_local
 from fastapi import FastAPI, File, UploadFile, Depends, HTTPException
-# from google.cloud import logging
 
-# logging.basicConfig(level=logging.INFO)
-# logging_client = logging.Client()
-# # This log can be found in the Cloud Logging console under 'Custom Logs'.
-# logger = logging_client.logger(os.environ.get('LOGGINGNAME', 'deco_api.dev'))
 import logging
 import pickle
 import copy
@@ -34,7 +31,6 @@ handler = CloudLoggingHandler(client, name=os.environ.get('LOGGINGNAME', 'deco_a
 cloud_logger = logging.getLogger('cloudLogger')
 cloud_logger.setLevel(logging.INFO) # defaults to WARN
 cloud_logger.addHandler(handler)
-
 
 from src.feed import PersonalizedArt, ExploreExploitClusters, DistanceClusterModel
 from src.art_configurations import ArtConfigurations
@@ -57,7 +53,17 @@ eec = ExploreExploitClusters(dcm,
                             min_dist=float(DCM_MIN_DIST), 
                             exp_exl=float(DCM_EXPLOIT_PCT))
 
-app = FastAPI()
+app = FastAPI(title='deco-api', version="0.1.0")
+
+origins = ["*", "http://localhost:8000/"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 ac = ArtConfigurations(fileloc=os.environ.get('ART_CONFIG_FILE', 'art_configurations.csv'))
 
@@ -305,6 +311,7 @@ def vibes(vibe=None, session_id=None, start_cursor=None, n_records=25, represent
 
 @app.get('/explore/{session_id}')
 def explore(session_id=None, likes:str='', dislikes:str='', skip_n=0, n_return=6, n_start=0):
+    
     if not session_id:
         session_id = str(uuid.uuid4())
 
@@ -480,3 +487,6 @@ def sessionlogin(login: SessionLogin, current_user: FirebaseClaims = Depends(get
 @app.get('/session_state/{session}')
 def session_state(session: str, current_user: FirebaseClaims = Depends(get_current_user())):
     return data.get_state(hashkey=None, session=session)
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8080)
