@@ -81,8 +81,10 @@ export const initialState = {
     'loggedIn': false,
     'purchaseList': null,
     'vibeSelect': false,
-    'searchTagSet': [],
+    'searchTagSet': '',
+    'searchTagNames': [],
     'likedArt': [],
+    'recommendationApprovals': {approvals: [], disapprovals: []},
     'priceRange': {'p_xsmall': {'price': '$40-60', 'name': 'Extra Small', 'sizeDesc': '12" x 14"', artSize: [12, 14], 'priceTextSize': '10px'},
                         'l_xsmall': {'price':'$40-60', 'name': 'Extra Small', 'sizeDesc': '14" x 12"', artSize: [14, 12], 'priceTextSize': '10px'},
                         'xsmall': {'price': '$40-60', 'name': 'Extra Small', 'sizeDesc': '14" x 14"', artSize: [14, 14], 'priceTextSize': '10px'},
@@ -154,6 +156,19 @@ const StateProvider = ( { children } ) => {
             }
             return newState
         }
+      case 'DELETE_ROOM':
+        if (state.rooms.map(r=>r.id).includes(action.room.id)) {
+          newState = {...state, 
+            newRoomShow: {currentName: '', selectionRoom: state.blankRoom, show: state.newRoomShow.show},
+            rooms: state.rooms.filter(r => r.id !== action.room.id)}
+          if (state.loggedIn){
+            postData('/state/', newState, cookies.fbToken)
+          }
+          return newState
+        }
+        else {
+          return state
+          }
       case 'CLUSTER_LIKE':
         if (state.newRoomShow.selectionRoom.clusterData.likes.includes(action.like)) {
           return state
@@ -199,7 +214,7 @@ const StateProvider = ( { children } ) => {
           return {...state, artBrowseSeed: {...state.artBrowseSeed, feed: [], feedCursor: null}}
       
       case 'RELOAD_FEED':
-          return {...state, artBrowseSeed: {...state.artBrowseSeed, reload: !state.artBrowseSeed.reload}}
+          return {...state, artBrowseSeed: {...state.artBrowseSeed, reload: action.reload}}
       
       case 'TOGGLE_VIBE_SELECT':
         return {...state, vibeSelect: !state.vibeSelect}
@@ -238,9 +253,31 @@ const StateProvider = ( { children } ) => {
         return {...state, newRoomShow: action.newRoomShow}
       case 'POTENTIAL_ART':
         return {...state, potentialArt: action.artData}
+      case 'RECOMMENDATION_APPROVAL':
+        
+      let approval = action.approval ? 'reco_approve' : 'reco_disapprove'
+
+        postData('/actions/', { session: state.sessionId, action: approval, item: action.art.artId})
+
+        if (action.approval) {
+          newState = {...state, recommendationApprovals: {...state.recommendationApprovals, 
+            approvals: state.recommendationApprovals.approvals.concat(action.art.artId)}}
+        }
+        else {
+          newState = {...state, recommendationApprovals: {...state.recommendationApprovals, 
+            disapprovals: state.recommendationApprovals.approvals.concat(action.art.artId)}}
+        }
+
+        if (state.loggedIn){
+          postData('/state/', newState, cookies.fbToken)
+        }
+
+        return newState
       case 'LIKE_ART':
         postData('/actions/', { session: state.sessionId, action: 'liked', item: action.art.artId})
-        newState = {...state, likedArt: state.likedArt.concat(action.art)}
+        let tmpArt = action.art
+        tmpArt['id'] = action.art.artId
+        newState = {...state, likedArt: state.likedArt.concat(tmpArt)}
         if (state.loggedIn){
           postData('/state/', newState, cookies.fbToken)
         }
@@ -256,7 +293,7 @@ const StateProvider = ( { children } ) => {
 
         return {...state, artBrowseSeed: action.artBrowseSeed}
       case 'CHANGE_SEARCH_TAG_SET':
-          return {...state, searchTagSet: action.searchTagSet}
+          return {...state, searchTagSet: action.searchTagSet, searchTagNames: action.searchTagNames}
       case 'CHANGE_MENU':
         // filter for arrangement in the room equal to action.id
         return {...state, 'rooms': state.rooms.map((room, _) => {
@@ -281,7 +318,24 @@ const StateProvider = ( { children } ) => {
         const popArt =  JSON.parse(JSON.stringify(state.newRoomShow.selectionRoom.art));
         const artRenumbered = action.art.map((a, _) => {
             if (a.artId != 'NULLFRAME') {
-              let sPopArt = {...popArt.shift(), id: a.id, size: a.size}
+              
+              let loopArt = popArt.shift()
+              let sPopArt = {}
+              
+              loopArt = (loopArt === undefined) ? {} : loopArt
+
+              if ('size_price_list' in loopArt) {
+                  if (loopArt.size_price_list.map(x=>x.type.trim()).includes(a.size)){
+                    sPopArt = {...loopArt, id: a.id, size: a.size}
+                  }
+                  else {
+                    sPopArt = a
+                  }
+              }
+              else{
+                sPopArt = {id: a.id, size: a.size}
+              }
+              
               if (!('artId' in sPopArt)) {
                 sPopArt['artId'] = a.artId
               }
@@ -366,7 +420,7 @@ const StateProvider = ( { children } ) => {
       
       case 'NAME_ROOM':
         if (state.rooms.map(r=>r.id).includes(action.id)) {
-          
+
           newState = {...state, 
             rooms: state.rooms.map(r => {
               

@@ -55,28 +55,31 @@ function RoomSummary({art}){
                     <Typography color="textPrimary" variant="subtitle1" noWrap={true}>
                     {art.name}
                     </Typography>
+                    <div className="card-aligner">
                     <div className="art-purchase-col">
-                    <ArtWork size={art.size} showprice={false} PPI={4.0} artImage={art.images} artId={art.artId} nullFrame={false}/>
-
-                    </div>
-                    <div className="art-purchase-col">
-                        <ul style={{"listStyleType":"none", "padding": "0px"}}>
-                             <li className="pricing">
-                             <Typography variant="body">
+                        <ul style={{"listStyleType":"none", "padding": "0px"}} key='ul-top'>
+                             <li className="pricing" key='size-pricing'>
+                             <Typography variant="body1" key='size-text'>
                               Size: {artMatchExtractor(art, 'size')}
                              </Typography>
                              </li>
-                             <li className="pricing">
-                             <Typography variant="body">
+                             <li className="pricing" key='price-pricing'>
+                             <Typography variant="body1" key='price-text'>
                              Price: {"$"+artMatchExtractor(art, 'price')}
                              </Typography>
                              </li>
                         </ul>
                     </div>
+                    <div className="art-purchase-col">
+                    <ArtWork size={art.size} showprice={false} PPI={4.0} artImage={art.images} artId={art.artId} nullFrame={false}/>
+                    </div>
+                    </div>
                 </CardContent>
                 <CardActions>
+                <div className='card-center'>
                 <Button style={{"backgroundColor":"#DEE2E6"}} variant="outlined"
                             onClick={() => {openInNewTab(art.page_url+'?curator=mskarlin')}}>Artist page link</Button>
+                </div>
                 </CardActions>
             </Card>
     )
@@ -112,7 +115,7 @@ function RoomSummary({art}){
         return (
             <>
               <div className="explain-menu" style={{top: '78px'}}>
-                  <span className="material-icons md-36" onClick={() => {navigate('/rooms')}}>keyboard_backspace</span>
+                  <span className="material-icons md-28" onClick={() => {navigate('/rooms')}}>arrow_back_ios</span>
                   <div className="explain-text">Purchase your art at the source...</div>
               </div>
               <div className="explain-menu" style={{top: '119px'}}>
@@ -124,14 +127,23 @@ function RoomSummary({art}){
 
     // TODO: need to not show this when the browse menu is up
     const purchaseFeed = () => {
-    
+        const marginModifier = (ind) => {
+          if (ind === 0) {
+            return ' top'
+          }
+          else {
+            return ''
+          }
+
+        }
+
         return (purchaseArt.map((art, _) => {
           return (
                  (art.artId)?
-                  <div className="purchase-menu-box" key={'rmb'+art.id}>
+                  <div className={"purchase-menu-box"+marginModifier(_)} key={'rmb'+art.id}>
                     <div className="art-purchase" id={art.id} key={art.id}>
 
-                      <RoomSummary art={art}/>
+                      <RoomSummary art={art} key={'roomartsummary'+art.id}/>
                       
                     </div>
                   </div>:<></>

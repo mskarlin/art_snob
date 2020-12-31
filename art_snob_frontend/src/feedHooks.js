@@ -20,21 +20,21 @@ export const useFetch = (loadMore, dispatch, setLoadMore) => {
 }
 
 export const useTagFetch = (loadMore, dispatch, setLoadMore, endpoint, formatEndpoint, artState) => {
+  
     useEffect(() => {
-        dispatch({ type: 'FETCHING_IMAGES', fetching: true })
+        if (loadMore) {
         fetch(formatEndpoint)
         .then(data => data.json())
         .then(json => {
             dispatch({ type: 'STACK_IMAGES', images: json.art, cursor: json.cursor})
-            dispatch({ type: 'FETCHING_IMAGES', fetching: false })
             setLoadMore(false)
         })
         .catch(e => {
             // handle error
-            dispatch({ type: 'FETCHING_IMAGES', fetching: false })
             setLoadMore(false)
             return e
         })
+      }
 
         // const intervalId = setInterval( () => {
         // if (refs){

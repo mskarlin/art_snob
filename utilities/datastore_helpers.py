@@ -148,6 +148,13 @@ class DataStoreInterface(object):
     def query(self, kind: str, n_records: int = 500, query_filters: List[Tuple[str, str, str]] = None,
               filter_keys: List[str] = None, cursor: Any = None, keys_only: bool = False, tolist: bool = False,
               key_filter: bool = False, cache_break: int = 0):
+        return self.query_nocache(kind=kind, n_records=n_records, query_filters=query_filters,
+              filter_keys=filter_keys, cursor=cursor, keys_only=keys_only, tolist=tolist,
+              key_filter=key_filter, cache_break=cache_break)
+
+    def query_nocache(self, kind: str, n_records: int = 500, query_filters: List[Tuple[str, str, str]] = None,
+              filter_keys: List[str] = None, cursor: Any = None, keys_only: bool = False, tolist: bool = False,
+              key_filter: bool = False, cache_break: int = 0):
         """Query records in a kind, with optional filters and keys
 
         Args:

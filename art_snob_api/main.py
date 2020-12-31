@@ -38,7 +38,7 @@ cloud_logger.addHandler(handler)
 
 from src.feed import PersonalizedArt, ExploreExploitClusters, DistanceClusterModel
 from src.art_configurations import ArtConfigurations
-from src.datastore_helpers import DatastoreInteractions, FriendlyDataStore
+from src.datastore_helpers import FriendlyDataStore
 from jose.exceptions import JWTError
 
 DISTANCE_CLUSTER_MODEL = os.environ.get('DISTANCE_CLUSTER_MODEL', '12012020-distance-cluster-model.pkl')
@@ -152,7 +152,7 @@ def feed(seed_likes:str='', session_id=None, start_cursor='0_25'):
     return {'art': work_list, 'cursor': next_cursor}
 
 @app.get("/random/")
-def random(session_id=None, cursor='0_25'):
+def random(session_id=None, cursor='0_25', curated=True):
 
     if not session_id:
         session_id = str(uuid.uuid4())
@@ -160,11 +160,21 @@ def random(session_id=None, cursor='0_25'):
     start, n_items = cursor.split('_')
     start = int(start)
     n_items = int(n_items)
+    seed = rand.randint(0,10000)
 
-    works = data.random(n_items=n_items, seed=abs(hash(session_id)) % (10 ** 8), start=start)
-    
-    # split up the art into what's needed
-    work_list = list_and_add_image_prefix({'art': works})
+    if not curated:
+        works = data.random(n_items=n_items, seed=abs(hash(session_id)) % (10 ** 8), start=start)
+        # split up the art into what's needed
+        work_list = list_and_add_image_prefix({'art': works})
+    else:
+        vibes = dsi.query(kind = data.VIBES, n_records = 100, tolist = True)
+        vibe_rep_art = [v['RepresentativeArt'] for v in vibes[0]]
+        idx_to_request = [item for sublist in vibe_rep_art for item in sublist]
+        works = dsi.read(ids=idx_to_request, kind=data.INFO_KIND, sorted_list=True)
+        work_list = add_image_prefix(works, ids=idx_to_request)
+        rand.Random(seed).shuffle(work_list)
+
+        return {'art': work_list[:n_items], 'cursor': f"{start+n_items}_{n_items}"}
 
     # recommendations.update({'session_id': session_id})
     return {'art': work_list, 'cursor': f"{start+n_items}_{n_items}"}
@@ -214,7 +224,12 @@ def recommended(session_id=None, likes:str='', dislikes:str='', start_cursor=Non
     likes = [int(l)+1 for l in likes.split(',') if l]
     dislikes = [int(d)+1 for d in dislikes.split(',') if d]
 
-    seed = rand.randint(0,10000)
+    # sub in some randoms if we've got no likes
+    if len(likes) == 0:
+        likes = [rand.randint(0,99) for i in range(3)]
+
+    # seed = rand.randint(0,10000)
+    seed = abs(hash(session_id)) % (10 ** 5)
     start = 0
 
     if start_cursor:
@@ -223,7 +238,7 @@ def recommended(session_id=None, likes:str='', dislikes:str='', start_cursor=Non
         start = int(start)
 
     works = []
-    cdata = data.clusters(likes, seed=seed, cursor=start_cursor, n_records=int(n_return))
+    cdata = data.clusters(likes, seed=seed, cursor=start_cursor, n_records=int(n_return), session_id=session_id)
     work_list = list_and_add_image_prefix({'art': cdata})
 
     log_exposure(work_list, session_id, how=f"exposure:recommended:{likes}|{dislikes}")
@@ -245,7 +260,7 @@ def taglist(session_id=None, n: int = 300, min_score: float = 4.0):
     return {'tags': sorted(tags[0], key=lambda x: -x['weighted_score'])}
 
 @app.get('/vibes/{session_id}')
-def vibes(vibe=None, session_id=None, start_cursor=None, n_records=25):
+def vibes(vibe=None, session_id=None, start_cursor=None, n_records=25, representative_art=True):
     if not session_id:
         session_id = str(uuid.uuid4())
 
@@ -262,16 +277,29 @@ def vibes(vibe=None, session_id=None, start_cursor=None, n_records=25):
                 tolist = True
                 )
     if vibe:
-        # get the vibe of interest from object
-        vibe_candidate = [v['Clusters'] for v in vibes[0] if v['Vibes'].strip(' ').lower() == vibe.strip(' ').lower()]
-        if vibe_candidate:
-            return recommended(session_id=session_id, 
-                               likes=','.join([str(v) for v in vibe_candidate[0]]), 
-                               dislikes='', 
-                               start_cursor=start_cursor, 
-                               n_return=n_records)
+
+        if representative_art:
+            vibe_rep_art = [v['RepresentativeArt'] for v in vibes[0] if v['Vibes'].strip(' ').lower() == vibe.strip(' ').lower()]
+
+            if vibe_rep_art:
+                works = dsi.read(ids=vibe_rep_art[0], kind=data.INFO_KIND, sorted_list=True)
+                work_list = add_image_prefix(works, ids=vibe_rep_art[0])
+                return {'art': work_list, 'cursor': None}
+
+            else:
+                return {'art': None, 'cursor': None}
+
         else:
-            return {'art': None, 'cursor': None}
+            # get the vibe of interest from object
+            vibe_candidate = [v['Clusters'] for v in vibes[0] if v['Vibes'].strip(' ').lower() == vibe.strip(' ').lower()]
+            if vibe_candidate:
+                return recommended(session_id=session_id, 
+                                likes=','.join([str(v) for v in vibe_candidate[0]]), 
+                                dislikes='', 
+                                start_cursor=start_cursor, 
+                                n_return=n_records)
+            else:
+                return {'art': None, 'cursor': None}
     else:
         return {'vibes': vibes[0]}    
 
@@ -337,6 +365,7 @@ def art(art_id: int, session_id=None, max_tags=5, return_clusters=True):
         cluster_info = dsi.read(ids=[art_id], kind=data.CLUSTER_INDEX, sorted_list=False)
         if art_id in cluster_info:
             work['metadata'] = cluster_info[art_id]
+            work['metadata'].update({'cluster_desc': eec.art_cluster_def[cluster_info[art_id]['cluster_id']]})
         else:
             work['metadata'] = {'cluster_id': -1}
 

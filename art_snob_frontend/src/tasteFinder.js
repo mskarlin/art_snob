@@ -203,8 +203,13 @@ function VibeView({vibe}) {
             
             <CardActions>
                 <Button size="small" variant="outlined" color="secondary"
-                onClick={() => {dispatch({type: "ADD_VIBE", vibe: vibe});
-                dispatch({type: 'ADD_ROOM', 'room': state.newRoomShow.selectionRoom});
+                onClick={() => {
+                  let vibeRoom = {...state.newRoomShow.selectionRoom, 
+                    clusterData: {...state.newRoomShow.selectionRoom.clusterData, 
+                      skipN: 0, 
+                      startN: 0,
+                      likes: vibe.Clusters}}
+                dispatch({type: 'ADD_ROOM', 'room': vibeRoom});
                 dispatch({type: 'TOGGLE_VIBE_SELECT'});
                 navigate('/rooms/');
                 }}
@@ -292,7 +297,6 @@ export function TasteFinder() {
     }
 
     const roomFeed = () => {
-      console.log('NEWROOMSHOWSHOW', state.newRoomShow.show)
       if((state.rooms.length === 0) || (state.newRoomShow.show)){
         // if we didn't come from a room (to edit it) then we need to make a working room that we're going to be editing
         maybeNewRoomCreate()

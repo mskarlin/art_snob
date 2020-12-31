@@ -6,10 +6,11 @@ import { v4 as uuidv4 } from 'uuid';
 import './sidebar.scss';
 import './App.css';
 import { CookiesProvider, useCookies } from 'react-cookie';
-import { useFetch, useInfiniteScroll } from './feedHooks'
+import { useTagFetch, useInfiniteScroll } from './feedHooks'
 import {Rooms} from "./artComponents"
 import {TasteFinder} from "./tasteFinder"
-import {ArtDetail, ArtCarousel} from "./detailView"
+import {About} from "./about.js"
+import {ArtDetail, ArtCarousel, SingleCarousel} from "./detailView"
 import {RoomConfigurations} from "./roomConfiguration.js"
 import {ArtBrowse} from "./artBrowse"
 import {Privacy} from "./privacy.js"
@@ -44,37 +45,18 @@ const fontTheme = createMuiTheme({
 
 
 function App() {
-  const [loadMore, setLoadMore] = useState(false);
-  
-  const imgReducer = (state, action) => {
-    switch (action.type) {
-      case 'STACK_IMAGES':
-        return { ...state, images: state.images.concat(action.images) }
-      case 'FETCHING_IMAGES':
-        return { ...state, fetching: action.fetching }
-      default:
-        return state;
-    }
-  }
-  const [imgData, imgDispatch] = useReducer(imgReducer,{ images:[], fetching: true})
-
-
-  // starting state for entire thing...
-  let feedBoundaryRef = useRef(null);
-  useFetch(loadMore, imgDispatch, setLoadMore);
-  useInfiniteScroll(feedBoundaryRef, setLoadMore);
-
   return (
     <CookiesProvider>
       <UserProvider>
         <StateProvider>
         <ThemeProvider theme={fontTheme}>
         <Router>
-            <AppParent path="/" imgData={imgData} feedBoundaryRef={feedBoundaryRef}>
+            <AppParent path="/">
               <SplashPage path="/" />
               <SignIn path="/signin" />
               <SignUp path="/signup" />
               <Privacy path="/privacy"/>
+              <About path="/about"/>
               <Terms path="/terms"/>
               <PasswordReset path="/passwordreset" />
               <TasteFinder path="/taste"/>
@@ -92,15 +74,36 @@ function App() {
   )
 }
 
-function TopHeader( {imgData, feedBoundaryRef } ) {
+function TopHeader () {
+  
+  const globalState = useContext(store);
+  const { dispatch, state } = globalState;
+
+  const recommendedEndpoints = () => {
+    // get seed art ids to send to the backend
+    const likes = (state.rooms.length > 0) ? state.rooms[0].clusterData.likes.join(',') : ''
+    const dislikes = (state.rooms.length > 0) ? state.rooms[0].clusterData.dislikes.join(',') : ''
+
+    return '/recommended/' + state.sessionId
+    + '?likes='+encodeURIComponent(likes)
+    + '&dislikes='+encodeURIComponent(dislikes)
+}
+  
+  const endpoint =  recommendedEndpoints()
+  const detailMatch = useMatch('/detail:id')
+  const roomMatch = useMatch('/rooms')
+
   return (<div style={{"position": "fixed", "top": 0, "zIndex": 4}}>
             <MainHeader />
-            <TopArtFeed imgData={imgData} feedBoundaryRef={feedBoundaryRef}/>
+            {(detailMatch || roomMatch )?
+            <div className='art-feed'>
+              <SingleCarousel imgSize={''} endpoint={endpoint} showFavoriteSelect={false} index={0} key={'topartfeed'+endpoint}/>
+            </div>: <></>}
           </div>)
 }
 
 
-function AppParent({children, imgData, feedBoundaryRef }) {
+function AppParent({children}) {
 
   const globalState = useContext(store);
   const { state } = globalState;
@@ -109,7 +112,7 @@ function AppParent({children, imgData, feedBoundaryRef }) {
     <div className="App">
       <main>
         <div className="view-parent">
-          <TopHeader imgData={imgData} feedBoundaryRef={feedBoundaryRef}/>
+          <TopHeader />
           <LandingPage />
           {children}
           {<Footer/>}
@@ -153,11 +156,11 @@ function LandingCopy() {
   return (
     <div className="landing-copy">
       <Typography variant="h6" align="center" paragraph={true} style={{ fontWeight: 600}}>
-       Enliven your home with the perfect wall art
+       Bring your home to life with the perfect wall art
       </Typography>
       <Typography variant="body1" align="center" style={{ fontSize: "0.8rem"}}>
-        We partner with the largest art print providers while providing advanced recommendation algorithms that
-        find the best match for your home out of 100,000+ works.
+      We partner with the largest art print sellers to provide 100,000+ gorgeous works to bring your home to life. 
+      Using our advanced, proprietary recommendation algorithms, we find art you will love and arrange it into optimal configurations for your walls.
       </Typography>
     </div>
   )
@@ -187,10 +190,10 @@ const { dispatch, state } = globalState;
   // const baseMatch = useMatch('/')
 
 if (detailMatch || roomMatch )
-{
+{ // sizing was: style={{'width': imgData.images.length*126+15+'px'}}
 return (
         <div className='art-feed'>
-            <div className='carousal-spacing main-feed' style={{'width': imgData.images.length*126+15+'px'}}>
+            <div className='carousal-spacing main-feed'>
               {imgData.images.map((image, index) => {
                 const { artist, images, id } = image
                 return (
@@ -271,30 +274,26 @@ function WelcomeMessage() {
     overflow: "hidden",
   }
   const welcomeMessage = {
-    width: "100vw",
+    width: "75vw",
     height: "100vh",
+    margin: "auto",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
-    alignItems: "center",
+    alignItems: "start",
     overflow: "hidden",
     flexShrink: 0,
     background: "none",
-    alignItems: "center",
     padding: "0px",
     overflow: "hidden",
     transform: "none"
-
   }
 return (
         <div style={welcomeMessage}>
-          <div style={firstLine}>
-            <div className="welcome-to">Welcome to  </div>
-            <div className="magic-lattice-art">Deco</div>
-          </div>
-          <div className="centerline">The room-centric art finder to complete your home.</div>
-          <div className="cookiesnote">Note that we use cookies to store your info between sessions.</div>
+          <Typography variant="h4" align="left" paragraph={true} style={{fontFamily: ["Poiret One", "serif"], color: "#FFFFFF"}}>Welcome to Deco</Typography>
+          <Typography variant="subtitle1"  align="left" paragraph={true} style={{color: "#FFFFFF"}}>Find art that matches your taste.</Typography>
           <Button variant="contained" color="primary" onClick={() => dispatch({type: "TOGGLE_LANDING"})}>Get Started!</Button>
+          <Typography variant="body2"  align="left" paragraph={true} style={{color: "#FFFFFF", marginTop: "15px"}}><i>Note that we use cookies for analytics and recommendations between sessions.</i></Typography>
         </div>
       )
 
@@ -340,7 +339,7 @@ function TopMenuDrawer({drawerOpen, setDrawerOpen, toggleDrawer}) {
             <ListItemIcon>{<NewReleasesIcon style={{'color': 'black'}}/>}</ListItemIcon>
             <ListItemText primary='Take taste finder' />
           </ListItem> :
-          <ListItem button key='Browse art' onClick={() => {
+          <ListItem button key='Browse art or favorites' onClick={() => {
                                                             dispatch({type: 'ART_BROWSE_SEED',
                                                             artBrowseSeed: state.rooms[0]});
 
@@ -359,10 +358,7 @@ function TopMenuDrawer({drawerOpen, setDrawerOpen, toggleDrawer}) {
             <ListItemIcon>{<HelpIcon style={{'color': 'black'}}/>}</ListItemIcon>
             <ListItemText primary='About' />
           </ListItem>
-          <ListItem button key='Favorites' onClick={() => navigate('/browse')}>
-            <ListItemIcon>{<FavoriteIcon style={{'color': 'black'}}/>}</ListItemIcon>
-            <ListItemText primary='Favorites' />
-          </ListItem>
+  
       </List>
     </div>
   );

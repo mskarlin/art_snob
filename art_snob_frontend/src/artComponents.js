@@ -7,6 +7,12 @@ import _ from 'lodash';
 import { navigate } from "@reach/router"
 import Popover from '@material-ui/core/Popover';
 import TextField from '@material-ui/core/TextField';
+import Button from '@material-ui/core/Button';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
 
 
 // import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
@@ -25,7 +31,7 @@ export const useArtData = (artId, dispatch, handleScrollClick) => {
       size_price_list: [], 
       standard_tags: [], 
       artist: "",
-      metadata: "",
+      metadata: {"cluster_id": -1, "cluster_desc": ""} ,
       images: ""});
       handleScrollClick();
     })
@@ -320,6 +326,25 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
     const globalState = useContext(store);
     const { state, dispatch } = globalState;
 
+    const [open, setOpen] = React.useState(false);
+
+        const handleClickOpen = () => {
+          setOpen(true);
+        };
+
+        const handleClose = () => {
+          setOpen(false);
+        };
+
+    const buttonColor = () =>
+    { if (artNumFilled/artNumTotal === 1.0) {
+        return 'secondary'
+    }
+    else {
+      return 'default'
+    }
+  }
+
     //TODO: the case when this is the selected room!
     // TODO: memoize this function
     const artPriceExtractor = (art) => {
@@ -401,8 +426,39 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
             </div>
           </div>
           <span className="material-icons md-36" onClick={()=>{
-                            navigate('/taste/');}} 
+                            if (state.loggedIn === false && state.rooms.length >= 1){
+                              handleClickOpen()
+                            }
+                            else{
+                            navigate('/taste/');}}} 
                             style={{"pointerEvents": "all"}}>add_circle_outline</span>
+           <Dialog
+              open={open}
+              onClose={handleClose}
+              aria-labelledby="alert-dialog-title"
+              aria-describedby="alert-dialog-description"
+            >
+            <DialogTitle id="alert-dialog-title">{"Sign up?"}</DialogTitle>
+            <DialogContent>
+              <DialogContentText id="alert-dialog-description">
+                To save recommendations between sessions please sign up for a free account!
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => {
+                handleClose();
+                navigate('/signup');
+              }} color="primary">
+                Sign Up
+              </Button>
+              <Button onClick={() => {
+                handleClose();
+                navigate('/taste/');
+              }} color="primary" autoFocus>
+                Continue as Guest
+              </Button>
+            </DialogActions>
+          </Dialog>
         </div>
       )
 
@@ -416,6 +472,7 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
           </div>
           <div className="room-works">
             {artNumFilled}/{artNumTotal}, ${Math.round(room.art.map(a => artPriceExtractor(a)).reduce((total, inp) => total+parseFloat(inp.substring(1)), 0))}
+            <Button variant='outlined' size='small' style={{"marginLeft": "15px"}} color={buttonColor()} onClick={() => navigate('/purchase/'+room.id)}>Purchase Art</Button>
           </div>
         </div>
         {(showingMenu) ?
@@ -484,6 +541,10 @@ return (<div className="menu-box">
             <span className="material-icons md-36" onClick={handleClick}>title</span>
             <div className="room-menu-text">Rename...</div>
           </div>
+          <div className="room-menu-single-item"> 
+            <span className="material-icons md-36" onClick={() => dispatch({type: "DELETE_ROOM", room: room})}>delete_outline</span>
+            <div className="room-menu-text">Delete room...</div>
+          </div>
           <Popover 
               id={popoverId}
               open={open}
@@ -509,15 +570,13 @@ return (<div className="menu-box">
     const { dispatch, state } = globalState;
     const [activeStep, setActiveStep] = useState(0);
 
-    // const blurring = state.artDetailShow ? {WebkitFilter: "blur(8px)", filter: "blur(8px)"} : {}
-    const blurring = {}
-    let roomStyle = {...blurring}
     let showPrices = false
+    let headerClassModifier = ''
 
     if (state.potentialArt)
     {
-      roomStyle = {...roomStyle, marginTop: '237px'};
       showPrices = true
+      headerClassModifier = 'explain'
     } 
 
 
@@ -525,7 +584,7 @@ return (<div className="menu-box">
     const artExplain = () => {
       if (state.potentialArt) {
         return (
-              <div className="explain-menu" style={{top: '196px'}}>
+              <div className="explain-menu feed">
                   <span className="material-icons md-36" onClick={() => {dispatch({type: 'POTENTIAL_ART', artData: null})}}>keyboard_backspace</span>
                   <div className="explain-text">Select a spot for your art</div>
               </div>
@@ -556,7 +615,7 @@ return (<div className="menu-box">
     return(
     
     <div className="room-main">
-        <div className="room-feed" style={roomStyle}>
+        <div className={"room-feed "+headerClassModifier}>
         {artExplain()}
         {
           roomFeed()

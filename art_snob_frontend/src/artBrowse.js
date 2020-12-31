@@ -2,7 +2,7 @@ import React, { useState, useReducer, useEffect, useRef, useContext } from 'reac
 
 import { navigate } from "@reach/router"
 import { store } from './store.js';
-import { ArtCarousel, ArtColumns, ArtDetail, LikesColumns } from './detailView'
+import { ArtColumns, LikesColumns } from './detailView'
 import { tag_suggestions } from './tag_suggestions'
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import { makeStyles } from '@material-ui/core/styles';
@@ -42,7 +42,7 @@ export function ArtBrowse({children, navigate}) {
     const classes = useStyles();
     const autoCompleteBox = useRef(null);
     const [selectBrowseType, setSelectBrowseType] = useState(0)
-    const [tagSeedBrowse, setTagSeedBrowse] = useState('')
+    // const [tagSeedBrowse, setTagSeedBrowse] = useState('')
 
     
     const handleChange = (event, newValue) => {
@@ -53,12 +53,14 @@ export function ArtBrowse({children, navigate}) {
         if (e) {
             if (v.length > 0) {
                 dispatch({type: 'CLEAR_FEED_IMAGES'})
-                setTagSeedBrowse('/tags/'+v.join('|'))
+                // setTagSeedBrowse('/tags/'+v.join('|'))
+                dispatch({type: 'CHANGE_SEARCH_TAG_SET', searchTagSet: '/tags/'+v.join('|')})
             }
             else {
                 dispatch({type: 'CLEAR_FEED_IMAGES'})
-                dispatch({type:'RELOAD_FEED'})
-                setTagSeedBrowse('')
+                dispatch({type:'RELOAD_FEED', reload: true})
+                // setTagSeedBrowse('')
+                dispatch({type: 'CHANGE_SEARCH_TAG_SET', searchTagSet: '', searchTagNames: []})
             }
         }
     }
@@ -90,7 +92,7 @@ export function ArtBrowse({children, navigate}) {
                 <div className="browse-feed ">
                     <div className="works-select-menu">
                         <div className="explain-menu">
-                            <span className="material-icons md-36" onClick={() => {
+                            <span className="material-icons md-28" onClick={() => {
                                 navigate('/rooms');
                                 }}>arrow_back_ios</span>
                             <div className="explain-text">Choose any work to fill your rooms</div>
@@ -113,7 +115,7 @@ export function ArtBrowse({children, navigate}) {
                                         id="tags-standard"
                                         classes={classes}
                                         options={tag_suggestions}
-                                        defaultValue={state.searchTagSet}
+                                        defaultValue={state.searchTagNames}
                                         onChange={tagSetter}
                                         renderInput={(params) => (
                                         <TextField
@@ -129,9 +131,9 @@ export function ArtBrowse({children, navigate}) {
                     </div>
                     <div style={{'marginTop': getMargin()}}>
                     
-                    <LikesColumns navigate={navigate} art={state.likedArt} showFavoriteSelect={(state.likedArt.length === 0)} show={(selectBrowseType == 1) && (tagSeedBrowse === '')}/>
-                    <ArtColumns title='Recommended Art' navigate={navigate} endpoint={recommendedEndpoints()} show={(selectBrowseType == 0) && (tagSeedBrowse === '')}/>
-                    <ArtColumns title='Tag Results...' endpoint={tagSeedBrowse} show={tagSeedBrowse !== ''}/>
+                    <LikesColumns navigate={navigate} art={state.likedArt} showFavoriteSelect={(state.likedArt.length === 0)} show={(selectBrowseType == 1) && (state.searchTagSet === '')}/>
+                    <ArtColumns key={"recommended-carousel"} title='Recommended Art' navigate={navigate} endpoint={recommendedEndpoints()} show={(selectBrowseType == 0) && (state.searchTagSet === '')}/>
+                    <ArtColumns key={"tag-carousel"} title='Tag Results...' endpoint={state.searchTagSet} show={state.searchTagSet !== ''}/>
 
                     </div>
                 </div>
