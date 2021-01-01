@@ -72,3 +72,8 @@ create-neo4j-db:
 		-v $(HOME)/neo4j/plugins:/plugins \
 		--env NEO4J_AUTH=neo4j/test \
 		neo4j:latest
+
+deploy-frontend:
+	cd art_snob_frontend ; npm run build
+	cp -r art_snob_frontend/build ./build_deploy/build/
+	cd build_deploy ; gcloud app deploy

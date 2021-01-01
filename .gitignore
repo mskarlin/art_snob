@@ -7,4 +7,5 @@ notebooks/.ipynb_checkpoints
 *.xml
 *.pkl
 *.npy
+build_deploy/build/*
 .DS_Store

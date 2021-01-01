@@ -179,7 +179,7 @@ main {
   /* color: #888;  */
 }
 
-@media (max-width: 400px) { 
+@media (max-width: 479px) { 
 
   .explain-menu {
     box-sizing: border-box;
@@ -303,7 +303,7 @@ main {
 
 }
 
-@media (min-width: 400px) { 
+@media (min-width: 479px) { 
 
 
   .explain-menu {

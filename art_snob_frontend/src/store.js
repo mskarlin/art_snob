@@ -12,7 +12,7 @@ async function postData(url = '', data = {}, token=null) {
       myHeaders['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(process.env.REACT_APP_API_PROXY+url, {
+    const response = await fetch(process.env.REACT_APP_PROD_API_DOMAIN+url, {
       method: 'POST', // *GET, POST, PUT, DELETE, etc.
       mode: 'cors', // no-cors, *cors, same-origin
       cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
@@ -56,7 +56,7 @@ export async function logIn(email, sessionId, state, dispatch, token) {
       else{
         dispatch({type: 'TOGGLE_LOG_STATE', state: true})
       }
-    console.log('Pulled session', maybeSession.sessionId);
+    // console.log('Pulled session', maybeSession.sessionId);
     dispatch({type: 'ASSIGN_STATE', state: maybeSession})
   }
   else{
@@ -111,9 +111,8 @@ const StateProvider = ( { children } ) => {
 
   const [state, dispatch] = useReducer(
       (state, action) => {
-    // TODO: delete rooms 
-    console.log('StateProvider:ACTION', action)
-    console.log('StateProvider:STATE', state)
+    // console.log('StateProvider:ACTION', action)
+    // console.log('StateProvider:STATE', state)
     let newState={}
     switch(action.type){
       case 'ASSIGN_STATE':

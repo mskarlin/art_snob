@@ -175,7 +175,7 @@ function ImgColumn ({art}) {
 const useArtColumnFetch = (loadMore, dispatch, endpoint, formatEndpoint, show) => {
     useEffect(() => {
         if (formatEndpoint && loadMore) {
-            fetch(formatEndpoint)
+            fetch(process.env.REACT_APP_PROD_API_DOMAIN+formatEndpoint)
             .then(data => data.json())
             .then(json => {
                 if (show) {
@@ -421,7 +421,7 @@ return (
             onClick={()=>{dispatch({'type': 'POTENTIAL_ART', 'artData': artData});
                                                             dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
                                                             dispatch({'type': 'CLOSE_ALL_MENUS'})
-                                                            navigate('/rooms/')}}>
+                                                            navigate('/rooms')}}>
             Add to room
             </Button>            
             <Button variant="contained" style={{width: "150px", marginTop: "15px"}}

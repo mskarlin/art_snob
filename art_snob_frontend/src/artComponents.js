@@ -14,14 +14,10 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
-
-// import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-
-
 export const useArtData = (artId, dispatch, handleScrollClick) => {
   useEffect(() => {
       if (artId){
-          fetch('/art/'+artId)
+          fetch(process.env.REACT_APP_PROD_API_DOMAIN+'/art/'+artId)
           .then(response => response.json())
           .then(data => dispatch({...data, artId: artId}));
           handleScrollClick();
@@ -43,7 +39,7 @@ export const useArrangementData = (nWorks, priceFilter, setArrangeData) => {
   useEffect(() => {
       if (nWorks){
           // fetch('/art_configurations/'+nWorks+'?minprice='+priceFilter.min+'&maxprice='+priceFilter.max)
-          fetch('/art_configurations/0?defaults=true')
+          fetch(process.env.REACT_APP_PROD_API_DOMAIN+'/art_configurations/0?defaults=true')
           .then(response => response.json())
           .then(data => {setArrangeData(data.art_configuration);
                         });
@@ -285,9 +281,6 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
 
     const artHeight = {'living_room': '50%', 'blank': '100%'}
 
-    //TODO: set up centerline margins for each room...
-    const centerLineMargins = {'living_room': "75px"}
-
     const roomBackground = {
       width: "100%",
       maxWidth: "500px",
@@ -301,8 +294,6 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
     }
 
     return (
-      // <TransformWrapper pan={{'disabled': true}} wheel={{'disabled': true}}>
-      //       <TransformComponent> 
       <div className="roomview" style={blurring}>
              
             <div ref={ref} style={roomBackground}>
@@ -313,8 +304,6 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
               />
         </div>
       </div>
-      // </TransformComponent>
-      //   </TransformWrapper>
     )
   }
 
@@ -427,7 +416,7 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
                               handleClickOpen()
                             }
                             else{
-                            navigate('/taste/');}}} 
+                            navigate('/taste');}}} 
                             style={{"pointerEvents": "all"}}>add_circle_outline</span>
            <Dialog
               open={open}
@@ -450,7 +439,7 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
               </Button>
               <Button onClick={() => {
                 handleClose();
-                navigate('/taste/');
+                navigate('/taste');
               }} color="primary" autoFocus>
                 Continue as Guest
               </Button>

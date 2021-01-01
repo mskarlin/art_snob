@@ -68,18 +68,9 @@ const tasteCompletion = (clusterData) => {
   // each like is 25% and there are a max of 25 actions, but you need one like
   // constants determined from google sheet
   let baseRate = clusterData.likes.length / 5.0
-  let expTerm = (1-Math.exp(-clusterData.nActions/1000.)) * clusterData.nActions
-  if (baseRate === 0) {
-    return 100 * clusterData.nActions / 50
-  }
-  else if (baseRate >= 1.1) {
-    return 100
-  }
-  else {
-    return 100 * baseRate * 4.0 * ( 40.5 * expTerm / 25)
-  }
+  let expTerm = (clusterData.nActions * 0.04)
+  return 100 * (baseRate + expTerm)
 }
-
 
 function ClusterView({art, exploreCluster}) {
     const globalState = useContext(store);
@@ -143,7 +134,7 @@ function TasteBrowse() {
 
     useEffect(() => {
     
-        fetch(process.env.REACT_APP_API_PROXY+exploreEndpoint)
+        fetch(process.env.REACT_APP_PROD_API_DOMAIN+exploreEndpoint)
         .then(data => data.json())
         .then(json => {
           setArt(json.art)
@@ -190,7 +181,7 @@ function VibeView({vibe}) {
 
     useEffect(() => {
     
-        fetch(process.env.REACT_APP_API_PROXY+'/vibes/' + state.sessionId + '?vibe=' +  encodeURIComponent(vibe.Vibes) + '&n_records=4')
+        fetch(process.env.REACT_APP_PROD_API_DOMAIN+'/vibes/' + state.sessionId + '?vibe=' +  encodeURIComponent(vibe.Vibes) + '&n_records=4')
         .then(data => data.json())
         .then(json => {
             setVibeImages(json.art)
@@ -229,7 +220,7 @@ function VibeView({vibe}) {
                       likes: vibe.Clusters}}
                 dispatch({type: 'ADD_ROOM', 'room': vibeRoom});
                 dispatch({type: 'TOGGLE_VIBE_SELECT'});
-                navigate('/rooms/');
+                navigate('/rooms');
                 }}
                 >Select!</Button>
             </CardActions>
@@ -247,7 +238,7 @@ function VibeSelect() {
 
     useEffect(() => {
     
-        fetch(process.env.REACT_APP_API_PROXY+'/vibes/'+state.sessionId)
+        fetch(process.env.REACT_APP_PROD_API_DOMAIN+'/vibes/'+state.sessionId)
         .then(data => data.json())
         .then(json => {
           setVibes(json.vibes)
@@ -359,7 +350,7 @@ export function TasteFinder() {
                             <Button size="small" variant="outlined" color="secondary"
                             onClick={() => {let tmpRoom = maybeNewRoomCreate(true, true)
                                 dispatch({type: 'ADD_ROOM', 'room': tmpRoom});
-                                navigate('/rooms/');
+                                navigate('/rooms');
                             }}
                             >Continue</Button>
                             <Button size="small" variant="outlined"

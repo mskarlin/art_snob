@@ -3,7 +3,7 @@ import { useEffect, useCallback, useRef } from 'react';
 export const useFetch = (loadMore, dispatch, setLoadMore) => {
     useEffect(() => {
         dispatch({ type: 'FETCHING_IMAGES', fetching: true })
-        fetch('/feed/')
+        fetch(process.env.REACT_APP_PROD_API_DOMAIN+'/feed/')
         .then(data => data.json())
         .then(images => {
             dispatch({ type: 'STACK_IMAGES', images: images.art })
@@ -23,7 +23,7 @@ export const useTagFetch = (loadMore, dispatch, setLoadMore, endpoint, formatEnd
   
     useEffect(() => {
         if (loadMore) {
-        fetch(formatEndpoint)
+        fetch(process.env.REACT_APP_PROD_API_DOMAIN+formatEndpoint)
         .then(data => data.json())
         .then(json => {
             dispatch({ type: 'STACK_IMAGES', images: json.art, cursor: json.cursor})
