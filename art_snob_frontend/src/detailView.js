@@ -8,6 +8,7 @@ import Typography from '@material-ui/core/Typography';
 import _ from 'lodash';
 import { navigate, useLocation } from "@reach/router"
 import ButtonGroup from '@material-ui/core/ButtonGroup';
+import Popper from '@material-ui/core/Popper';
 import ThumbUpAltOutlinedIcon from '@material-ui/icons/ThumbUpAltOutlined';
 import ThumbDownAltOutlinedIcon from '@material-ui/icons/ThumbDownAltOutlined';
 
@@ -16,14 +17,32 @@ export const openInNewTab = (url) => {
     if (newWindow) newWindow.opener = null
 }
 
-export function SingleCarousel({endpoint, index, showFavoriteSelect, initialImages={images:[], cursor: null, fetching: true}, imgSize=''}) {
+export function SingleCarousel({endpoint, index, showFavoriteSelect, initialImages={images:[
+    {name: '', images: '', id: null},
+    {name: '', images: '', id: null},
+    {name: '', images: '', id: null},
+    {name: '', images: '', id: null},
+    {name: '', images: '', id: null},
+    {name: '', images: '', id: null},
+    {name: '', images: '', id: null},
+    {name: '', images: '', id: null},
+    {name: '', images: '', id: null},
+    {name: '', images: '', id: null}
+], cursor: null, fetching: true}, imgSize=''}) {
     const globalState = useContext(store);
     const { state } = globalState;
 
     const feedReducer = (state, action) => {
     switch (action.type) {
         case 'STACK_IMAGES':
-            return {...state, images: state.images.concat(action.images), cursor: action.cursor}
+            let filledSlice = state.images.filter(x=>x.id !== null)
+            let unfilledSlice = state.images.filter(x=>x.id === null)
+            if (unfilledSlice.length > 0) {
+                return {...state, images: filledSlice.concat(action.images).concat(unfilledSlice.slice(action.images.length)), cursor: action.cursor}
+            }
+            else {
+                return {...state, images: state.images.concat(action.images), cursor: action.cursor}
+            }
         case 'FETCHING_IMAGES':
             return {...state, fetching: action.fetching}
         case 'RESET':
@@ -64,9 +83,9 @@ export function SingleCarousel({endpoint, index, showFavoriteSelect, initialImag
                 {feedData.images.map((image, index) => {
                     const { name, images, id } = image
                     return (
-                    <div key={'art-'+index.toString()+index.toString() } className={'imgholder ' + imgSize} 
-                    // ref={refs.current[index]}
-                    >
+                    <div key={'art-'+index.toString()+index.toString() } className={'imgholder ' + imgSize}>
+                        {(id===null)?<CircularProgress style={{'position': 'absolute',
+                        'color': '#018E42', zIndex: 2}}/>:
                             <img
                             alt={name}
                             data-src={'https://storage.googleapis.com/artsnob-image-scrape/'+images}
@@ -76,7 +95,7 @@ export function SingleCarousel({endpoint, index, showFavoriteSelect, initialImag
                             onClick={()=>{
                                 navigate('/detail/'+id)
                                 }}
-                            />
+                            />}
                     </div>
                     )
                 })}
@@ -219,13 +238,7 @@ export function ArtColumns({title, endpoint, navigate, numColumns=2, show=true})
 
     const showControl = () => {
         if (show) {
-            return (<>
-                {/* <div className='select-explain'>
-                    <Typography variant="h5" align="center">
-                    {title}
-                    </Typography>
-                </div> */}
-    
+            return (<>   
                 <div className='preference-flex'>
                     {_.range(numColumns).map((i) => {
                         return <ImgColumn key={'pArtCol-'+i.toString()} navigate={navigate} art={state.artBrowseSeed.feed.slice(i*state.artBrowseSeed.feed.length/numColumns, 
@@ -320,7 +333,8 @@ function RecommendedReason({metadata, state}) {
 export function ArtDetail({nTags, id}) {
     const globalState = useContext(store);
     const { dispatch, state } = globalState;
-     
+
+
     const handleScrollClick = () => {
         window.scrollTo(0, 0)
     }
@@ -379,24 +393,16 @@ return (
             src={'https://storage.googleapis.com/artsnob-image-scrape/'+artData.images}
             />
         </div>
-        {/* <div className="tag-holder">
-        {artData.standard_tags.slice(0, ntags).map(i => {
-            return <button className="tag-button" key={i} onClick={() => { 
-        dispatch({type: 'CHANGE_SEARCH_TAG_SET', searchTagSet: '/tags/'+i, searchTagNames: [i]});
-        dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: state.rooms[0]})
-        navigate('/browse/'+state.rooms[0].id)}
-        }>{i}</button>})}
-        </div> */}
         <div className="tag-holder">
             {RecommendedReason({metadata: artData.metadata, state: state})}
             <ButtonGroup aria-label="outlined primary button group" style={{paddingTop: "15px"}}>
-            <Button color={buttonColor('approve')} onClick={() => {
-              dispatch({type: 'RECOMMENDATION_APPROVAL', art: artData, approval: true});
-            }}>{<ThumbUpAltOutlinedIcon/>}</Button>
-            <Button color={buttonColor('disapprove')} onClick={() => {
-              dispatch({type: 'RECOMMENDATION_APPROVAL', art: artData, approval: false});
-            }}>{<ThumbDownAltOutlinedIcon/>}</Button>
-        </ButtonGroup>
+                <Button color={buttonColor('approve')} onClick={() => {
+                dispatch({type: 'RECOMMENDATION_APPROVAL', art: artData, approval: true});
+                }}>{<ThumbUpAltOutlinedIcon/>}</Button>
+                <Button color={buttonColor('disapprove')} onClick={() => {
+                dispatch({type: 'RECOMMENDATION_APPROVAL', art: artData, approval: false});
+                }}>{<ThumbDownAltOutlinedIcon/>}</Button>
+            </ButtonGroup>
         </div>
         <div className="price-size-action-container">
             <div className="price-size">

@@ -68,7 +68,7 @@ const tasteCompletion = (clusterData) => {
   // each like is 25% and there are a max of 25 actions, but you need one like
   // constants determined from google sheet
   let baseRate = clusterData.likes.length / 5.0
-  let expTerm = (clusterData.nActions * 0.04)
+  let expTerm = (clusterData.nActions * 0.03)
   return 100 * (baseRate + expTerm)
 }
 
@@ -103,7 +103,7 @@ function ClusterView({art, exploreCluster}) {
               dispatch({type: 'CLUSTER_LIKE', like: exploreCluster.cluster});
             }}>{<ThumbUpAltOutlinedIcon/>}</Button>
             <Button onClick={() => {
-              dispatch({type: 'CLUSTER_SKIP'});
+              dispatch({type: 'CLUSTER_SKIP', skipped: exploreCluster.cluster});
               }}>Skip</Button>
             <Button onClick={() => {
               dispatch({type: 'CLUSTER_DISLIKE', dislike: exploreCluster.cluster});
@@ -126,6 +126,7 @@ function TasteBrowse() {
     const exploreEndpoint = '/explore/'+state.sessionId 
     + '?likes='+encodeURIComponent(state.newRoomShow.selectionRoom.clusterData.likes.join(','))
     + '&dislikes='+encodeURIComponent(state.newRoomShow.selectionRoom.clusterData.dislikes.join(','))
+    + '&skipped='+encodeURIComponent(state.newRoomShow.selectionRoom.clusterData.skipped.join(','))
     + '&skip_n='+encodeURIComponent(state.newRoomShow.selectionRoom.clusterData.skipN)
     + '&n_return='+(state.newRoomShow.selectionRoom.clusterData.startN*4+4).toString()
     + '&n_start='+(state.newRoomShow.selectionRoom.clusterData.startN*4).toString()

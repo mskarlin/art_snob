@@ -52,13 +52,12 @@ export function ArtBrowse({children, navigate}) {
         if (e) {
             if (v.length > 0) {
                 dispatch({type: 'CLEAR_FEED_IMAGES'})
-                // setTagSeedBrowse('/tags/'+v.join('|'))
-                dispatch({type: 'CHANGE_SEARCH_TAG_SET', searchTagSet: '/tags/'+v.join('|')})
+                dispatch({type: 'CHANGE_SEARCH_TAG_SET', searchTagSet: '/tags/'+v.join('|'), searchTagNames: v})
+                dispatch({type:'RELOAD_FEED', reload: true})
             }
             else {
                 dispatch({type: 'CLEAR_FEED_IMAGES'})
                 dispatch({type:'RELOAD_FEED', reload: true})
-                // setTagSeedBrowse('')
                 dispatch({type: 'CHANGE_SEARCH_TAG_SET', searchTagSet: '', searchTagNames: []})
             }
         }
@@ -114,7 +113,8 @@ export function ArtBrowse({children, navigate}) {
                                         id="tags-standard"
                                         classes={classes}
                                         options={tag_suggestions}
-                                        defaultValue={state.searchTagNames}
+                                        // defaultValue={state.searchTagNames}
+                                        value={state.searchTagNames}
                                         onChange={tagSetter}
                                         renderInput={(params) => (
                                         <TextField

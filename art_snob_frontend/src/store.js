@@ -69,7 +69,11 @@ export async function logIn(email, sessionId, state, dispatch, token) {
 
 // todo: write a session ID to the cookies, and write the state every so often? maybe every update??
 // todo: then that way for logins or whatever, we could just load the state? 
-const blankRoom= {reload: true, feed: [], feedCursor: null, roomType: 'blank', 'name': 'My new room', 'showingMenu': false, art: [{id:1, size: 'medium', artId: null}], arrangement: {rows:1}, arrangementSize: 1, clusterData:{likes:[], dislikes:[], skipN:0, startN:0, nActions:0}, vibes: [], 'seedTags': [], 'seedArt': []}
+const initialFeed = [{name: '', images: '', id: null}, {name: '', images: '', id: null}, {name: '', images: '', id: null}, {name: '', images: '', id: null},
+{name: '', images: '', id: null}, {name: '', images: '', id: null}, {name: '', images: '', id: null}, {name: '', images: '', id: null}, {name: '', images: '', id: null},                     
+{name: '', images: '', id: null}]
+
+const blankRoom= {reload: true, feed: initialFeed, feedCursor: null, roomType: 'blank', 'name': 'My new room', 'showingMenu': false, art: [{id:1, size: 'medium', artId: null}], arrangement: {rows:1}, arrangementSize: 1, clusterData:{likes:[], dislikes:[], skipped:[], skipN:0, startN:0, nActions:0}, vibes: [], 'seedTags': [], 'seedArt': []}
 
 
 export const initialState = {
@@ -200,6 +204,7 @@ const StateProvider = ( { children } ) => {
           selectionRoom: {...state.newRoomShow.selectionRoom, 
             clusterData: {...state.newRoomShow.selectionRoom.clusterData, 
               skipN: currentSkip+1,
+              skipped: state.newRoomShow.selectionRoom.clusterData.skipped.concat(action.skipped),
               nActions: state.newRoomShow.selectionRoom.clusterData.nActions + 1
             }}}}
 
@@ -212,10 +217,15 @@ const StateProvider = ( { children } ) => {
               }}}}
       
       case 'ADD_FEED_IMAGES':
-        return {...state, artBrowseSeed: {...state.artBrowseSeed, feed: state.artBrowseSeed.feed.concat(action.images), feedCursor: action.cursor}}
-
+        let unfilledFeed = state.artBrowseSeed.feed.filter(x=> x.id === null)
+        if (unfilledFeed.length > 0) {
+          return {...state, artBrowseSeed: {...state.artBrowseSeed, feed: action.images, feedCursor: action.cursor}}
+        }
+        else{
+          return {...state, artBrowseSeed: {...state.artBrowseSeed, feed: state.artBrowseSeed.feed.concat(action.images), feedCursor: action.cursor}}
+        }
       case 'CLEAR_FEED_IMAGES':
-          return {...state, artBrowseSeed: {...state.artBrowseSeed, feed: [], feedCursor: null}}
+          return {...state, artBrowseSeed: {...state.artBrowseSeed, feed: initialFeed, feedCursor: null}}
       
       case 'RELOAD_FEED':
           return {...state, artBrowseSeed: {...state.artBrowseSeed, reload: action.reload}}
