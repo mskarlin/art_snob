@@ -310,15 +310,17 @@ def vibes(vibe=None, session_id=None, start_cursor=None, n_records=25, represent
         return {'vibes': vibes[0]}    
 
 @app.get('/explore/{session_id}')
-def explore(session_id=None, likes:str='', dislikes:str='', skip_n=0, n_return=6, n_start=0):
+def explore(session_id=None, likes:str='', dislikes:str='', skipped:str='', skip_n=0, n_return=6, n_start=0):
     
     if not session_id:
         session_id = str(uuid.uuid4())
 
     likes = [int(l) for l in likes.split(',') if l]
     dislikes = [int(d) for d in dislikes.split(',') if d]
+    skipped = [int(d) for d in skipped.split(',') if d]
 
-    next_cluster, next_items = eec.predict_next(likes=likes, dislikes=dislikes, skip_n=int(skip_n), n_ids=int(n_return), n_start=int(n_start))
+    next_cluster, next_items = eec.predict_next(likes=likes, dislikes=dislikes, skipped=skipped, 
+    skip_n=int(skip_n), n_ids=int(n_return), n_start=int(n_start))
     next_items = [int(ni) for ni in next_items]
 
     # hydrate the items

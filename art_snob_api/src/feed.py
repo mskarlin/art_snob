@@ -67,14 +67,22 @@ class ExploreExploitClusters():
 
         return blank
     
-    def next_item(self, total_mask, likes, skip_n=0):
+    def next_item(self, total_mask, likes, dislikes, skipped, skip_n=0, use_random=True):
+
+        if use_random: 
+            while True:
+                item = random.randint(0, len(self.cluster_centers)-1)
+                if item not in likes and item not in dislikes and item not in skipped:
+                    return item
+                else:
+                    continue
     
         masked_exp = np.multiply(self.exponential_drop(self.distance_mat), total_mask).sum(axis=0)
     
         if random.random() < self.exp_exl:
             sorted_mask = np.argsort(-1*masked_exp)
             for item in sorted_mask:
-                if item not in likes:
+                if item not in likes and item not in dislikes and item not in skipped:
                     if skip_n == 0:
                         return item
                     else:
@@ -82,13 +90,14 @@ class ExploreExploitClusters():
         else:
             sorted_mask = np.argsort(np.abs(masked_exp))
             for item in sorted_mask:
-                if item not in likes:
+                print(item, likes, dislikes, skipped)
+                if item not in likes and item not in dislikes and item not in skipped:
                     if skip_n == 0:
                         return item
                     else:
                         skip_n -= 1
-    
-    def predict_next(self, likes=[], dislikes=[], skip_n=0, art_ids=True, n_ids=5, n_start=0):
+
+    def predict_next(self, likes=[], dislikes=[], skipped=[], skip_n=0, art_ids=True, n_ids=5, n_start=0, use_random=True):
         # when no likes or dislikes, we allow for a random choice, eventually we'd like this 
         # to be popular...
         mask = self.preference_mask(likes)
@@ -100,13 +109,13 @@ class ExploreExploitClusters():
             if not likes and not dislikes:
                 item = random.randint(0, len(self.cluster_centers)-1)
             else:
-                item = self.next_item(total_mask, likes, skip_n)
+                item = self.next_item(total_mask, likes, dislikes, skipped, skip_n, use_random=use_random)
 
             dist, n_idx = self.nn_tree.query([self.cluster_centers[item]], k=n_ids)
             
             return {'cluster': int(item), 'description': self.art_cluster_def[item]}, self.key_map[n_idx[:,n_start:n_ids]][0]
         else:
-            return self.next_item(total_mask, likes, skip_n)
+            return self.next_item(total_mask, likes, dislikes, skipped, skip_n, use_random=use_random)
     
 
 class PersonalizedArt():
