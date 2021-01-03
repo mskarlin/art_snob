@@ -441,7 +441,7 @@ return (
                 const artLength =  (roomLength>0) ? state?.artBrowseSeed?.art?.length : 0;
                 const focusArtId =  state?.artBrowseSeed?.focusArtId ?? 0;
                 
-                if (roomLength == 1 && artLength == 1){
+                if (roomLength === 1 && artLength === 1){
                             dispatch({...artData, type: 'ADD_ART', roomId: state.artBrowseSeed.id, roomArtId: 1})
                             dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
                             dispatch({'type': 'CLOSE_ALL_MENUS'})

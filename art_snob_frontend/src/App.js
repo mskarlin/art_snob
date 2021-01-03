@@ -132,8 +132,7 @@ function LandingPage() {
                             const tmpRoom = {...state.blankRoom, id: uuidv4()}
                             dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: '', selectionRoom: tmpRoom, show: true}});
                             navigate("/taste");
-                            }
-                            } 
+                            }} 
                             style={{"pointerEvents": "all"}}>
      Start the taste finder
     </Button>
