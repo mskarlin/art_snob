@@ -374,6 +374,15 @@ export function ArtDetail({nTags, id}) {
         }
     }
 
+    const inRoom = () => {
+        if (state.rooms.map(r => r.art.map(x=>x.artId).includes(id)).includes(true)){
+            return true
+        }
+        else {
+            return false
+        }
+    }
+
 return (
     <div className="fullpage-detail-container">
     <div className="detail-container">
@@ -422,14 +431,40 @@ return (
             </ul>
             </div>
             <div className="detail-purchase-buttons">
+            {inRoom() ? 
+                <Button variant="contained" color="secondary" 
+            style={{width: "150px"}}
+            onClick={()=>{dispatch({'type': 'REMOVE_ART', 'artId': artData.artId})}}>
+            Remove from room
+            </Button> 
+            :
             <Button variant="contained" color="secondary" 
             style={{width: "150px"}}
-            onClick={()=>{dispatch({'type': 'POTENTIAL_ART', 'artData': artData});
-                                                            dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
-                                                            dispatch({'type': 'CLOSE_ALL_MENUS'})
-                                                            navigate('/rooms')}}>
+            onClick={()=>{                                  
+                if (state.artBrowseSeed) {
+                    if (state.artBrowseSeed.focusArtId) {
+                        dispatch({...artData, type: 'ADD_ART', roomId: state.artBrowseSeed.id, roomArtId: state.artBrowseSeed.focusArtId})
+                        dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
+                        dispatch({'type': 'CLOSE_ALL_MENUS'})
+                        navigate('/rooms')
+                    }
+                    else {
+                        dispatch({'type': 'POTENTIAL_ART', 'artData': artData});
+                        dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
+                        dispatch({'type': 'CLOSE_ALL_MENUS'})
+                        navigate('/rooms')
+                    }
+                }
+                else {
+                dispatch({'type': 'POTENTIAL_ART', 'artData': artData});
+                dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
+                dispatch({'type': 'CLOSE_ALL_MENUS'})
+                navigate('/rooms')
+                }
+                }}>
             Add to room
-            </Button>            
+            </Button> 
+            }           
             <Button variant="contained" style={{width: "150px", marginTop: "15px"}}
             onClick={()=>{dispatch({'type': 'LIKE_ART', 'art': artData})}}>{saveCopy()}</Button>
             <Button variant="contained" style={{width: "150px", marginTop: "15px"}}

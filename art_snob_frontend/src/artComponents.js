@@ -5,6 +5,8 @@ import { store } from './store.js';
 import _ from 'lodash';
 
 import { navigate } from "@reach/router"
+import Typography from '@material-ui/core/Typography';
+
 import Popover from '@material-ui/core/Popover';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
@@ -48,7 +50,7 @@ export const useArrangementData = (nWorks, priceFilter, setArrangeData) => {
 }
 
 
-export function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, roomArtId, artId, nullFrame}) {
+export function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, roomArtId, artId, nullFrame, passThroughClick}) {
 
     const globalState = useContext(store);
     const { state, dispatch } = globalState;
@@ -162,12 +164,22 @@ export function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, room
   }
 
     const clickAction = (aid) => {
-      if (state.potentialArt && isArtworkEligible()) {
+      if (passThroughClick){
+        passThroughClick()
+      }
+      else if (state.potentialArt && isArtworkEligible()) {
         dispatch({...state.potentialArt, type: 'ADD_ART', roomId: roomId, roomArtId: roomArtId})
         dispatch({type: 'POTENTIAL_ART', artData: null})
       }
       else if (aid) {
         navigate('/detail/'+aid)
+      }
+      else {
+        // set dispatch for the right browse seed
+        // also set roomArtId to be the art to focus on within that dispatch
+        const thisRoom = state.rooms.filter(r=>r.id === roomId)
+        dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: thisRoom[0], focusArtId: roomArtId})
+        navigate('/browse/'+roomId)
       }
     }
 
@@ -181,12 +193,19 @@ export function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, room
             <div style={imagePaper}>
               {(showprice)
                   ? <div style={priceFrame}>
+                      <span className="material-icons md-18" style={{'color': 'gray'}}>add_circle_outline</span> 
                       {state.priceRange[size].sizeDesc}<br/>
                       <span style={{"color": "#56876D", "fontWeight": 900}}>{artPriceExtractor()}</span>
                     </div>
                   : ''
               }
               {(!isArtworkEligible()) ? <div style={{fontSize: state.priceRange[size].priceTextSize, textAlign: 'center'}}>No matching<br/>size...</div>:  ''
+              }
+              {(artImage || showprice) ? <></> :
+              <div className="new-art-frame"> 
+                <Typography variant='caption'>Add</Typography>
+                <span className="material-icons md-18" style={{'color': 'gray'}}>add_circle_outline</span> 
+              </div>
               }
               </div>
               </div>)
@@ -197,7 +216,7 @@ export function ArtWork({ppi, artMargin, size, showprice, artImage, roomId, room
     return ( checkForNullFrame(nullFrame) )
   }
   
-function recursiveArrange(arrangement, art, ppi, id, showPrices){
+function recursiveArrange(arrangement, art, ppi, id, showPrices, passThroughClick){
     // recursively extract the row arrangement
     const artArray = [];
     // TODO need to add keys to the subelements here 
@@ -212,6 +231,7 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
                                    roomArtId={arrangement[property]}
                                    nullFrame={(art[arrangement[property]-1].artId==="NULLFRAME")}
                                    showprice={showPrices}
+                                   passThroughClick={passThroughClick}
                                    > </ArtWork>)
             continue
         }
@@ -223,7 +243,8 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
                      art,
                      ppi,
                      id,
-                     showPrices)}
+                     showPrices, 
+                     passThroughClick)}
                 </div>)
             case 'cols':
                 return (<div className='arrangement-col' key={id+uuidv4()}>
@@ -231,17 +252,18 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
                     art,
                     ppi,
                     id,
-                    showPrices)}
+                    showPrices, 
+                    passThroughClick)}
                 </div>)
             default:
-                artArray.push((recursiveArrange(arrangement[property], art, ppi, id, showPrices)))
+                artArray.push((recursiveArrange(arrangement[property], art, ppi, id, showPrices, passThroughClick)))
         }   
     }
     return artArray
   }
 
   
-  function ArtArrangement({arrangement, art, ppi, artHeight, id, showPrices}) {
+  function ArtArrangement({arrangement, art, ppi, artHeight, id, showPrices, passThroughClick}) {
   // get the arrangement from the props data structure
   // at the root, each node name is the size to dictate the node
   // deal with the side effect of querying art data
@@ -253,12 +275,12 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
     justifyContent: "center"
   }
   return (
-  <div style={arrangementStyle}>{recursiveArrange(arrangement, art, ppi, id, showPrices)}</div>
+  <div style={arrangementStyle}>{recursiveArrange(arrangement, art, ppi, id, showPrices, passThroughClick)}</div>
   )
   }
   
 
-  export function RoomView({room, showPrices}){
+  export function RoomView({room, showPrices, passThroughClick}){
 
     const ref = useRef(null);
     const [dimensions, setDimensions] = useState({ width:0, height: 0 });
@@ -301,6 +323,7 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
               ppi={PPI[room.roomType]} id={room.id}
               artHeight={artHeight[room.roomType]}
               showPrices={showPrices}
+              passThroughClick={passThroughClick}
               />
         </div>
       </div>
@@ -416,7 +439,10 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
                               handleClickOpen()
                             }
                             else{
-                            navigate('/taste');}}} 
+                              const tmpRoom = {...state.blankRoom, id: uuidv4()}
+                              dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: '', selectionRoom: tmpRoom, show: false}});
+                              navigate('/taste');
+                              }}} 
                             style={{"pointerEvents": "all"}}>add_circle_outline</span>
            <Dialog
               open={open}
@@ -439,6 +465,8 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices){
               </Button>
               <Button onClick={() => {
                 handleClose();
+                const tmpRoom = {...state.blankRoom, id: uuidv4()}
+                dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: '', selectionRoom: tmpRoom, show: false}});
                 navigate('/taste');
               }} color="primary" autoFocus>
                 Continue as Guest
@@ -508,28 +536,37 @@ return (<div className="menu-box">
             navigate('/browse/'+room.id)
           }
             }>search</span>
-            <div className="room-menu-text">Find art...</div>
+            <div className="room-menu-text" onClick={() => 
+            {
+            dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: room})
+            navigate('/browse/'+room.id)
+          }}>Find art...</div>
           </div>
           <div className="room-menu-single-item"> 
             <span className="material-icons md-36" onClick={() => {
-              dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: room.name, selectionRoom: {...room, showingMenu: false}, show: true}})
+              dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: room.name, selectionRoom: {...room, showingMenu: false}, show: false}})
               navigate('/configure/'+room.id)
               }}>edit</span>
-            <div className="room-menu-text">Arrangement...</div>
+            <div className="room-menu-text" onClick={() => {
+              dispatch({type: 'ASSIGN_NEW_ROOM_SHOW', newRoomShow: {currentName: room.name, selectionRoom: {...room, showingMenu: false}, show: false}})
+              navigate('/configure/'+room.id)
+              }}>Arrangement...</div>
           </div>
           <div className="room-menu-single-item"> 
             <span className="material-icons md-36" onClick={() => {
               navigate('/purchase/'+room.id)
               }}>shopping_cart</span>
-            <div className="room-menu-text">Purchase room...</div>
+            <div className="room-menu-text" onClick={() => {
+              navigate('/purchase/'+room.id)
+              }}>Purchase room...</div>
           </div>
           <div className="room-menu-single-item"> 
             <span className="material-icons md-36" onClick={handleClick}>title</span>
-            <div className="room-menu-text">Rename...</div>
+            <div className="room-menu-text" onClick={handleClick}>Rename...</div>
           </div>
           <div className="room-menu-single-item"> 
             <span className="material-icons md-36" onClick={() => dispatch({type: "DELETE_ROOM", room: room})}>delete_outline</span>
-            <div className="room-menu-text">Delete room...</div>
+            <div className="room-menu-text"  onClick={() => dispatch({type: "DELETE_ROOM", room: room})}>Delete room...</div>
           </div>
           <Popover 
               id={popoverId}

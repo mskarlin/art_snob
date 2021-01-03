@@ -73,7 +73,7 @@ const initialFeed = [{name: '', images: '', id: null}, {name: '', images: '', id
 {name: '', images: '', id: null}, {name: '', images: '', id: null}, {name: '', images: '', id: null}, {name: '', images: '', id: null}, {name: '', images: '', id: null},                     
 {name: '', images: '', id: null}]
 
-const blankRoom= {reload: true, feed: initialFeed, feedCursor: null, roomType: 'blank', 'name': 'My new room', 'showingMenu': false, art: [{id:1, size: 'medium', artId: null}], arrangement: {rows:1}, arrangementSize: 1, clusterData:{likes:[], dislikes:[], skipped:[], skipN:0, startN:0, nActions:0}, vibes: [], 'seedTags': [], 'seedArt': []}
+const blankRoom= {reload: true, feed: initialFeed, feedCursor: null, roomType: 'blank', 'name': 'My new room', 'showingMenu': false, focusArtId: null, art: [{id:1, size: 'medium', artId: null}], arrangement: {rows:1}, arrangementSize: 1, clusterData:{likes:[], dislikes:[], skipped:[], skipN:0, startN:0, nActions:0}, vibes: [], 'seedTags': [], 'seedArt': []}
 
 
 export const initialState = {
@@ -115,8 +115,8 @@ const StateProvider = ( { children } ) => {
 
   const [state, dispatch] = useReducer(
       (state, action) => {
-    // console.log('StateProvider:ACTION', action)
-    // console.log('StateProvider:STATE', state)
+    console.log('StateProvider:ACTION', action)
+    console.log('StateProvider:STATE', state)
     let newState={}
     switch(action.type){
       case 'ASSIGN_STATE':
@@ -159,6 +159,22 @@ const StateProvider = ( { children } ) => {
             }
             return newState
         }
+      case 'REMOVE_ART':
+        let newRooms = state.rooms.map(r => 
+          {if (r.art.map(x=>x.artId).includes(action.artId)){
+            let newArt = r.art.filter(x=> x.artId !== action.artId)
+            let replaceArt = r.art.filter(x=> x.artId === action.artId)
+            newArt = newArt.concat({id:replaceArt[0].id, size: replaceArt[0].size, artId: null})
+            return {...r, art: newArt}
+          }
+          else{ 
+            return r
+          }
+          }
+            )
+        return {...state, rooms: newRooms}
+
+
       case 'DELETE_ROOM':
         if (state.rooms.map(r=>r.id).includes(action.room.id)) {
           newState = {...state, 
@@ -304,8 +320,12 @@ const StateProvider = ( { children } ) => {
         // right now, the order should be art->vibe->tag but this ranking can be optimized too
         // each exposure combo can be written to the backend where we get a chance to rank it
         // could also take the features for the art, and rank by those (on the front-end...)
-
-        return {...state, artBrowseSeed: action.artBrowseSeed}
+        if ('focusArtId' in action){
+        return {...state, artBrowseSeed: {...action.artBrowseSeed, focusArtId: action.focusArtId}}
+        }
+        else {
+          return {...state, artBrowseSeed: action.artBrowseSeed}
+        }
       case 'CHANGE_SEARCH_TAG_SET':
           return {...state, searchTagSet: action.searchTagSet, searchTagNames: action.searchTagNames}
       case 'CHANGE_MENU':

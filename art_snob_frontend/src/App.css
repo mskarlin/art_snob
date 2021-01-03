@@ -172,6 +172,11 @@ main {
   color: #888; 
 }
 
+.material-icons.md-18 { 
+  cursor: pointer;
+  font-size: 18px; 
+  color: #888; 
+}
 
 .material-icons.md-48 { 
   cursor: pointer;
@@ -1371,4 +1376,10 @@ main {
     align-items: center;
     justify-content: center;
     width: 100%;
+  }
+
+  .new-art-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }

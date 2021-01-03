@@ -105,7 +105,7 @@ function SingleArtSelect(show) {
   
   function MultiArtSelect(show) {
     const globalState = useContext(store);
-    const { state } = globalState;
+    const { state, dispatch } = globalState;
     const [numMultiWorks, setNumMultiWorks] = useState(2);
     const [priceFilter, setPriceFilter] = useState({'min': 20, 'max': 1200});
     const [roomSelect, setRoomSelect] = useState([{'name': null, 
@@ -114,10 +114,23 @@ function SingleArtSelect(show) {
                                                 'arrangementSize': 1}}])
   
     useArrangementData(numMultiWorks, priceFilter, setRoomSelect)
+
     const includeTest = () => {
         if (state.newRoomShow.selectionRoom.arrangementSize > 1) { return "Selected!"} else { return "Not Selected (tap to select)"}
       }
 
+
+    const onArrangeClick = (room) => {
+      return (
+        () => {
+          dispatch({type: "ADD_ARRANGEMENT", art: room.art, id: state.newRoomShow.selectionRoom.id,
+            arrangement: room.arrangement, arrangementSize: room.arrangementSize,
+            showingMenu: false
+            });
+            navigate('/rooms')
+        }
+        )
+       }
 
     if (show) {
     return (
@@ -142,7 +155,9 @@ function SingleArtSelect(show) {
                 return (<div className="room" id={room.name} key={room.name}>
                         <RoomDescription name={room.name} artNumFilled={0} artNumTotal={room.arrangementSize} 
                         priceRange={[room.minprice, room.maxprice]} room={room}/>
-                        <RoomView room={{roomType:'blank', arrangement: room.arrangement, art: room.art, id: thisId}} showPrices={true}></RoomView>
+                        <RoomView room={{roomType:'blank', arrangement: room.arrangement, art: room.art, id: thisId}} showPrices={true}
+                        passThroughClick={onArrangeClick({roomType:'blank', arrangementSize: room.arrangementSize, arrangement: room.arrangement, art: room.art, id: thisId})}  
+                        ></RoomView>
                         </div>)
                 })
               }
