@@ -228,7 +228,7 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices, passThroughClic
                                    artId={art[arrangement[property]-1].artId}
                                    artImage={art[arrangement[property]-1].images}
                                    roomId={id}
-                                   roomArtId={arrangement[property]}
+                                   roomArtId={art[arrangement[property]-1].id}
                                    nullFrame={(art[arrangement[property]-1].artId==="NULLFRAME")}
                                    showprice={showPrices}
                                    passThroughClick={passThroughClick}

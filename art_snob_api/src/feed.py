@@ -90,7 +90,6 @@ class ExploreExploitClusters():
         else:
             sorted_mask = np.argsort(np.abs(masked_exp))
             for item in sorted_mask:
-                print(item, likes, dislikes, skipped)
                 if item not in likes and item not in dislikes and item not in skipped:
                     if skip_n == 0:
                         return item

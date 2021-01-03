@@ -210,12 +210,8 @@ const useArtColumnFetch = (loadMore, dispatch, endpoint, formatEndpoint, show) =
     }, [dispatch, endpoint, loadMore, show])
 }
 
-export function ArtColumns({title, endpoint, navigate, numColumns=2, show=true}) {
-    // TODO: figure out implementation for likes and explore here... then work out the
-    // TODO: detail url implementation, you should be able to share URLs of art wherever you find it
-    // TODO: if you find it in your browse feed, then the link should probably go to a room feed
-    // TODO: and then it'll have to build the default room if it doesn't exist-- then when you 
-    // TODO: try to get to the browse feed, it'll simply run you back to the taste flow.
+export function ArtColumns({title, endpoint, navigate, numColumns=2, show=true, chunkLength=26}) {
+
     const globalState = useContext(store);
     const { dispatch, state } = globalState;
 
@@ -241,8 +237,7 @@ export function ArtColumns({title, endpoint, navigate, numColumns=2, show=true})
             return (<>   
                 <div className='preference-flex'>
                     {_.range(numColumns).map((i) => {
-                        return <ImgColumn key={'pArtCol-'+i.toString()} navigate={navigate} art={state.artBrowseSeed.feed.slice(i*state.artBrowseSeed.feed.length/numColumns, 
-                        (i+1)*state.artBrowseSeed.feed.length/numColumns)}/>
+                        return <ImgColumn key={'pArtCol-'+i.toString()} navigate={navigate} art={state.artBrowseSeed.feed.filter((x,index)=>index % numColumns === i)}/>
                     })}
                 </div>
                 
@@ -440,26 +435,30 @@ return (
             :
             <Button variant="contained" color="secondary" 
             style={{width: "150px"}}
-            onClick={()=>{                                  
-                if (state.artBrowseSeed) {
-                    if (state.artBrowseSeed.focusArtId) {
-                        dispatch({...artData, type: 'ADD_ART', roomId: state.artBrowseSeed.id, roomArtId: state.artBrowseSeed.focusArtId})
-                        dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
-                        dispatch({'type': 'CLOSE_ALL_MENUS'})
-                        navigate('/rooms')
-                    }
-                    else {
-                        dispatch({'type': 'POTENTIAL_ART', 'artData': artData});
-                        dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
-                        dispatch({'type': 'CLOSE_ALL_MENUS'})
-                        navigate('/rooms')
-                    }
+            onClick={()=>{                
+
+                const roomLength =  state?.rooms?.length ?? 0;
+                const artLength =  (roomLength>0) ? state?.artBrowseSeed?.art?.length : 0;
+                const focusArtId =  state?.artBrowseSeed?.focusArtId ?? 0;
+                
+                if (roomLength == 1 && artLength == 1){
+                            dispatch({...artData, type: 'ADD_ART', roomId: state.artBrowseSeed.id, roomArtId: 1})
+                            dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
+                            dispatch({'type': 'CLOSE_ALL_MENUS'})
+                            navigate('/rooms')}
+                    
+                else if (focusArtId > 0) {
+                    dispatch({...artData, type: 'ADD_ART', roomId: state.artBrowseSeed.id, roomArtId: focusArtId})
+                    dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
+                    dispatch({'type': 'CLOSE_ALL_MENUS'})
+                    navigate('/rooms')
                 }
+                
                 else {
-                dispatch({'type': 'POTENTIAL_ART', 'artData': artData});
-                dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
-                dispatch({'type': 'CLOSE_ALL_MENUS'})
-                navigate('/rooms')
+                    dispatch({'type': 'POTENTIAL_ART', 'artData': artData});
+                    dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
+                    dispatch({'type': 'CLOSE_ALL_MENUS'})
+                    navigate('/rooms')
                 }
                 }}>
             Add to room

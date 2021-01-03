@@ -115,8 +115,8 @@ const StateProvider = ( { children } ) => {
 
   const [state, dispatch] = useReducer(
       (state, action) => {
-    console.log('StateProvider:ACTION', action)
-    console.log('StateProvider:STATE', state)
+    // console.log('StateProvider:ACTION', action)
+    // console.log('StateProvider:STATE', state)
     let newState={}
     switch(action.type){
       case 'ASSIGN_STATE':
@@ -161,19 +161,19 @@ const StateProvider = ( { children } ) => {
         }
       case 'REMOVE_ART':
         let newRooms = state.rooms.map(r => 
-          {if (r.art.map(x=>x.artId).includes(action.artId)){
-            let newArt = r.art.filter(x=> x.artId !== action.artId)
-            let replaceArt = r.art.filter(x=> x.artId === action.artId)
-            newArt = newArt.concat({id:replaceArt[0].id, size: replaceArt[0].size, artId: null})
-            return {...r, art: newArt}
-          }
-          else{ 
-            return r
-          }
+          {
+            let tmpArt = r.art.map(a => {
+            if (a.artId === action.artId){ 
+              return {id:a.id, size: a.size, artId: null}
+            }
+            else {
+              return a
+            }
           }
             )
+            return {...r, art: tmpArt}
+          })
         return {...state, rooms: newRooms}
-
 
       case 'DELETE_ROOM':
         if (state.rooms.map(r=>r.id).includes(action.room.id)) {
@@ -414,6 +414,7 @@ const StateProvider = ( { children } ) => {
         })
       case 'ADD_ART':
         postData('/actions/', { session: state.sessionId, action: 'addtoroom:'+action.roomId, item: action.artId})
+
         newState = {...state, rooms: state.rooms.map((room, _) => {
           const {id} = room
           if (id === action.roomId) {

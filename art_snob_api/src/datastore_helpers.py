@@ -184,8 +184,8 @@ class FriendlyDataStore():
         else:
             return 0.0
 
-    def rerank_from_like_and_approvals(self, session_id, id_list_to_rank):
-        
+
+    def member_neighbor_sets(self, session_id):
         # first we pull the session_id and likes for this user
         results, cursor = self.dsi.query_nocache(kind=self.ACTION_KIND,
                                      query_filters=[('session', '=', session_id)],
@@ -206,11 +206,18 @@ class FriendlyDataStore():
         neg_neighbors = [neighbor_list['neighbors'][:25] for neighbor_list in neg_to_flatten.values()]
         neg_neighbors = set([item for sublist in neg_neighbors for item in sublist])
 
+        return pos_neighbors, neg_neighbors
+
+    def rerank_from_like_and_approvals(self, pos_neighbors, neg_neighbors, id_list_to_rank):
+
+        if len(pos_neighbors) == 0 and len(neg_neighbors) == 0:
+            return id_list_to_rank
+
         indexed_id_list_to_rank = [(i,self.score(i, pos_neighbors, neg_neighbors)) for i in id_list_to_rank]
 
         # remove what was below the threshold prior (that's all seen...)
 
-        return sorted(indexed_id_list_to_rank, key=lambda x: x[1], reverse=True)
+        return [t[0] for t in sorted(indexed_id_list_to_rank, key=lambda x: x[1], reverse=True)]
 
     def clusters(self, clusters: List, seed=814, cursor:str='', n_records:int=26, session_id=None):
         
@@ -230,6 +237,11 @@ class FriendlyDataStore():
         for keys in cluster_keys:
             tmp_cluster_ids = list(set([int(k) for k in keys['idx']]))
             random.Random(rseed).shuffle(tmp_cluster_ids)
+            
+            if session_id:
+                pos_neighbors, neg_neighbors = self.member_neighbor_sets(session_id)
+                tmp_cluster_ids = self.rerank_from_like_and_approvals(pos_neighbors, neg_neighbors, tmp_cluster_ids)[start:]
+
             idx_to_request.append(tmp_cluster_ids)
         
         idx_to_request = itertools.zip_longest(*idx_to_request)
@@ -237,12 +249,9 @@ class FriendlyDataStore():
         idx_to_request = [item for sublist in idx_to_request for item in sublist if item is not None]
 
         if session_id:
-            # trim off what we've seen already
-            idx_to_request = self.rerank_from_like_and_approvals(session_id, idx_to_request[start:])
-            idx_to_request = [i[0] for i in idx_to_request]
             return self.dsi.read(ids=idx_to_request[:n_records], kind=self.INFO_KIND)
-
-        return self.dsi.read(ids=idx_to_request[start:(start+n_records)], kind=self.INFO_KIND)
+        else:
+            return self.dsi.read(ids=idx_to_request[start:(start+n_records)], kind=self.INFO_KIND)
 
     def search(self, query, get_cursor=False, start_cursor=None, n_records=25):
         """Get all search results based on tags"""
