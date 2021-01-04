@@ -1,0 +1,55 @@
+metadata: {}
+implementation_config:
+
+  reader_config:
+
+    read_gcs_locations:
+      class: DataStoreReader
+      project: artsnob-1
+      kind: 07032020-images-full-embed
+      destinations:
+        - flatten_lists
+
+    flatten_lists:
+      class: ListFlattener
+      key: reader_data
+      key_to_flatten: embeddings
+      key_to_write: data
+      destinations:
+        - umap_reduction
+        - annoy_transformer
+
+    umap_reduction:
+      class: UmapPipeline
+      is_training: True
+      n_components: 100
+      destinations:
+        - annoy_transformer
+        - gcs_writer
+
+    annoy_transformer:
+      class: AnnoyPipeline
+      is_training: True
+      metric: angular
+      num_trees: 500
+      n_neighbors: 2
+      destinations:
+        - annoy_uploader
+
+  writer_config:
+
+    gcs_writer:
+      class: GcsDillWriter
+      bucket_name: artsnob-models
+      gcs_project: artsnob-1
+
+    annoy_uploader:
+      class: AnnoyUploader
+      gcs_location: gs://artsnob-models/annoy/07312020/small_index.ann
+      destinations:
+        - tranformer_writer
+
+    tranformer_writer:
+      class: GcsDillWriter
+      bucket_name: artsnob-models
+      gcs_project: artsnob-1

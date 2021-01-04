@@ -11,6 +11,8 @@ import logging
 import warnings
 
 from primrose.base.node import AbstractNode
+from src.auto_node import AutoNode
+from typing import Dict, List
 
 
 class EntityFormatter(AbstractNode):
@@ -76,3 +78,61 @@ class EntityFormatter(AbstractNode):
         terminate = False
 
         return data_object, terminate
+
+
+class ReverseIndex(AutoNode):
+    """Make a dict into a list of keys for each field within a dict"""
+     
+    @staticmethod
+    def necessary_config(node_config):
+        """Returns the necessary configuration keys for the ReverseIndex object
+        """
+        return {'index_key'}
+    
+    def execute(self, data: Dict, index_key: str, convert_to_list_of_dict: bool = True):
+
+        inverse_index = {}
+        index_keys = []
+
+        for k,v in data.items():
+            newkey = v.get(index_key) # return a list for each object (list of words, tags, etc.)
+            for key in newkey:
+                if key:
+                    if key in inverse_index:
+                        inverse_index[key].append(k)
+                    else:
+                        inverse_index[key] = [k]
+            
+        if convert_to_list_of_dict:
+            list_index = []
+            for k, v in inverse_index.items():
+                index_keys.append(k)
+                list_index.append({'keys': v})
+            inverse_index = list_index
+
+        return {'inverse_index': inverse_index, 'index_keys': index_keys}
+
+
+class IndexFromReverseIndex(AutoNode):
+
+    @staticmethod
+    def necessary_config(node_config):
+        return {}
+    
+    def execute(self, data: Dict, key_to_reverse: str):
+        """Flatten entities to make one entry per atomic entity and associate with id_list items"""
+        index = []
+        index_ids = []
+        id_list = []
+        entities = []
+
+        for k,v in data.items():
+            id_list.append(k)
+            entities.append(v)
+
+        for entity, idx in zip(entities, id_list):
+            for item in entity[key_to_reverse]:
+                index.append({'cluster_id': idx-1}) # NOTE MINUS 1 BECAUSE OF DATASTORE LIMITATIONS
+                index_ids.append(item)
+
+        return {'data': index, 'keys': index_ids}

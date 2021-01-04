@@ -1,0 +1,30 @@
+metadata: {}
+implementation_config:
+
+  reader_config:
+
+    read_gcs_locations:
+      class: DataStoreReader
+      project: artsnob-1
+      kind: frames-scraped-image-data
+      destinations:
+        - inverse_index
+
+    inverse_index:
+      class: ReverseIndex
+      index_key: standard_tags
+      convert_to_list_of_dict: True
+      destinations:
+        - datastore_writer
+
+  writer_config:
+
+    datastore_writer:
+      class: DatastoreWriter
+      kind_name: 11202020-tag_reverse_index
+      gcs_project: artsnob-1
+      project: artsnob-1
+      key: inverse_index
+      ids_key: index_keys
+      exclude_from_indexes:
+        - keys

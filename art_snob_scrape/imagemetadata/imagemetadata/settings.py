@@ -66,24 +66,24 @@ DOWNLOADER_MIDDLEWARES = {
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'imagemetadata.pipelines.CroppedImagePipeline': 1,
+    'imagemetadata.pipelines.ImagesPipeline': 1,
     'imagemetadata.pipelines.ArtworkPipeline': 2
 }
 IMAGES_STORE = 'gs://artsnob-image-scrape/'
 GCS_PROJECT_ID = 'artsnob-1'
 GCS_PROJECT = 'artsnob-1'
-DATASTORE_KIND = 'scraped-image-data'
+DATASTORE_KIND = 'frames-scraped-image-data'
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
 AUTOTHROTTLE_ENABLED = True
 # The initial download delay
-AUTOTHROTTLE_START_DELAY = 5
+AUTOTHROTTLE_START_DELAY = 1
 # The maximum download delay to be set in case of high latencies
-AUTOTHROTTLE_MAX_DELAY = 60
+AUTOTHROTTLE_MAX_DELAY = 30
 # The average number of requests Scrapy should be sending in parallel to
 # each remote server
-AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
+AUTOTHROTTLE_TARGET_CONCURRENCY = 2.0
 # Enable showing throttling stats for every response received:
 AUTOTHROTTLE_DEBUG = True
 

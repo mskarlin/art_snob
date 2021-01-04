@@ -15,13 +15,14 @@ sys.path.append('../../')
 import asyncio
 import backoff
 import itertools
+from typing import List
 from gcloud.aio.storage import Storage
 from aiohttp import ClientSession as Session
 from aiohttp import ClientTimeout
-from primrose.base.reader import AbstractReader
+from src.auto_node import AutoNode
 
 
-class AioGcsReader(AbstractReader):
+class AioGcsReader(AutoNode):
     """Read a selection of records from one or more GCP Datastore kinds"""
 
     DATA_KEY = 'reader_data'
@@ -60,16 +61,44 @@ class AioGcsReader(AbstractReader):
     async def storage_download(self, storage, bucket, obj):
         return await storage.download(bucket, obj)
 
-    async def download_objects(self, object_names):
+    async def download_objects(self, object_names, bucket):
         timeout = ClientTimeout(total=3600, connect=None, sock_connect=None, sock_read=None)
         async with Session(timeout=timeout) as session:
             storage = Storage(session=session)
             results = await asyncio.gather(
-                *[self.storage_download(storage, self.node_config.get('bucket'), obj_name) for obj_name in object_names]
+                *[self.storage_download(storage, bucket , obj_name) for obj_name in object_names]
                 # *[storage.download(self.node_config.get('bucket'), obj_name) for obj_name in object_names]
             )
 
         return results
+
+    def execute(self, object_names: List, bucket: str, async_calls_per_second: int = 1000,
+                write_location: List = None):
+
+        logging.info(f'Asyncronously gathering {len(object_names)} from GCS.')
+
+        chunks = len(object_names) // async_calls_per_second + 1
+
+        gcs_items = []
+
+        for chunk in range(chunks):
+            item_slice = itertools.islice(
+                object_names, async_calls_per_second * chunk, async_calls_per_second * (chunk + 1),
+            )
+
+            objects = asyncio.run(self.download_objects(item_slice, bucket))
+
+            gcs_items += objects
+
+        if write_location:
+            # write each one of the objects to file
+            for fn, item in zip(write_location, gcs_items):
+                with open(fn, 'wb') as f:
+                    f.write(item)
+
+        logging.info(f'Objects downloaded into bytestrings.')
+
+        return {'objects': gcs_items}
 
     def run(self, data_object):
         """Read objects from GCS to local filesystem with async calls
@@ -101,7 +130,7 @@ class AioGcsReader(AbstractReader):
                 object_names, async_calls_per_second * chunk, async_calls_per_second * (chunk + 1),
             )
 
-            objects = asyncio.run(self.download_objects(item_slice))
+            objects = asyncio.run(self.download_objects(item_slice, self.node_config.get('bucket')))
 
             gcs_items += objects
 

@@ -16,13 +16,13 @@ class ImagemetadataItem(scrapy.Item):
 
 class ArtSnobItem(scrapy.Item):
     # define the fields for your item here like:
+    size_price_list = scrapy.Field()
+    color_list = scrapy.Field()
     image_urls = scrapy.Field()
     page_url = scrapy.Field()
     images = scrapy.Field()
     name = scrapy.Field()
     description = scrapy.Field()
-    price = scrapy.Field()
-    sizes = scrapy.Field()
     artist = scrapy.Field()
     standard_tags = scrapy.Field()
     checksum = scrapy.Field()

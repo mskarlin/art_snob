@@ -1,0 +1,1385 @@
+/* .App {
+  text-align: center;
+  height: 100vh;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 24px;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+.Background-box {
+  width: 70vw;
+  height: auto;
+  display: flex;
+}
+
+.Background-image {
+  display: inline-block;
+}
+
+.Background-image img {
+  width: 100%;
+  height: auto;
+
+}
+
+.image-sidebar {
+width: 20vw;
+min-width: 100px;
+background: #1d1d1d;
+color: #adadad;
+height: 100%;
+text-align: left;
+transition: width, left, right, 0.3s;
+position: relative;
+z-index: 111;
+display: flex;
+} */
+
+/* 
+########################
+Start of Framer elements
+########################
+*/
+
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Raleway&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Poiret+One&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Italiana&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+
+main {
+  height: 100vh;
+  width: 100vw;
+  top: 0;
+  overflow: hidden;
+}
+
+
+.welcome-to {
+  width: 110px;
+  height: 40px;
+  overflow: hidden;
+  font-family: "Noto Sans JP", sans-serif;
+  color: #FFFFFF;
+  font-size: 20px;
+  letter-spacing: 0px;
+  line-height: 1.2;
+  font-weight: 400;
+  font-style: normal;
+  vertical-align: text-bottom;
+}
+
+.magic-lattice-art {
+  width: 200px;
+  height: 40px;
+  overflow: hidden;
+  font-family: "Poiret One", serif;
+  color: #FFFFFF;
+  font-size: 24px;
+  letter-spacing: 0px;
+  line-height: 1.2;
+  font-weight: 1000;
+  font-style: normal;
+  vertical-align: text-bottom;
+  margin-bottom: 2px;
+  margin-left: 4px;
+}
+
+.centerline {
+  width: 327px;
+  height: 50px;
+  overflow: hidden;
+  font-family: "Noto Sans JP", sans-serif;
+  color: #FFFFFF;
+  font-size: 20px;
+  letter-spacing: 0px;
+  line-height: 1.2;
+  font-weight: 400;
+  font-style: normal;
+  text-align: left;
+}
+
+.cookiesnote {
+  width: 327px;
+  height: 50px;
+  overflow: hidden;
+  font-family: "Noto Sans JP", sans-serif;
+  color: #FFFFFF;
+  font-size: 13px;
+  letter-spacing: 0px;
+  line-height: 1.2;
+  font-weight: 300;
+  font-style: normal;
+  text-align: left;
+}
+
+.deco-header {
+  width: 150px;
+  cursor: pointer;
+  user-select: all;
+  pointer-events: all;
+  height: 43px;
+  overflow: hidden;
+  font-family: "Poiret One", serif;
+  color: #000000;
+  font-size: 24px;
+  letter-spacing: 0px;
+  line-height: 43px;
+  font-weight: 900;
+  font-style: normal;
+  text-align: left;
+  padding-left: 10px;
+}
+
+.material-icons.md-36 { 
+  cursor: pointer;
+  font-size: 36px; 
+  /* color: #888;  */
+}
+
+.material-icons.md-28 { 
+  cursor: pointer;
+  font-size: 28px; 
+  color: #888; 
+}
+
+.material-icons.md-18 { 
+  cursor: pointer;
+  font-size: 18px; 
+  color: #888; 
+}
+
+.material-icons.md-48 { 
+  cursor: pointer;
+  font-size: 48px; 
+  /* color: #888;  */
+}
+
+@media (max-width: 479px) { 
+
+  .explain-menu {
+    box-sizing: border-box;
+    position: absolute;
+    width: 100%;
+    height: 41px;
+    display: flex;
+    flex-direction: row;
+    background: white;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 10px;
+    overflow: hidden;
+    border-style: solid;
+    border-color: #222;
+    border-top-width: 0px;
+    border-bottom-width: 0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    z-index: 3;
+  }
+
+  .explain-menu.feed {
+    top: 196px;
+  }
+
+  .room-feed {
+    width: 100vw;
+    margin-top: 196px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    overflow: hidden;
+    background-color: white;
+    /* -webkit-filter: blur(8px);
+    filter: blur(8px); */
+  }
+
+  .room-feed.explain {
+    margin-top: 237px;
+  }
+  
+  .room-feed.purchase {
+    margin-top: 78px;
+  }
+
+  .carousal-spacing.main-feed.large {
+    height: 175px;
+  }
+  
+  .carousal-spacing.main-feed.small {
+    height: 100px;
+  }
+
+  .art-feed {
+    box-sizing: border-box;
+    width: 100vw;
+    height: 118px;
+    overflow: auto;
+    white-space: nowrap;
+    border-style: solid;
+    border-color: #222;
+    border-top-width: 0px;
+    border-bottom-width: 3px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    display: inline-block
+  }
+  
+  .art-feed-small {
+    width: 100vw;
+    height: 118px;
+    overflow: auto;
+    white-space: nowrap;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    display: inline-block;
+    border-color: black;
+    border-style: solid;
+  }
+  
+  .art-feed-small.large {
+    height: 175px;
+  }
+  
+  .art-feed-small.small {
+    height: 100px;
+  }
+
+  .imgholder {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 126px;
+    height: 118px;
+    overflow: hidden;
+    /* background-color:rgba(245, 0, 87, 0.5); */
+    border-bottom-width: 0px;
+    border-left-width: 0px;
+    border-top-width: 0px;
+    border-right-width: 0px;
+    border-color: black;
+    border-style: solid;
+    position: relative;
+  }
+  
+  .imgholder.large {
+    width: 175px;
+    height: 175px;
+  }
+  
+  .imgholder.small {
+    width: 100px;
+    height: 100px;
+  }
+
+}
+
+@media (min-width: 479px) { 
+
+
+  .explain-menu {
+    box-sizing: border-box;
+    position: absolute;
+    width: 100%;
+    height: 41px;
+    display: flex;
+    background: white;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 10px;
+    overflow: hidden;
+    border-style: solid;
+    border-color: #222;
+    border-top-width: 0px;
+    border-bottom-width: 0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    z-index: 3;
+  }
+
+  .explain-menu.feed {
+    top: 250px;
+  }
+
+  .room-feed {
+    width: 100vw;
+    margin-top: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    overflow: hidden;
+    background-color: white;
+    /* -webkit-filter: blur(8px);
+    filter: blur(8px); */
+  }
+
+  .room-feed.explain {
+    margin-top: 300px;
+  }
+  
+  .room-feed.purchase {
+    margin-top: 78px;
+  }
+
+  .carousal-spacing.main-feed.large {
+    height: 250px;
+  }
+  
+  .carousal-spacing.main-feed.small {
+    height: 125px;
+  }
+
+  .art-feed {
+    box-sizing: border-box;
+    width: 100vw;
+    height: 175px;
+    overflow: auto;
+    white-space: nowrap;
+    border-style: solid;
+    border-color: #222;
+    border-top-width: 0px;
+    border-bottom-width: 3px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    display: inline-block
+  }
+
+  .art-feed-small {
+    width: 100vw;
+    height: 175px;
+    overflow: auto;
+    white-space: nowrap;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    display: inline-block;
+    border-color: black;
+    border-style: solid;
+  }
+
+  .art-feed-small.large {
+    height: 250px;
+  }
+  .art-feed-small.small {
+    height: 125px;
+  }
+
+  .imgholder {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 175px;
+    height: 175px;
+    overflow: hidden;
+    /* background-color:rgba(245, 0, 87, 0.5); */
+    border-bottom-width: 0px;
+    border-left-width: 0px;
+    border-top-width: 0px;
+    border-right-width: 0px;
+    border-color: black;
+    border-style: solid;
+    position: relative;
+  }
+  
+  .imgholder.large {
+    width: 250px;
+    height: 250px;
+  }
+  
+  .imgholder.small {
+    width: 125px;
+    height: 125px;
+  }
+
+}
+
+
+.art-feed::-webkit-scrollbar {    display: none;}
+.art-feed-small::-webkit-scrollbar { display: none;}
+
+.art-feed.detail {
+  box-sizing: border-box;
+  overflow: visible;
+  white-space: nowrap;
+  border-style: solid;
+  border-color: #222;
+  border-top-width: 0px;
+  border-bottom-width: 0px;
+  border-left-width: 0px;
+  border-right-width: 0px;
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  }
+
+.art-feed-detail-container {
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+}
+
+
+.carousal-spacing.main-feed {
+  flex-shrink: 0;
+  user-select: none;
+  pointer-events: none;
+  width: fit-content;
+  /* height: 118px; */
+  display: flex;
+  flex-direction: row;
+  padding: 0px;
+  transform: none;
+  overflow: visible;
+  overflow-x: auto;
+}
+
+.carousal-spacing.main-feed::-webkit-scrollbar {    display: none;}
+
+
+.browse-imgtext {
+ text-align: center;
+ overflow-wrap: normal;
+ width: 100%;
+ white-space: normal;
+}
+
+.imgholder img {
+  object-fit: cover;
+  min-height: 100%;
+  min-width: 100%;
+}
+
+.imgholder img.selected{
+  object-fit: cover;
+  min-height: 100%;
+  min-width: 100%;
+  opacity: 0.4;
+}
+
+.loadingbox {
+
+  width: 20px;
+  height: 118px;
+  text-align: center;
+
+}
+
+.room-main {
+  width: 100vw;
+  height: 100vh;
+  overflow: auto;
+  white-space: nowrap;
+  display: inline-block
+}
+
+.room-main::-webkit-scrollbar {    display: none;}
+
+
+.browse-feed {
+  width: 100vw;
+  margin-top: 78px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  overflow: hidden;
+  background-color: white;
+  /* -webkit-filter: blur(8px);
+  filter: blur(8px); */
+}
+
+.room {
+  width: 100vw;
+  height: 374px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  overflow: hidden;
+  background-color: white;
+}
+
+.art-purchase {
+  width: 100vw;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  overflow: hidden;
+  background-color: white;
+}
+
+.room-menu-box {
+  width: 100vw;
+  height: 374px;
+  position: relative;
+}
+
+.purchase-menu-box {
+  margin-top: 15px;
+  width: 100vw;
+  height: auto;
+  position: relative;
+}
+
+.purchase-menu-box.top {
+  margin-top: 85px;
+}
+
+.room-description {
+  box-sizing: border-box;
+  width: 100vw;
+  height: 80px;
+  max-width: 1000px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  overflow: hidden;
+  background-color: white;
+}
+
+.room-title {
+  height: 72px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: flex-start;
+  overflow: hidden;
+  background-color: white;
+}
+
+.room-name {
+  height: 33px;
+  overflow: hidden;
+  font-family: "Noto Sans JP", sans-serif;
+  color: #000000;
+  font-size: 14px;
+  letter-spacing: 0px;
+  line-height: 33px;
+  font-weight: 900;
+  font-style: normal;
+  text-align: left;
+}
+
+.room-works {
+  width: 218px;
+  height: 33px;
+  overflow: hidden;
+  font-family: "Noto Sans JP", sans-serif;
+  color: #000000;
+  font-size: 11px;
+  letter-spacing: 0px;
+  line-height: 33px;
+  font-weight: 400;
+  font-style: normal;
+  text-align: left;
+}
+
+.roomview {
+  width: 100vw;
+  height: 300px;
+  overflow: hidden;
+  background-color: white;
+}
+
+.arrangement-row {
+  flex-shrink: 0;
+  align-items: center;
+  user-select: none;
+  pointer-events: none;
+  display: flex;
+  flex-direction: row;
+  padding: 0px;
+  overflow: visible;
+  align-content: space-around;
+}
+
+.arrangement-col {
+  flex-shrink: 0;
+  user-select: none;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  padding: 0px;
+  overflow: visible;
+  align-items: center;
+  align-content: space-around;
+}
+
+.locked-detail-container {
+  position: absolute;
+  overflow: auto;
+  left: 50%;
+  width: 90vw;
+  margin-top: 200px;
+  margin-left: -45vw;
+  height: 70%;
+  z-index: 3;
+  background-color: white;
+  border: 2px solid #495057;
+}
+
+.fullpage-detail-container {
+  overflow: auto;
+  width: 100vw;
+  margin-top: 77px;
+  height: 70%;
+  z-index: 3;
+  background-color: white;
+  /* border: 2px solid #495057; */
+}
+
+
+.browse-holder {
+  overflow: auto;
+  height: 100%;  
+}
+
+.auto-complete {
+  height: auto;
+  width: 100%;
+  position: absolute;
+  background-color: #ffffff;
+  margin-top: 0px;
+  z-index: 3;
+}
+
+.auto-complete-background {
+  width: 100%;
+  height: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  border-bottom-width: 2px;
+  border-left-width: 0px;
+  border-right-width: 0px;
+  border-top-width: 0px;
+  border-style: solid;
+  box-sizing:border-box;
+
+}
+
+.detail-container {
+  width: 100%;
+  overflow: hidden;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.detail-title {
+  box-sizing: border-box;
+  width: 100%;
+  height: 75px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: white;
+}
+
+.detail-title-tag {
+  box-sizing: border-box;
+  width: 100%;
+  height: 75px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: left;
+  padding: 10px;
+  background-color: white;
+}
+
+
+.detail-name {
+  height: 21px;
+  font-family: "Noto Sans JP", sans-serif;
+  color: #000000;
+  font-size: 14px;
+  letter-spacing: 0px;
+  line-height: 21px;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.large-image {
+  width: 100%;
+  /* height: 300px; */
+  max-height: 700px;
+  overflow: hidden;
+  max-width: 700px;
+  margin: auto;
+}
+
+
+.large-image img {
+  object-fit: contain;
+  min-height: 100%;
+  min-width: 100%;
+}
+
+.tag-holder {
+    width: 100%;
+    height: 100px;
+    padding-bottom: 10px;
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-family: "Noto Sans JP", sans-serif;
+    color: #000000;
+    font-size: 12px;
+    letter-spacing: 0px;
+    line-height: 30px;
+    font-weight: 700;
+    font-style: normal;
+  }
+
+  .tag-button {
+    background-color: #F8F9FA;
+    border: 1px solid #495057;
+    font-family: "Noto Sans JP", sans-serif;
+    color: black;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 16px;
+  }
+
+  .tag-button.selected {
+    background-color: #F8F9FA;
+    border: 1px solid rgba(245, 0, 87, 0.5);
+    color: #f50057;
+  }
+
+  .tag-button.small {
+    padding: 3px 5px;
+    font-size: 10px;
+  }
+
+  .select-explain {
+    height: 30px;
+    margin-top: 5px;
+    white-space: normal;
+    padding-bottom: 15px;
+  }
+
+  .price-size-action-container {
+    box-sizing: border-box;
+    width: 100%;
+    height: 200px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    overflow: visible;
+    max-width: 500px;
+    margin: auto;
+  }
+
+  .price-size {
+    overflow: hidden;
+    font-family: "Noto Sans JP", sans-serif;
+    color: #000000;
+    font-size: 12px;
+    letter-spacing: 0px;
+    line-height: 1.2;
+    font-weight: 700;
+    font-style: normal;
+    text-align: left;
+    padding: 5px;
+  }
+
+  .pricing {
+    padding-bottom: 3px;
+    padding-top: 10px;
+  }
+
+
+  .detail-purchase-buttons {
+    width: 40%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background-color: white;
+  }
+
+  .detail-button {
+    background-color: #ADB5BD;
+    font-family: "Noto Sans JP", sans-serif;
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+    font-size: 11px;
+    width: 75%;
+    max-width: 150px;
+    border: 1px solid #495057;
+    color: black;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 10px;
+  }
+
+  .detail-button.purchase {
+    width: auto;
+    padding: 5px 10px 5px 5px;
+  }
+
+  .works-select-menu {
+    width: 100%;
+    z-index: 2;
+  }
+
+  .explain-text {
+    width: 100%;
+    padding: 10px;
+    height: 25px;
+    overflow: hidden;
+    font-family: "Noto Sans JP", sans-serif;
+    color: #000000;
+    font-size: 14px;
+    letter-spacing: 0px;
+    line-height: 25px;
+    font-weight: 700;
+    font-style: normal;
+  }
+
+
+  .room-name-entry {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding: 10px;
+    align-items: center;
+    overflow: visible;
+    border-style: solid;
+    border-color: #222;
+    border-top-width: 0px;
+    border-bottom-width: 0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+  }
+
+  .room-name-form {
+    width: 100%;
+    height: 40px;
+    overflow: hidden;
+    font-family: "Noto Sans JP", sans-serif;
+    color: #000000;
+    font-size: 12px;
+    overflow: visible;
+    letter-spacing: 0px;
+    line-height: 21px;
+    font-weight: 900;
+    font-style: normal;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+  }
+
+  .name-form {
+    width: 60%;
+    height: 25px;
+    font-family: "Noto Sans JP", sans-serif;
+    background-color: #E9ECEF;
+    border-radius: 5px;
+    border: rgba(0,0,0,0);
+    border-width: 1px;
+
+  }
+
+  .collection-heading {
+    border: #222;
+    box-sizing: border-box;
+    width: 100%;
+    height: 74px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    overflow: hidden;
+    background-color: white;
+    border-bottom: 1px;
+    border-style: solid;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+  }
+
+  .collection-heading.multi {
+    height: 100px;
+}
+
+  .stacked-descriptors {
+    width: 175px;
+    height: 74px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: flex-start;
+    overflow: visible;
+    background-color: white;
+  }
+
+  .stacked-descriptors.multi {
+    height: 115px;
+    width: 50%;
+}
+
+  .collection-text {
+    width: 162px;
+    height: 23px;
+    overflow: hidden;
+    font-family: "Noto Sans JP", sans-serif;
+    color: #000000;
+    font-size: 14px;
+    letter-spacing: 0px;
+    line-height: 23px;
+    font-weight: 900;
+    font-style: normal;
+    text-align: left;
+  }
+  
+  .purchase-title {
+    text-indent: 10px;
+    padding: 10px;
+    width: 100%;
+    white-space: normal;
+    height: 30px;
+    overflow: hidden;
+    font-family: "Noto Sans JP", sans-serif;
+    color: #000000;
+    font-size: 14px;
+    letter-spacing: 0px;
+    line-height: 15px;
+    font-weight: 900;
+    font-style: normal;
+    text-align: left;
+  }
+
+  .collection-text-sub {
+    width: 180px;
+    height: 23px;
+    overflow: hidden;
+    font-family: "Noto Sans JP", sans-serif;
+    color: #DEE2E6;
+    font-size: 14px;
+    letter-spacing: 0px;
+    line-height: 23px;
+    font-weight: 900;
+    font-style: normal;
+    text-align: left;
+  }
+
+  .price-text {
+    height: 23px;
+    overflow: hidden;
+    font-family: "Noto Sans JP", sans-serif;
+    color: #56876D;
+    font-size: 14px;
+    letter-spacing: 0px;
+    line-height: 23px;
+    font-weight: 900;
+    font-style: normal;
+    text-align: left;
+  }
+
+  .single-work-art-sizes {
+    width: 100%;
+    height: 175px;
+    overflow: auto;
+    background-color: white;
+    border-style: solid;
+    border-color: #222;
+    border-top-width: 0px;
+    border-bottom-width: 1px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+  }
+
+  .single-work-art-stack {
+  width: 1500px;
+  height: 175px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  overflow: visible;
+}
+
+.single-work-view {
+  width: 150px;
+  height: 175px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background-color: white;
+}
+
+.single-work-view.selected {
+  background: beige;
+  position: relative;
+}
+
+.work-desc-text {
+  width: 98px;
+  height: 20px;
+  padding: 5px;
+  overflow: hidden;
+  font-family: "Noto Sans JP", sans-serif;
+  color: #000000;
+  font-size: 14px;
+  letter-spacing: 0px;
+  line-height: 20px;
+  font-weight: 400;
+  font-style: normal;
+  text-align: center;
+}
+
+.min-max-price-input {
+  width: 100%;
+  height: 40px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: visible;
+  background-color: white;
+}
+
+.filter-selectors {
+  width: 100vw;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  overflow: visible;
+  background-color: white;
+}
+
+.price-input {
+  width: 60px;
+  height: 40px;
+  font-family: "Noto Sans JP", sans-serif;
+  background-color: #E9ECEF;
+  border-radius: 5px;
+  border: rgba(0,0,0,0);
+  border-width: 1px;
+
+}
+
+.preference-flex {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  height: 100%;
+  max-width: 500px;
+  margin-top: 25px;
+}
+
+.vert-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  white-space: normal;
+}
+
+
+.button-split {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+  height: 50px;
+}
+
+.room-price-and-add-button {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: flex-end;
+  overflow: hidden;
+  background-color: white;
+}
+
+.menu-box {
+  box-sizing: border-box;
+  width: 244px;
+  z-index: 1;
+  height: 290px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 10px;
+  overflow: visible;
+  background-color: #FFFFFF;
+  border: 1px solid #9d9b9b;
+  position: absolute;
+  margin-top: 80px;
+}
+
+.room-menu-single-item {
+  width: 235px;
+  height: 47px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  overflow: hidden;
+  background-color: white;
+}
+
+.room-menu-text {
+  width: 123px;
+  height: 47px;
+  overflow: hidden;
+  font-family: "Noto Sans JP", sans-serif;
+  color: #000000;
+  font-size: 14px;
+  letter-spacing: 0px;
+  line-height: 47px;
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+.art-purchase-container {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  overflow: visible;
+}
+
+.art-purchase-top-col {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  overflow: visible;
+}
+
+.art-purchase-col {
+  font-family: 'Noto Sans JP';
+  font-size: 13px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  overflow: visible;
+}
+
+.tag-select-container {
+  width: 85%;
+  text-align: center;
+  height: 100%;
+  white-space: normal;
+}
+
+.next-buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.explain-text-next {
+    padding: 10px;
+    height: 25px;
+    overflow: hidden;
+    font-family: "Noto Sans JP", sans-serif;
+    color: #000000;
+    font-size: 14px;
+    letter-spacing: 0px;
+    line-height: 25px;
+    font-weight: 700;
+    font-style: normal;
+}
+
+.welcome-banner {
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  overflow: hidden;
+  background-color: white;
+  padding-top: 45px;
+  padding-bottom: 45px;
+}
+
+.footer {
+  width: 100vw;
+    height: 100px;
+    border-top: black;
+    border-top-width: 1px;
+    border-top-style: dotted;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    overflow: hidden;
+    background-color: white;
+    margin-top: 50px;
+    position: absolute;
+  }
+
+  .footer-links {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .landing-copy {
+    padding-left: 25px;
+    padding-right: 25px;
+    margin-top: 25px;
+  }
+
+  .view-parent {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+
+  .taste-card-select {
+    margin-top: 45px;
+    height: 450px;
+    width: 75%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    margin-left: auto;
+    justify-content: space-evenly;
+    margin-right: auto;
+  }
+
+  .flex-user-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-top: 93px;
+  }
+
+  .user-inputs {
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    justify-content: space-between;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 20px;
+    height: 175px;
+    min-width: 250px;
+    max-width: 500px; 
+  }
+
+  .sign-in-post-menu {
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .card-aligner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .card-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .new-art-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }

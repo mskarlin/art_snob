@@ -29,7 +29,7 @@ from primrose.configuration.configuration import Configuration
 from primrose.dag_runner import DagRunner
 from primrose.dag.config_layer_traverser import ConfigLayerTraverser
 from primrose.dag.depth_first_traverser import DepthFirstTraverser
-from utilities.logging import setup_logging
+from utilities.custom_logging import setup_logging
 
 
 warnings.filterwarnings("ignore")

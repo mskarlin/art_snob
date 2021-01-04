@@ -77,7 +77,7 @@ class DatastoreWriter(AbstractWriter):
 
         dsi.update(data_to_write,
                    kind,
-                   exclude_from_indexes=self.node_config.get('exclude_from_indexes'),
+                   exclude_from_indexes=self.node_config.get('exclude_from_indexes', []),
                    ids=ids_to_write)
 
         terminate = False

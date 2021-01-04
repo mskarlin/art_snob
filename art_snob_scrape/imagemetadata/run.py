@@ -5,7 +5,7 @@ sys.path.append('../')
 sys.path.append('../../')
 
 from utilities.credentials import set_application_default_credentials
-from utilities.logging import setup_logging
+from utilities.custom_logging import setup_logging
 
 setup_logging()
 

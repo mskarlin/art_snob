@@ -7,6 +7,12 @@ artwork among some popular sources.
 
 ### todo:
 
+* Set up social element to see if what you made is cool/not cool,
+* get a deep link to share to ask people to thumb-up or down
+
+* send via email to indicate if you like it or not
+* send with a link for anyone to check out and thumb-up/down of course someone else can then make their own page
+
 * set up GH actions file to do CI/CD
     - run tests
     - build image(s)
@@ -24,6 +30,4 @@ artwork among some popular sources.
 * CDN for images / queries
 
 * New multi-feed (explore vs. exploit) with embedded content row based UI
-
-* refactor JS to best standards...
 

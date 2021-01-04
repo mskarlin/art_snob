@@ -11,6 +11,8 @@ class AnnoyTransformer(AbstractTransformer):
 
         """
         self.index = AnnoyIndex(vector_length, metric=metric)
+        self.metric = metric
+        self.vector_length = vector_length
         self.num_trees = num_trees
         self.n_neighbors = n_neighbors
         self.names = []
@@ -43,6 +45,7 @@ class AnnoyTransformer(AbstractTransformer):
 
         neighbor_data = []
 
+        # todo: parallelize this operation... (though we might struggle to pickle the index object...)
         for n in names:
 
             if n in self.name_to_index:
@@ -55,3 +58,6 @@ class AnnoyTransformer(AbstractTransformer):
                 neighbor_data.append(neighbors)
 
         return neighbor_data
+
+    def load_index(self, indexloc):
+        self.index.load(indexloc)

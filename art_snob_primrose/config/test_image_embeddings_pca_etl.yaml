@@ -29,6 +29,7 @@ implementation_config:
       destinations:
         - annoy_transformer
         - entity_formatter
+        - gcs_writer
 
     annoy_transformer:
       class: AnnoyPipeline
@@ -38,6 +39,7 @@ implementation_config:
       n_neighbors: 100
       destinations:
         - entity_formatter
+        - annoy_uploader
 
     entity_formatter:
       class: EntityFormatter
@@ -60,3 +62,18 @@ implementation_config:
         - index_data
         - umap_data
 
+    gcs_writer:
+      class: GcsDillWriter
+      bucket_name: artsnob-models
+      gcs_project: artsnob-1
+
+    annoy_uploader:
+      class: AnnoyUploader
+      gcs_location: gs://artsnob-models/annoy/07312020/index.ann
+      destinations:
+        - tranformer_writer
+
+    tranformer_writer:
+      class: GcsDillWriter
+      bucket_name: artsnob-models
+      gcs_project: artsnob-1

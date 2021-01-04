@@ -1,0 +1,12 @@
+*/__pycache__
+*.pyc
+.vscode/
+notebooks/.ipynb_checkpoints
+notebooks/*.csv
+*.index
+*.idea
+*.xml
+*.pkl
+*.npy
+build_deploy/build/*
+*.DS_Store
