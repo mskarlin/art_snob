@@ -1,6 +1,8 @@
 import React, { useState, useReducer, useEffect, useContext } from 'react';
 import { useTagFetch } from './feedHooks'
 import {useArtData} from './artComponents'
+// import firebase from "firebase/app";
+import { defaultAnalytics } from './firebase.js'
 import { store } from './store.js';
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -329,7 +331,6 @@ export function ArtDetail({nTags, id}) {
     const globalState = useContext(store);
     const { dispatch, state } = globalState;
 
-
     const handleScrollClick = () => {
         window.scrollTo(0, 0)
     }
@@ -377,6 +378,10 @@ export function ArtDetail({nTags, id}) {
             return false
         }
     }
+
+    defaultAnalytics.logEvent('view_item', {'items': [{id: artData.artId, name: artData.name, 
+        category: artData?.metadata?.cluster_id
+        }]})
 
 return (
     <div className="fullpage-detail-container">
@@ -467,7 +472,16 @@ return (
             <Button variant="contained" style={{width: "150px", marginTop: "15px"}}
             onClick={()=>{dispatch({'type': 'LIKE_ART', 'art': artData})}}>{saveCopy()}</Button>
             <Button variant="contained" style={{width: "150px", marginTop: "15px"}}
-            onClick={() => {openInNewTab(artData.page_url+'?curator=mskarlin')}}>Purchase work</Button>
+            onClick={() => {
+                defaultAnalytics.logEvent('purchase', 
+                              {value: Number(artData?.size_price_list[2]?.price)*0.1,
+                              items: [{id: artData.id, 
+                              name: artData.name, 
+                              category: artData?.metadata?.cluster_id,
+                              variant: artData?.size_price_list[2]?.size
+                              }]
+                              })
+                openInNewTab(artData.page_url+'?curator=mskarlin')}}>Purchase work</Button>
             <Typography variant='caption' align='center'>(Affiliate link)</Typography>
             </div>
         </div>

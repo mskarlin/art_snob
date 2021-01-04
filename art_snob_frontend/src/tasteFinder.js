@@ -1,5 +1,6 @@
 import React, { useState,  useEffect, useContext } from 'react';
 import { navigate } from "@reach/router"
+import { defaultAnalytics } from "./firebase.js"
 
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Button from '@material-ui/core/Button';
@@ -147,7 +148,9 @@ function TasteBrowse() {
         })
 
         if ( completion >= 100) {
-            // const tasteComplete = () => {
+                defaultAnalytics.logEvent('screen_view', {
+                  screen_name: 'Finished Taste Finder'
+                })
                 dispatch({type: 'ADD_ROOM', 'room': state.newRoomShow.selectionRoom});
                 dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: state.newRoomShow.selectionRoom});
                 dispatch({type: 'TOGGLE_NEW_ROOM_SHOW', show: false});

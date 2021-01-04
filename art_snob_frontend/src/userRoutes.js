@@ -3,7 +3,7 @@ import { Link } from "@reach/router";
 import { logIn, store } from "./store.js"
 import firebase from "firebase/app"
 import "firebase/auth" 
-import { auth } from "./firebase.js";
+import { auth, defaultAnalytics } from "./firebase.js";
 import Typography from '@material-ui/core/Typography';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';

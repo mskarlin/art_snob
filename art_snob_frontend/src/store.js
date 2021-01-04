@@ -1,6 +1,7 @@
 import React, {Component, createContext, useReducer, useEffect} from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { auth } from "./firebase.js";
+import { auth, defaultAnalytics } from "./firebase.js";
+// import firebase from "firebase/app";
 import { useCookies } from 'react-cookie';
 
 
@@ -54,12 +55,14 @@ export async function logIn(email, sessionId, state, dispatch, token) {
         return;
       }
       else{
+        defaultAnalytics.logEvent('login')
         dispatch({type: 'TOGGLE_LOG_STATE', state: true})
       }
     // console.log('Pulled session', maybeSession.sessionId);
     dispatch({type: 'ASSIGN_STATE', state: maybeSession})
   }
   else{
+    defaultAnalytics.logEvent('login')
     dispatch({type: 'TOGGLE_LOG_STATE', state: true})
     postData('/state/', state, token)
   }
@@ -193,6 +196,10 @@ const StateProvider = ( { children } ) => {
           return state
       }
       else {
+          
+          let likeDesc = (state.newRoomShow.selectionRoom.clusterData.likes.length==0)?'':(state.newRoomShow.selectionRoom.clusterData.likes.length+1).toString()
+          defaultAnalytics.setUserProperties({['taste'+likeDesc]: action.like})
+
           return {...state, newRoomShow: {...state.newRoomShow, 
             selectionRoom: {...state.newRoomShow.selectionRoom, 
               clusterData: {...state.newRoomShow.selectionRoom.clusterData, 
@@ -327,6 +334,7 @@ const StateProvider = ( { children } ) => {
           return {...state, artBrowseSeed: action.artBrowseSeed}
         }
       case 'CHANGE_SEARCH_TAG_SET':
+          defaultAnalytics.logEvent('search', {'search_term': action.searchTagNames.join(',')})
           return {...state, searchTagSet: action.searchTagSet, searchTagNames: action.searchTagNames}
       case 'CHANGE_MENU':
         // filter for arrangement in the room equal to action.id
@@ -414,7 +422,9 @@ const StateProvider = ( { children } ) => {
         })
       case 'ADD_ART':
         postData('/actions/', { session: state.sessionId, action: 'addtoroom:'+action.roomId, item: action.artId})
-
+        defaultAnalytics.logEvent('add_to_cart', {'items': [{id: action.artId, name: action.name, 
+          category: action?.metadata?.cluster_id
+        }]})
         newState = {...state, rooms: state.rooms.map((room, _) => {
           const {id} = room
           if (id === action.roomId) {

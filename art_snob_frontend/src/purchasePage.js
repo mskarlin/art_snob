@@ -1,4 +1,6 @@
 import React, { useContext } from 'react';
+// import firebase from "firebase/app";
+import { defaultAnalytics } from './firebase.js'
 import { store } from './store.js';
 import {openInNewTab} from './detailView.js';
 import {ArtWork} from './artComponents.js'
@@ -72,7 +74,18 @@ function RoomSummary({art}){
                 <CardActions>
                 <div className='card-center'>
                 <Button style={{"backgroundColor":"#DEE2E6"}} variant="outlined"
-                            onClick={() => {openInNewTab(art.page_url+'?curator=mskarlin')}}>Artist page link</Button>
+                            onClick={() => {
+                              defaultAnalytics.logEvent('purchase', 
+                              {value: Number(artMatchExtractor(art, 'price'))*0.1,
+                              items: [{id: art.artId, 
+                              name: art.name, 
+                              category: art?.metadata?.cluster_id,
+                              variant: artMatchExtractor(art, 'size')
+                              }]
+                              })
+                              openInNewTab(art.page_url+'?curator=mskarlin')
+                              }
+                              }>Artist page link</Button>
                 </div>
                 </CardActions>
             </Card>
