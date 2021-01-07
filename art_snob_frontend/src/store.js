@@ -1,7 +1,6 @@
 import React, {Component, createContext, useReducer, useEffect} from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { auth, defaultAnalytics } from "./firebase.js";
-// import firebase from "firebase/app";
 import { useCookies } from 'react-cookie';
 
 
@@ -87,6 +86,7 @@ export const initialState = {
     'artBrowseSeed': null, 
     'loggedIn': false,
     'purchaseList': null,
+    'history': [], // (changable) cluster like / dislike
     'vibeSelect': false,
     'searchTagSet': '',
     'searchTagNames': [],
@@ -121,6 +121,7 @@ const StateProvider = ( { children } ) => {
     // console.log('StateProvider:ACTION', action)
     // console.log('StateProvider:STATE', state)
     let newState={}
+    let newHistory={}
     switch(action.type){
       case 'ASSIGN_STATE':
         // need to fill in some non-backend stored state variables, fill with the blank room stuff
@@ -128,8 +129,13 @@ const StateProvider = ( { children } ) => {
           art: r.art, arrangement: r.arrangement, arrangementSize: r.arrangementSize, clusterData: r.clusterData, 
           id: r.id
         }})
+
+        const loadedHistory = (action.state?.history)?action.state.history:[]
+        const logStatus  = (action.state?.loggedIn)?action.state.loggedIn: state.loggedIn
+
         return {...state, sessionId: action.state.sessionId, 
             likedArt: action.state.likedArt, rooms: addedRooms,
+            history: loadedHistory, loggedIn: logStatus,
           newRoomShow: {...state.newRoomShow, show: false}}
       case 'TOGGLE_LOG_STATE':
         return {...state, loggedIn: action.state}
@@ -192,15 +198,22 @@ const StateProvider = ( { children } ) => {
           return state
           }
       case 'CLUSTER_LIKE':
+        
         if (state.newRoomShow.selectionRoom.clusterData.likes.includes(action.like)) {
           return state
       }
       else {
-          
+
+          newHistory = {id: uuidv4(), what: 'clusterLike', to: state.newRoomShow.selectionRoom.id, 
+          with: {id: action.like, image: null, name: action.name}}
+        
           let likeDesc = (state.newRoomShow.selectionRoom.clusterData.likes.length==0)?'':(state.newRoomShow.selectionRoom.clusterData.likes.length+1).toString()
           defaultAnalytics.setUserProperties({['taste'+likeDesc]: action.like})
+          postData('/actions/', { session: state.sessionId, action: 'cluster:like', item: action.like})
 
-          return {...state, newRoomShow: {...state.newRoomShow, 
+          return {...state, 
+            history: state.history.concat(newHistory),
+            newRoomShow: {...state.newRoomShow, 
             selectionRoom: {...state.newRoomShow.selectionRoom, 
               clusterData: {...state.newRoomShow.selectionRoom.clusterData, 
                 skipN: 0, 
@@ -209,11 +222,19 @@ const StateProvider = ( { children } ) => {
                 likes: state.newRoomShow.selectionRoom.clusterData.likes.concat(action.like)}}}}
       }
       case 'CLUSTER_DISLIKE':
+
         if (state.newRoomShow.selectionRoom.clusterData.dislikes.includes(action.dislike)) {
           return state
       }
       else {
-          return {...state, newRoomShow: {...state.newRoomShow, 
+
+        newHistory = {id: uuidv4(), what: 'clusterDislike', to: state.newRoomShow.selectionRoom.id, 
+          with: {id: action.like, image: null, name: action.name}}
+
+        postData('/actions/', { session: state.sessionId, action: 'cluster:dislike', item: action.dislike})
+          return {...state, 
+            history: state.history.concat(newHistory),
+            newRoomShow: {...state.newRoomShow, 
             selectionRoom: {...state.newRoomShow.selectionRoom, 
               clusterData: {...state.newRoomShow.selectionRoom.clusterData, 
                 skipN: 0, 
@@ -294,15 +315,37 @@ const StateProvider = ( { children } ) => {
         
       let approval = action.approval ? 'reco_approve' : 'reco_disapprove'
 
+      newHistory = {id: uuidv4(), what: approval, to: null, with: {id: action.art.artId, image: action.art.images, name: action.art.name}}
+
         postData('/actions/', { session: state.sessionId, action: approval, item: action.art.artId})
 
         if (action.approval) {
+          let newApprovals = {}
+          if (state.recommendationApprovals.approvals.includes(action.art.artId)){
+              newApprovals = state.recommendationApprovals.approvals.filter(x => x !== action.art.artId)
+          }
+          else {
+              newApprovals = state.recommendationApprovals.approvals.concat(action.art.artId)
+          }
+
           newState = {...state, recommendationApprovals: {...state.recommendationApprovals, 
-            approvals: state.recommendationApprovals.approvals.concat(action.art.artId)}}
+            approvals: newApprovals},
+            history: state.history.concat(newHistory)
+          }  
         }
         else {
+          let newDisapprovals = {}
+          if (state.recommendationApprovals.disapprovals.includes(action.art.artId)){
+            newDisapprovals = state.recommendationApprovals.disapprovals.filter(x => x !== action.art.artId)
+          }
+          else {
+            newDisapprovals = state.recommendationApprovals.disapprovals.concat(action.art.artId)
+          }
+
           newState = {...state, recommendationApprovals: {...state.recommendationApprovals, 
-            disapprovals: state.recommendationApprovals.approvals.concat(action.art.artId)}}
+            disapprovals: newDisapprovals},
+            history: state.history.concat(newHistory)
+          } 
         }
 
         if (state.loggedIn){
@@ -310,11 +353,23 @@ const StateProvider = ( { children } ) => {
         }
 
         return newState
+      
+      case 'VIEW_ART':
+        newHistory = {id: uuidv4(), what: 'viewArt', to: null, with: {id: action.artId, image: action.images, name: action.name}}
+        // check for duplicates 
+        if (state.history.filter(h => h.what === 'viewArt').map(h=> h?.with?.id).includes(action.artId) || action.artId === null || action.artId === undefined){
+          return state
+        }
+        else {
+          return {...state, history: state.history.concat(newHistory)}
+        }
+
       case 'LIKE_ART':
         postData('/actions/', { session: state.sessionId, action: 'liked', item: action.art.artId})
+        newHistory = {id: uuidv4(), what: 'likeArt', to: null, with: {id: action.art.artId, image: action.art.images, name: action.art.name}}
         let tmpArt = action.art
         tmpArt['id'] = action.art.artId
-        newState = {...state, likedArt: state.likedArt.concat(tmpArt)}
+        newState = {...state, likedArt: state.likedArt.concat(tmpArt), history: state.history.concat(newHistory)}
         if (state.loggedIn){
           postData('/state/', newState, cookies.fbToken)
         }
@@ -420,12 +475,102 @@ const StateProvider = ( { children } ) => {
             return room
           }
         })
+      case 'REMOVE_HISTORY':
+        // first we filter the history, then we perform the "undo" action that we needed
+        newHistory = state.history.filter(h => h.id !== action.id)
+        let actionToUndo = state.history.filter(h => h.id === action.id)[0]
+
+        switch(actionToUndo?.what){
+          case 'viewArt':
+            newState = state
+            if (state.loggedIn){
+              postData('/state/', newState, cookies.fbToken)
+            }
+            return {...newState, history: newHistory}
+          case 'clusterDislike':
+            newState = {...state, rooms: state.rooms.map(room=>{
+              if (room.id === actionToUndo.to){
+                return {...room, clusterData: {...room.clusterData, dislikes: room.clusterData.dislikes.filter(c => c !== actionToUndo.with.id)}}
+              }
+              else{
+                return room
+              }
+            })}
+            if (state.loggedIn){
+              postData('/state/', newState, cookies.fbToken)
+            }
+            return {...newState, history: newHistory}
+          case 'clusterLike':
+              newState = {...state, rooms: state.rooms.map(room=>{
+                if (room.id === actionToUndo.to){
+                  return {...room, clusterData: {...room.clusterData, likes: room.clusterData.likes.filter(c => c !== actionToUndo.with.id)}}
+                }
+                else{
+                  return room
+                }
+              })}
+              if (state.loggedIn){
+                postData('/state/', newState, cookies.fbToken)
+              }
+              return {...newState, history: newHistory}
+          case 'reco_approve':
+            postData('/actions/', { session: state.sessionId, action: 'UNDO_reco_approve', item: actionToUndo.with.id})
+            newState = {...state, recommendationApprovals: {...state.recommendationApprovals, 
+              approvals: state.recommendationApprovals.approvals.filter( a => a !== actionToUndo.with.id)},
+            } 
+            if (state.loggedIn){
+              postData('/state/', newState, cookies.fbToken)
+            }
+            return {...newState, history: newHistory}
+          case 'reco_disapprove':
+            postData('/actions/', { session: state.sessionId, action: 'UNDO_reco_disapprove', item: actionToUndo.with.id})
+            newState = {...state, recommendationApprovals: {...state.recommendationApprovals, 
+              disapprovals: state.recommendationApprovals.disapprovals.filter( d => d !== actionToUndo.with.id)},
+            }  
+            if (state.loggedIn){
+              postData('/state/', newState, cookies.fbToken)
+            }
+            return {...newState, history: newHistory}
+          case 'likeArt':
+            newState = {...state, likedArt: state.likedArt.filter(a => a.artId !== actionToUndo.with.id)}
+            if (state.loggedIn){
+              postData('/state/', newState, cookies.fbToken)
+            }
+            return {...newState, history: newHistory}
+          case 'addArt':
+            newState = {...state, rooms: state.rooms.map(room => {
+              if (room.id === actionToUndo.to) {
+                return {...room, art: room.art.map(a => {
+                    if (a.artId === actionToUndo.with.id){
+                      return {id:a.id, size: a.size, artId: null}
+                    }
+                    else {
+                      return a
+                    }
+                })}
+              }
+              else {
+                return room
+              }
+            })}
+            if (state.loggedIn){
+              postData('/state/', newState, cookies.fbToken)
+            }
+            return {...newState, history: newHistory}
+        }
+        
+        
       case 'ADD_ART':
         postData('/actions/', { session: state.sessionId, action: 'addtoroom:'+action.roomId, item: action.artId})
         defaultAnalytics.logEvent('add_to_cart', {'items': [{id: action.artId, name: action.name, 
           category: action?.metadata?.cluster_id
         }]})
-        newState = {...state, rooms: state.rooms.map((room, _) => {
+
+        newHistory = {id: uuidv4(), what: 'addArt', to: action.roomId, with: {id: action.artId, image: action.images, name: action.name}}
+
+        newState = {...state, 
+          history: state.history.concat(newHistory),
+          rooms: state.rooms.map((room, _) => {
           const {id} = room
           if (id === action.roomId) {
               const updatedArtwork = room.art.map((work, _) => {

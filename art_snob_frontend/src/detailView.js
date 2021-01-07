@@ -303,15 +303,15 @@ function RecommendedReason({metadata, state}) {
     if (allLikes.includes(metadata.cluster_id)) {
         return (<Typography variant="body1" align="center" 
           style={{paddingLeft: "10px", paddingRight: "10px"}}>
-        {'You may like because of your enjoyment of '}
+        {'How do you like your recommendation for '}
         <b> {metadata.cluster_desc.toLowerCase()}</b>
-        {' art.'}
+        {' art?'}
       </Typography>)
     }
     else if (allDislikes.includes(metadata.cluster_id)) {
         return (<Typography variant="body1" align="center"
         style={{paddingLeft: "10px", paddingRight: "10px"}}>
-        {'You may dislike because of your aversion to '}
+        {'You may dislike this work because of your aversion to '}
         <b> {metadata.cluster_desc.toLowerCase()}</b>
         {' art.'}
       </Typography>) 
@@ -319,7 +319,7 @@ function RecommendedReason({metadata, state}) {
     else {
         return (<Typography variant="body1" align="center"
         style={{paddingLeft: "10px", paddingRight: "10px"}}>
-        {'How do you like '}
+        {'Do you like this '}
         <b> {metadata.cluster_desc.toLowerCase()}</b>
         {' art?'}
       </Typography>) 
@@ -382,6 +382,8 @@ export function ArtDetail({nTags, id}) {
     defaultAnalytics.logEvent('view_item', {'items': [{id: artData.artId, name: artData.name, 
         category: artData?.metadata?.cluster_id
         }]})
+    
+    dispatch({...artData, type: 'VIEW_ART'})
 
 return (
     <div className="fullpage-detail-container">
