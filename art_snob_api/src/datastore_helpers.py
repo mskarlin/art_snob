@@ -197,6 +197,14 @@ class FriendlyDataStore():
         positive_ids_to_neighbor = [int(r['item']) for r in results if (r['action']=='action' or 'addtoroom' in r['action'] or r['action'] == 'reco_approve')]
         negative_ids_to_neighbor = [int(r['item']) for r in results if (r['action'] == 'reco_disapprove')]
 
+        # remove any undo actions ( removes all for each )
+        positive_undos = set([int(r['item']) for r in results if (r['action'] == 'UNDO_reco_approve')])
+        negative_undos = set([int(r['item']) for r in results if (r['action'] == 'UNDO_reco_disapprove')])
+
+        # todo -- this needs to be only removing one per undo...
+        positive_ids_to_neighbor = [pin for pin in positive_ids_to_neighbor if pin not in positive_undos]
+        negative_ids_to_neighbor = [nin for nin in negative_ids_to_neighbor if nin not in negative_undos]        
+
         pos_to_flatten = self.dsi.read(ids=positive_ids_to_neighbor, kind=self.NEIGHBOR_KIND, filter_keys=['neighbors'])
         neg_to_flatten = self.dsi.read(ids=negative_ids_to_neighbor, kind=self.NEIGHBOR_KIND, filter_keys=['neighbors'])
         
