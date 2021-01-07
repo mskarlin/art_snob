@@ -53,7 +53,7 @@ eec = ExploreExploitClusters(dcm,
                             min_dist=float(DCM_MIN_DIST), 
                             exp_exl=float(DCM_EXPLOIT_PCT))
 
-app = FastAPI(title='deco-api', version="0.3.0")
+app = FastAPI(title='deco-api', version="0.4.5")
 
 origins = ["*", "http://localhost:8000/"]
 
@@ -464,6 +464,8 @@ class AppState(BaseModel):
     sessionId: str
     likedArt: List[Art]
     rooms: List[Room]
+    history: List[Dict]
+    loggedIn: bool
 
 
 class SessionLogin(BaseModel):

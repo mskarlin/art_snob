@@ -129,8 +129,13 @@ const StateProvider = ( { children } ) => {
           art: r.art, arrangement: r.arrangement, arrangementSize: r.arrangementSize, clusterData: r.clusterData, 
           id: r.id
         }})
+
+        const loadedHistory = (action.state?.history)?action.state.history:[]
+        const logStatus  = (action.state?.loggedIn)?action.state.loggedIn: state.loggedIn
+
         return {...state, sessionId: action.state.sessionId, 
             likedArt: action.state.likedArt, rooms: addedRooms,
+            history: loadedHistory, loggedIn: logStatus,
           newRoomShow: {...state.newRoomShow, show: false}}
       case 'TOGGLE_LOG_STATE':
         return {...state, loggedIn: action.state}
