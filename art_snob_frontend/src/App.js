@@ -7,6 +7,7 @@ import './sidebar.scss';
 import './App.css';
 import { CookiesProvider, useCookies } from 'react-cookie';
 import {Rooms} from "./artComponents"
+import HistoryIcon from '@material-ui/icons/History';
 import {TasteFinder} from "./tasteFinder"
 import {About} from "./about.js"
 import {ArtDetail, ArtCarousel, SingleCarousel} from "./detailView"
@@ -14,6 +15,7 @@ import {RoomConfigurations} from "./roomConfiguration.js"
 import {ArtBrowse} from "./artBrowse"
 import {Privacy} from "./privacy.js"
 import {Terms} from "./terms.js"
+import {History} from "./history.js"
 import { StateProvider, store, UserProvider, initialState } from './store.js';
 import {SignIn, SignUp, PasswordReset} from './userRoutes.js'
 import {PurchaseList} from "./purchasePage"
@@ -63,6 +65,7 @@ function App() {
               <ArtBrowse path="/browse/:id"/>
               <ArtDetail path="/detail/:id"/>
               <PurchaseList path="/purchase/:id"/>
+              <History path="/history"/>
             </AppParent>
           </Router>
           </ThemeProvider>
@@ -294,6 +297,10 @@ function TopMenuDrawer({drawerOpen, setDrawerOpen, toggleDrawer}) {
           <ListItem button key='Rooms' onClick={() => navigate('/rooms')}>
             <ListItemIcon>{<HomeIcon style={{'color': 'black'}}/>}</ListItemIcon>
             <ListItemText primary='Rooms' />
+          </ListItem>
+          <ListItem button key='History' onClick={() => navigate('/history')}>
+            <ListItemIcon>{<HistoryIcon style={{'color': 'black'}}/>}</ListItemIcon>
+            <ListItemText primary='History' />
           </ListItem>
           <ListItem button key='About' onClick={() => navigate('/about')}>
             <ListItemIcon>{<HelpIcon style={{'color': 'black'}}/>}</ListItemIcon>

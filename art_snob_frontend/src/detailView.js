@@ -319,9 +319,9 @@ function RecommendedReason({metadata, state}) {
     else {
         return (<Typography variant="body1" align="center"
         style={{paddingLeft: "10px", paddingRight: "10px"}}>
-        {'How do you like '}
+        {'How do you like this '}
         <b> {metadata.cluster_desc.toLowerCase()}</b>
-        {' art?'}
+        {' recommendation?'}
       </Typography>) 
     }
 }
@@ -382,6 +382,8 @@ export function ArtDetail({nTags, id}) {
     defaultAnalytics.logEvent('view_item', {'items': [{id: artData.artId, name: artData.name, 
         category: artData?.metadata?.cluster_id
         }]})
+    
+    dispatch({...artData, type: 'VIEW_ART'})
 
 return (
     <div className="fullpage-detail-container">

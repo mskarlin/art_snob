@@ -101,13 +101,13 @@ function ClusterView({art, exploreCluster}) {
         </div>
         <ButtonGroup aria-label="outlined primary button group" style={{paddingTop: "15px"}}>
             <Button onClick={() => {
-              dispatch({type: 'CLUSTER_LIKE', like: exploreCluster.cluster});
+              dispatch({type: 'CLUSTER_LIKE', like: exploreCluster.cluster, name: exploreCluster.description.toLowerCase()});
             }}>{<ThumbUpAltOutlinedIcon/>}</Button>
             <Button onClick={() => {
               dispatch({type: 'CLUSTER_SKIP', skipped: exploreCluster.cluster});
               }}>Skip</Button>
             <Button onClick={() => {
-              dispatch({type: 'CLUSTER_DISLIKE', dislike: exploreCluster.cluster});
+              dispatch({type: 'CLUSTER_DISLIKE', dislike: exploreCluster.cluster, name: exploreCluster.description.toLowerCase()});
             }}>{<ThumbDownAltOutlinedIcon/>}</Button>
         </ButtonGroup>
         <Button onClick={() => {
