@@ -81,18 +81,33 @@ export function SingleCarousel({endpoint, index, showFavoriteSelect, initialImag
 
     useTagFetch(loadMore, feedDataDispatch, setLoadMore, endpoint, formatEndpoint, renderLikes)
 
+    const resizedImageEndpoint = (imgSize) => {
+        switch(imgSize) {
+            case 'small':
+                return 'https://storage.googleapis.com/deco-images/thumb@250_'
+            case 'large':
+                return 'https://storage.googleapis.com/deco-images/thumb@500_'
+            default:
+                return 'https://storage.googleapis.com/deco-images/thumb@500_'
+        }
+    }
+
+
     return (<div key={'feed-'+index.toString()} className={'carousal-spacing main-feed '+imgSize}>
                 {feedData.images.map((image, index) => {
                     const { name, images, id } = image
+
+                    const imgLoc = (typeof images === 'string' || images instanceof String)?images.split('/').slice(-1)[0]:''
+                    
                     return (
                     <div key={'art-'+index.toString()+index.toString() } className={'imgholder ' + imgSize}>
                         {(id===null)?<CircularProgress style={{'position': 'absolute',
                         'color': '#018E42', zIndex: 2}}/>:
                             <img
                             alt={name}
-                            data-src={'https://storage.googleapis.com/artsnob-image-scrape/'+images}
+                            data-src={resizedImageEndpoint(imgSize)+imgLoc}
                             className="imgholder img"
-                            src={'https://storage.googleapis.com/artsnob-image-scrape/'+images}
+                            src={resizedImageEndpoint(imgSize)+imgLoc}
                             style={{"pointerEvents": "all"}}
                             onClick={()=>{
                                 navigate('/detail/'+id)
@@ -178,9 +193,9 @@ function ImgColumn ({art}) {
                         'color': '#018E42', zIndex: 2}}/>:
                         <img
                         alt={name}
-                        data-src={"https://storage.googleapis.com/artsnob-image-scrape/"+images}
+                        data-src={"https://storage.googleapis.com/deco-images/thumb@500_"+images?.split('/').slice(-1)[0]}
                         className={"imgholder img "}
-                        src={"https://storage.googleapis.com/artsnob-image-scrape/"+images}
+                        src={"https://storage.googleapis.com/deco-images/thumb@500_"+images?.split('/').slice(-1)[0]}
                         style={{"pointerEvents": "all"}}
                         onClick={() => {
                             navigate('/detail/'+id)
