@@ -16,6 +16,7 @@ import {ArtBrowse} from "./artBrowse"
 import {Privacy} from "./privacy.js"
 import {Terms} from "./terms.js"
 import {History} from "./history.js"
+import {SharedRoom} from "./sharedWalls.js"
 import { StateProvider, store, UserProvider, initialState } from './store.js';
 import {SignIn, SignUp, PasswordReset} from './userRoutes.js'
 import {PurchaseList} from "./purchasePage"
@@ -50,24 +51,25 @@ function App() {
       <UserProvider>
         <StateProvider>
         <ThemeProvider theme={fontTheme}>
-        <Router>
-            <AppParent path="/">
-              <SplashPage path="/" />
-              <SignIn path="/signin" />
-              <SignUp path="/signup" />
-              <Privacy path="/privacy"/>
-              <About path="/about"/>
-              <Terms path="/terms"/>
-              <PasswordReset path="/passwordreset" />
-              <TasteFinder path="/taste"/>
-              <RoomConfigurations path="/configure/:id"/>
-              <Rooms path="/rooms"/>
-              <ArtBrowse path="/browse/:id"/>
-              <ArtDetail path="/detail/:id"/>
-              <PurchaseList path="/purchase/:id"/>
-              <History path="/history"/>
-            </AppParent>
-          </Router>
+          <Router>
+              <AppParent path="/">
+                <SplashPage path="/" />
+                <SignIn path="/signin" />
+                <SignUp path="/signup" />
+                <Privacy path="/privacy"/>
+                <About path="/about"/>
+                <Terms path="/terms"/>
+                <PasswordReset path="/passwordreset" />
+                <TasteFinder path="/taste"/>
+                <RoomConfigurations path="/configure/:id"/>
+                <Rooms path="/walls"/>
+                <SharedRoom path="/shared/:sessionId/:wallId"/>
+                <ArtBrowse path="/browse/:id"/>
+                <ArtDetail path="/detail/:id"/>
+                <PurchaseList path="/purchase/:id"/>
+                <History path="/history"/>
+              </AppParent>
+            </Router>
           </ThemeProvider>
         </StateProvider>
       </UserProvider>
@@ -92,7 +94,7 @@ function TopHeader () {
   
   const endpoint =  recommendedEndpoints()
   const detailMatch = useMatch('/detail:id')
-  const roomMatch = useMatch('/rooms')
+  const roomMatch = useMatch('/walls')
 
   return (<div style={{"position": "fixed", "top": 0, "zIndex": 4}}>
             <MainHeader />
@@ -255,7 +257,7 @@ function TopMenuDrawer({drawerOpen, setDrawerOpen, toggleDrawer}) {
     removeCookie('fbToken')
     dispatch({type: 'TOGGLE_LOG_STATE', state: false})
     dispatch({type: 'ASSIGN_STATE', state: initialState})
-    navigate('/rooms')
+    navigate('/walls')
 
   }
 
@@ -294,9 +296,9 @@ function TopMenuDrawer({drawerOpen, setDrawerOpen, toggleDrawer}) {
             <ListItemText primary='Browse art' />
           </ListItem>
           }
-          <ListItem button key='Rooms' onClick={() => navigate('/rooms')}>
+          <ListItem button key='Walls' onClick={() => navigate('/walls')}>
             <ListItemIcon>{<HomeIcon style={{'color': 'black'}}/>}</ListItemIcon>
-            <ListItemText primary='Rooms' />
+            <ListItemText primary='Walls' />
           </ListItem>
           <ListItem button key='History' onClick={() => navigate('/history')}>
             <ListItemIcon>{<HistoryIcon style={{'color': 'black'}}/>}</ListItemIcon>

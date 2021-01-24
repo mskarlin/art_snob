@@ -1095,6 +1095,48 @@
   resolved "https://registry.yarnpkg.com/@csstools/normalize.css/-/normalize.css-10.1.0.tgz#f0950bba18819512d42f7197e56c518aa491cf18"
   integrity sha512-ij4wRiunFfaJxjB0BdrYHIH8FxBJpOwNPhhAcunlmPdXudL1WQV1qoP9un6JsEBAgQH+7UXyyjh0g7jTxXK6tg==
 
+"@daybrush/utils@^1.0.0", "@daybrush/utils@^1.1.1", "@daybrush/utils@^1.3.1", "@daybrush/utils@^1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@daybrush/utils/-/utils-1.4.0.tgz#c42ea6e65c044b8854d3456531deb226f2db7a56"
+  integrity sha512-P+l76QjGFwu8IbrFoIHO1equrL02h6wYJLRZ37Snr6o3bPEwPS0mdJqyTZipHMhrWoR44UVtZTUi41GPCDc9PQ==
+
+"@dnd-kit/accessibility@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@dnd-kit/accessibility/-/accessibility-1.0.0.tgz#306726518b89d588082f27a6ed9e4aa2cc145a34"
+  integrity sha512-jigv1H7IleOTbtsYoErEwq35EtTGBdSWGKuHt/UVtRRV4qJJXP8+/Wm/glUyz/ryT2dhlGU1ty7v5gsr3zRiQA==
+  dependencies:
+    tslib "^2.0.0"
+
+"@dnd-kit/core@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@dnd-kit/core/-/core-1.0.0.tgz#05357d637739ea413c7e9b4917732eec8c209e7b"
+  integrity sha512-3w1q0ez6Pzy7rz5c20MvarKlNPQPazRWzciVSLYdXt7SziQiBEMC5WdwyZR4lp9YYgx6alPLUkUUiLvBSKtDvg==
+  dependencies:
+    "@dnd-kit/accessibility" "^1.0.0"
+    "@dnd-kit/utilities" "^1.0.0"
+    tslib "^2.0.0"
+
+"@dnd-kit/modifiers@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@dnd-kit/modifiers/-/modifiers-1.0.0.tgz#e1d81a5677c43e1a3b98eb90f503354b651426a5"
+  integrity sha512-PVYZjG67IKQwEmXZoNRr2wZyaR3NLzjBdbOnLyhwha0siB0YNOW6vdKgtrushSrZfWHihXnQiP+O+1FQn8kaXA==
+  dependencies:
+    "@dnd-kit/core" "^1.0.0"
+    "@dnd-kit/utilities" "^1.0.0"
+    tslib "^2.0.0"
+
+"@dnd-kit/utilities@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@dnd-kit/utilities/-/utilities-1.0.0.tgz#175a203f0cd2fc1c7d09f9a92edf37b4c03d9a04"
+  integrity sha512-ukMGUI5Op500zn6+YhP5vL777ieBYmZ0SZYI3XfoPFtcGOkM/kKKeZECY37QJMbP6b36QqcHRVK1bYJHZBqIVg==
+  dependencies:
+    tslib "^2.0.0"
+
+"@egjs/list-differ@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@egjs/list-differ/-/list-differ-1.0.0.tgz#2277aff52e3e4bd9318d5c30ffc3ba3b6216f05e"
+  integrity sha512-HsbMKc0ZAQH+EUeCmI/2PvTYSybmkaWwakU8QGDYYgMVIg9BQ5sM0A0Nnombjxo2+JzXHxmH+jw//yGX+y6GYw==
+
 "@emotion/hash@^0.8.0":
   version "0.8.0"
   resolved "https://registry.yarnpkg.com/@emotion/hash/-/hash-0.8.0.tgz#bbbff68978fefdbe68ccb533bc8cbe1d1afb5413"
@@ -1693,6 +1735,48 @@
     invariant "^2.2.3"
     prop-types "^15.6.1"
     react-lifecycles-compat "^3.0.4"
+
+"@scena/event-emitter@^1.0.2", "@scena/event-emitter@^1.0.4":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@scena/event-emitter/-/event-emitter-1.0.5.tgz#047e3acef93cf238d7ce3a8cc5a12ec6bd9c3bb1"
+  integrity sha512-AzY4OTb0+7ynefmWFQ6hxDdk0CySAq/D4efljfhtRHCOP7MBF9zUfhKG3TJiroVjASqVgkRJFdenS8ArZo6Olg==
+  dependencies:
+    "@daybrush/utils" "^1.1.1"
+
+"@scena/guides@^0.13.0":
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/@scena/guides/-/guides-0.13.0.tgz#d9764c9983b7f1ae5c1c144da87bcdf73e410124"
+  integrity sha512-N7VGBbvGDYJZ2tIAfNk8XTTdfz8FpIdbTRnjDZG9PvnqtZdFN8mwhTLBTLvgWyU1o8w725/AW6r6IwT4T3DlEw==
+  dependencies:
+    "@scena/event-emitter" "^1.0.4"
+    react-compat-guides "^0.10.0"
+
+"@scena/matrix@^1.0.0":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@scena/matrix/-/matrix-1.1.1.tgz#5297f71825c72e2c2c8f802f924f482ed200c43c"
+  integrity sha512-JVKBhN0tm2Srl+Yt+Ywqu0oLgLcdemDQlD1OxmN9jaCTwaFPZ7tY8n6dhVgMEaR9qcR7r+kAlMXnSfNyYdE+Vg==
+  dependencies:
+    "@daybrush/utils" "^1.4.0"
+
+"@scena/react-guides@^0.12.0":
+  version "0.12.0"
+  resolved "https://registry.yarnpkg.com/@scena/react-guides/-/react-guides-0.12.0.tgz#f25cd2fcbe68ad84fe474f110439fcef0c6da01a"
+  integrity sha512-9BAKNRwt0bkyB3b635jFoMMmJGAqQF/ZPvnsgIe+LxofNVOfbsKbPCTLR+evKx5/QDpGAMbSBglG2LHhbz2yEw==
+  dependencies:
+    "@daybrush/utils" "^1.3.1"
+    "@scena/react-ruler" "^0.7.1"
+    css-to-mat "^1.0.3"
+    framework-utils "^0.3.4"
+    gesto "^1.2.1"
+    react-css-styled "^1.0.0"
+
+"@scena/react-ruler@^0.7.1", "@scena/react-ruler@^0.7.2":
+  version "0.7.2"
+  resolved "https://registry.yarnpkg.com/@scena/react-ruler/-/react-ruler-0.7.2.tgz#0d17756ae471deb1056a27da7ac588310500385a"
+  integrity sha512-/sVStj+jE8F4lycaUgwcN6PLDdqjqf6wIbOEM55BPAcr2VZ/tM/M5od+jRtvl2c2aRdoljriNKsnjHx8Xr7oXw==
+  dependencies:
+    "@daybrush/utils" "^1.0.0"
+    framework-utils "^0.3.4"
 
 "@sheerun/mutationobserver-shim@^0.3.2":
   version "0.3.3"
@@ -2851,6 +2935,11 @@ balanced-match@^1.0.0:
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.0.tgz#89b4d199ab2bee49de164ea02b89ce462d71b767"
   integrity sha1-ibTRmasr7kneFk6gK4nORi1xt2c=
 
+base64-arraybuffer@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/base64-arraybuffer/-/base64-arraybuffer-0.2.0.tgz#4b944fac0191aa5907afe2d8c999ccc57ce80f45"
+  integrity sha512-7emyCsu1/xiBXgQZrscw/8KPRT44I4Yq9Pe6EGs3aPRTsWuggML1/1DTuZUuIaJPIm1FTDUVXl4x/yW8s0kQDQ==
+
 base64-js@^1.0.2:
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.3.1.tgz#58ece8cb75dd07e71ed08c736abc5fac4dbf8df1"
@@ -3855,6 +3944,13 @@ css-has-pseudo@^0.10.0:
     postcss "^7.0.6"
     postcss-selector-parser "^5.0.0-rc.4"
 
+css-line-break@1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/css-line-break/-/css-line-break-1.1.1.tgz#d5e9bdd297840099eb0503c7310fd34927a026ef"
+  integrity sha512-1feNVaM4Fyzdj4mKPIQNL2n70MmuYzAXZ1aytlROFX1JsOo070OsugwGjj7nl6jnDJWHDM8zRZswkmeYVWZJQA==
+  dependencies:
+    base64-arraybuffer "^0.2.0"
+
 css-loader@3.4.2:
   version "3.4.2"
   resolved "https://registry.yarnpkg.com/css-loader/-/css-loader-3.4.2.tgz#d3fdb3358b43f233b78501c5ed7b1c6da6133202"
@@ -3904,6 +4000,22 @@ css-select@^2.0.0:
     css-what "^3.2.1"
     domutils "^1.7.0"
     nth-check "^1.0.2"
+
+css-styled@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/css-styled/-/css-styled-1.0.0.tgz#6fe10a98f95c24fa66cb1c41e11e7c00bcedac13"
+  integrity sha512-lDdPvM2/djv+La110zVY3RGQ7X4OOlzLS+IEjRcn8UlUmJd1+GNcGfDFmsKWwnLBupsY1w0QM1gRgV4RdcCjfw==
+  dependencies:
+    "@daybrush/utils" "^1.0.0"
+    string-hash "^1.1.3"
+
+css-to-mat@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/css-to-mat/-/css-to-mat-1.0.3.tgz#5c0d9b572b68b57fa8ba0b1a4c572c18ce3b2b60"
+  integrity sha512-HADRhVqPc8wFqEp6ClK+uuPYg+FMBinNo2ReLyI/KQCncmHPJ60o5zldyJG7NjsTqXWbdfGJO51jnoxfMvWJiA==
+  dependencies:
+    "@daybrush/utils" "^1.3.1"
+    "@scena/matrix" "^1.0.0"
 
 css-tree@1.0.0-alpha.37:
   version "1.0.0-alpha.37"
@@ -5307,6 +5419,11 @@ fragment-cache@^0.2.1:
   dependencies:
     map-cache "^0.2.2"
 
+framework-utils@^0.3.4:
+  version "0.3.4"
+  resolved "https://registry.yarnpkg.com/framework-utils/-/framework-utils-0.3.4.tgz#450e63cca680c2a78047691a32ed9f51a748e3a1"
+  integrity sha512-Psekd+sXiHxtjLvK6aqi7vw6sQpShfBQSYlLkxCyhVzpmeTdxv1lCq8BGx++Mm5yw+MUn5IA4WKNO6LZFtOe2Q==
+
 fresh@0.5.2:
   version "0.5.2"
   resolved "https://registry.yarnpkg.com/fresh/-/fresh-0.5.2.tgz#3d8cadd90d976569fa835ab1f8e4b23a105605a7"
@@ -5446,6 +5563,14 @@ gensync@^1.0.0-beta.1:
   version "1.0.0-beta.1"
   resolved "https://registry.yarnpkg.com/gensync/-/gensync-1.0.0-beta.1.tgz#58f4361ff987e5ff6e1e7a210827aa371eaac269"
   integrity sha512-r8EC6NO1sngH/zdD9fiRDLdcgnbayXah+mLgManTaIZJqEC1MZstmnox8KpnI2/fxQwrp5OpCOYWLp4rBl4Jcg==
+
+gesto@^1.2.1:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/gesto/-/gesto-1.3.0.tgz#ff141964faecbbae38e0cfb008607c533a6c694f"
+  integrity sha512-be9jSmhiDMjMzCQwBewOp/kBtKDB97d3e2lNkojMW9Ckgeu8c8Qglx7fopnLweoIGlIYsqDqwxHdJAkyL/TmFA==
+  dependencies:
+    "@daybrush/utils" "^1.0.0"
+    "@scena/event-emitter" "^1.0.2"
 
 get-caller-file@^1.0.1:
   version "1.0.3"
@@ -5824,6 +5949,11 @@ html-minifier-terser@^5.0.1:
     relateurl "^0.2.7"
     terser "^4.6.3"
 
+html-to-image@^1.3.21:
+  version "1.3.21"
+  resolved "https://registry.yarnpkg.com/html-to-image/-/html-to-image-1.3.21.tgz#f30f31656abb1d85e27d9cd40ac1c15a2dfcb4d1"
+  integrity sha512-yHmWT2wKWFoToE3QfuVPuP6LHnqU6l65l2XoczzAqDcpHphM7Ah67o1oWaNH1ciuzYBpuLcR+2rW9iixlFQUig==
+
 html-webpack-plugin@4.0.0-beta.11:
   version "4.0.0-beta.11"
   resolved "https://registry.yarnpkg.com/html-webpack-plugin/-/html-webpack-plugin-4.0.0-beta.11.tgz#3059a69144b5aecef97708196ca32f9e68677715"
@@ -5835,6 +5965,13 @@ html-webpack-plugin@4.0.0-beta.11:
     pretty-error "^2.1.1"
     tapable "^1.1.3"
     util.promisify "1.0.0"
+
+html2canvas@^1.0.0-rc.7:
+  version "1.0.0-rc.7"
+  resolved "https://registry.yarnpkg.com/html2canvas/-/html2canvas-1.0.0-rc.7.tgz#70c159ce0e63954a91169531894d08ad5627ac98"
+  integrity sha512-yvPNZGejB2KOyKleZspjK/NruXVQuowu8NnV2HYG7gW7ytzl+umffbtUI62v2dCHQLDdsK6HIDtyJZ0W3neerA==
+  dependencies:
+    css-line-break "1.1.1"
 
 htmlparser2@^3.3.0:
   version "3.10.1"
@@ -9717,6 +9854,35 @@ react-app-polyfill@^1.0.6:
     regenerator-runtime "^0.13.3"
     whatwg-fetch "^3.0.0"
 
+react-compat-css-styled@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/react-compat-css-styled/-/react-compat-css-styled-1.0.3.tgz#f3b2ab6fecc8a398ff781f5afa6c6900c8d657e4"
+  integrity sha512-xRQgT/tF7N0u3LiXee2Sd1ObldvrxJklDO3B6QASXLk3BQDcbr3qJJ7E61YQLdNlWuiyOySHTgn1Z93I1BjhDQ==
+  dependencies:
+    "@daybrush/utils" "^1.0.0"
+    css-styled "^1.0.0"
+    framework-utils "^0.3.4"
+    react-css-styled "^1.0.0"
+    react-simple-compat "^1.0.0"
+
+react-compat-guides@^0.10.0:
+  version "0.10.0"
+  resolved "https://registry.yarnpkg.com/react-compat-guides/-/react-compat-guides-0.10.0.tgz#14bbefe015697cdce90fac44c33697f5c276d329"
+  integrity sha512-NhBwdRG8od5u+OSRQfusVGC7Y7Hyr1UVuVYj7elxf5zjJJaDCp2RvZ6m9s7Qqu5n9cWKMYCqMgOOv5cbx06a1A==
+  dependencies:
+    "@scena/react-guides" "^0.12.0"
+    react-compat-css-styled "^1.0.3"
+    react-compat-ruler "^0.6.0"
+    react-simple-compat "^1.0.0"
+
+react-compat-ruler@^0.6.0:
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/react-compat-ruler/-/react-compat-ruler-0.6.0.tgz#b7e1bd777290c7cf1fbdfbac95d63c3422949c58"
+  integrity sha512-doJFYguqujRO0R2fyJhj/h+mekxWGob8jLhUHD9JGV1HQ83xmI+PP/lPyZ4f+KSEn6qtgLpxU4pBiWakd/54nA==
+  dependencies:
+    "@scena/react-ruler" "^0.7.2"
+    react-simple-compat "^1.0.0"
+
 react-cookie@^4.0.3:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/react-cookie/-/react-cookie-4.0.3.tgz#ba8e5ea0047c916516e1181a3ad394c9b7580b56"
@@ -9725,6 +9891,14 @@ react-cookie@^4.0.3:
     "@types/hoist-non-react-statics" "^3.0.1"
     hoist-non-react-statics "^3.0.0"
     universal-cookie "^4.0.0"
+
+react-css-styled@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/react-css-styled/-/react-css-styled-1.0.0.tgz#4b4272aa24f0a659e9723eac8263d2179dc6e886"
+  integrity sha512-E9i8S8LpmbYTgXrEirTM3MRsarrecLKn0arHKdy+Ob12sAjVv7sA7yxtnmCPNyxyICcBnKdpDHQVoTZxBwQ/yg==
+  dependencies:
+    css-styled "^1.0.0"
+    framework-utils "^0.3.4"
 
 react-dev-utils@^10.2.1:
   version "10.2.1"
@@ -9863,6 +10037,14 @@ react-sidebar@^3.0.2:
   dependencies:
     "@babel/runtime" ">=7.0.0-beta.56"
     prop-types "^15.6.2"
+
+react-simple-compat@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/react-simple-compat/-/react-simple-compat-1.0.0.tgz#6bc40a0bc9a914ad29c310755384251939c0d466"
+  integrity sha512-03AGsZIKCR88U/W1dFzw5PEWMcpbHIh8tfr1eKh9MsUsWGlf3ZxSdpHg5lEL61Kwe/kvKf/55tdoBe4E6E1Uuw==
+  dependencies:
+    "@daybrush/utils" "^1.0.0"
+    "@egjs/list-differ" "^1.0.0"
 
 react-slidedown@^2.4.5:
   version "2.4.5"
@@ -10941,6 +11123,11 @@ strict-uri-encode@^1.0.0:
   resolved "https://registry.yarnpkg.com/strict-uri-encode/-/strict-uri-encode-1.1.0.tgz#279b225df1d582b1f54e65addd4352e18faa0713"
   integrity sha1-J5siXfHVgrH1TmWt3UNS4Y+qBxM=
 
+string-hash@^1.1.3:
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/string-hash/-/string-hash-1.1.3.tgz#e8aafc0ac1855b4666929ed7dd1275df5d6c811b"
+  integrity sha1-6Kr8CsGFW0Zmkp7X3RJ1311sgRs=
+
 string-length@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/string-length/-/string-length-2.0.0.tgz#d40dbb686a3ace960c1cffca562bf2c45f8363ed"
@@ -11411,6 +11598,11 @@ tslib@^1.11.1:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
   integrity sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==
 
+tslib@^2.0.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.1.0.tgz#da60860f1c2ecaa5703ab7d39bc05b6bf988b97a"
+  integrity sha512-hcVC3wYEziELGGmEEXue7D75zbwIIVUMWAVbHItGPx0ziyXxrOMQx4rQEVEV45Ut/1IotuEvwqPopzIOkDMf0A==
+
 tsutils@^3.17.1:
   version "3.17.1"
   resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-3.17.1.tgz#ed719917f11ca0dee586272b2ac49e015a2dd759"
@@ -11614,6 +11806,11 @@ url@^0.11.0:
   dependencies:
     punycode "1.3.2"
     querystring "0.2.0"
+
+use-react-screenshot@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/use-react-screenshot/-/use-react-screenshot-1.0.2.tgz#a563a6c756086ebc975e7307d14f100dce9dc74c"
+  integrity sha512-dEloUgNs7tt187Qdmnce848uIL/QEpw7d/g4QmVif3daygrnMWbcpS+Lq5F2KlEjuKJIS4Ws1zxVACO5T5lo5Q==
 
 use@^3.1.0:
   version "3.1.1"

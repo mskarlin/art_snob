@@ -11,16 +11,19 @@ import itertools
 from datetime import datetime
 from typing import List, Dict, Optional
 from uuid import UUID
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 from pydantic import BaseModel
 
-sys.path.insert(0, '../')
+# sys.path.insert(0, '../')
 from utilities.datastore_helpers import DataStoreInterface
-from utilities.storage_helpers import download_gcs_local
-from fastapi import FastAPI, File, UploadFile, Depends, HTTPException
+from utilities.storage_helpers import download_gcs_local, upload_gcs_file
+from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, Body
 
 import logging
 import pickle
+import base64
 import copy
 import google.cloud.logging # Don't conflict with standard logging
 from google.cloud.logging.handlers import CloudLoggingHandler
@@ -434,6 +437,8 @@ class Art(BaseModel):
     artist: str
     size_price_list: List[PriceSize]
     page_url: str
+    x: Optional[float]
+    y: Optional[float]
 
 class RoomArt(Art):
     id: int
@@ -491,6 +496,60 @@ def sessionlogin(login: SessionLogin, current_user: FirebaseClaims = Depends(get
 @app.get('/session_state/{session}')
 def session_state(session: str, current_user: FirebaseClaims = Depends(get_current_user())):
     return data.get_state(hashkey=None, session=session)
+
+@app.get('/shared_walls/{session_id}/{wall_id}')
+def shared_walls(session_id: str, wall_id: str):
+    this_state = data.get_state(hashkey=None, session=[{'session_id': session_id}])
+    if this_state:
+        room = [r for r in this_state['rooms'] if r['id'] == wall_id]
+        if len(room) > 0:
+            return room[0]
+    return None
+
+@app.post('/share/')
+def share(app_state: AppState, 
+            room_id: str = Body(..., embed=True), email: str = Body(..., embed=True), image: str = Body(..., embed=True)):
+
+    session_id = app_state.sessionId
+    room = [r for r in app_state.rooms if r.id == room_id]
+
+    if len(room) > 0:
+        data.write_state(app_state)
+        room = room[0]
+        
+        if email and image:
+            data.write_action(Action(session=email, action='email_save', item=room_id+'|'+session_id))
+            image_name = f'{session_id}|{room_id}.png'
+            image_url = f"https://storage.googleapis.com/deco-user-images/{session_id}%7C{room_id}.png"
+            upload_gcs_file('deco-user-images', base64.b64decode(image), image_name)
+
+            wall_image = f'<img src="{image_url}"/><br>'
+            wall_url = os.environ.get('DECO_URL', 'https://decoart.io')+ f'/shared/{session_id}/{room_id}'
+            wall_link = f'<a href="{wall_url}">View my wall in Deco.</a><br>'
+
+            art_affiliate_links = ['Affiliate Links<br><ul>']
+
+            for art in room.art:
+                art_size = [(a.size, a.price) for a in art.size_price_list if a.type.strip() == art.size or a.type[2:].strip() == art.size[2:]]
+                art_affiliate_links.append(f"<li>{art.name}, {art_size[0][0]}, {art_size[0][1]}, <a href='{art.page_url+'?curator=mskarlin'}'>Affiliate Link</a></li>")
+
+            art_affiliate_links.append('</ul>')
+
+            art_affiliate_links = ''.join(art_affiliate_links)
+
+            message = Mail(from_email='mike@decoart.io',
+                        to_emails=email,
+                        subject=f'Shared art-wall: {room.name}',
+                        html_content=f"""{wall_image}{wall_link}{art_affiliate_links}""")
+
+            try:
+                sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+                response = sg.send(message)
+                print(response.status_code)
+                print(response.body)
+                print(response.headers)
+            except Exception as e:
+                print(e.message)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)

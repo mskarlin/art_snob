@@ -91,9 +91,9 @@ export function ArtBrowse({children, navigate}) {
                     <div className="works-select-menu">
                         <div className="explain-menu">
                             <span className="material-icons md-28" onClick={() => {
-                                navigate('/rooms');
+                                navigate('/walls');
                                 }}>arrow_back_ios</span>
-                            <div className="explain-text">Choose any work to fill your rooms</div>
+                            <div className="explain-text">Choose any work to fill your walls</div>
                         </div>
                         <Tabs
                             value={selectBrowseType}
