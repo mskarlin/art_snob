@@ -178,6 +178,12 @@ main {
   color: #888; 
 }
 
+.material-icons.md-12 { 
+  cursor: pointer;
+  font-size: 12px; 
+  color: #888; 
+}
+
 .material-icons.md-48 { 
   cursor: pointer;
   font-size: 48px; 
@@ -185,6 +191,38 @@ main {
 }
 
 @media (max-width: 479px) { 
+
+  .room {
+    width: 100vw;
+    height: 425px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    overflow: hidden;
+    background-color: white;
+  }
+
+  .leftRuler {
+    width: 15px;
+    height: 335px;
+    position: absolute;
+    margin-top: 15px;
+  }
+
+  .roomview {
+    width: 100vw;
+    height: 350px;
+    display: flex;
+    overflow: hidden;
+    background-color: white;
+  }
+
+  .room-menu-box {
+    width: 100vw;
+    height: 425px;
+    position: relative;
+  }
 
   .explain-menu {
     box-sizing: border-box;
@@ -210,6 +248,14 @@ main {
   .explain-menu.feed {
     top: 196px;
   }
+
+  .share-options{
+    display: flex;
+    height: 250px;
+    flex-direction: column;
+    justify-content: space-evenly;
+  }
+
 
   .room-feed {
     width: 100vw;
@@ -310,6 +356,39 @@ main {
 
 @media (min-width: 479px) { 
 
+
+  .roomview {
+    width: 100vw;
+    height: 500px;
+    display: flex;
+    max-width: 1000px;
+    overflow: hidden;
+    background-color: white;
+  }
+
+  .room {
+    width: 100vw;
+    height: 575px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    overflow: hidden;
+    background-color: white;
+  }
+
+  .leftRuler {
+    width: 15px;
+    height: 485px;
+    position: absolute;
+    margin-top: 15px;
+  }
+
+  .room-menu-box {
+    width: 100vw;
+    height: 575px;
+    position: relative;
+  }
 
   .explain-menu {
     box-sizing: border-box;
@@ -531,17 +610,6 @@ main {
   filter: blur(8px); */
 }
 
-.room {
-  width: 100vw;
-  height: 374px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  align-items: center;
-  overflow: hidden;
-  background-color: white;
-}
-
 .art-purchase {
   width: 100vw;
   height: auto;
@@ -551,12 +619,6 @@ main {
   align-items: center;
   overflow: hidden;
   background-color: white;
-}
-
-.room-menu-box {
-  width: 100vw;
-  height: 374px;
-  position: relative;
 }
 
 .purchase-menu-box {
@@ -625,14 +687,6 @@ main {
 .ruler-holder-vert {
   display: flex;
   flex-direction: column;
-}
-
-.roomview {
-  width: 100vw;
-  height: 300px;
-  display: flex;
-  overflow: hidden;
-  background-color: white;
 }
 
 .arrangement-row {

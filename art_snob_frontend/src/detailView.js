@@ -364,6 +364,14 @@ export function ArtDetail({nTags, id}) {
     const onImgLoad = ({target:img}) => {
       setNativeImageSize({height:img.offsetHeight, width:img.offsetWidth});
     }
+
+    const colorList = [{name: 'black', code: '#222'}, 
+                        {name: 'white', code: '#FDFEFE'}, 
+                        {'name': 'natural wood', code: '#E6BF83'},
+                        {'name': 'walnut wood', code: '#502900'},
+                        {'name': 'pecan wood', code: '#5A330A'},
+                        {'name': 'red', code: '#7C0A02'},
+                    ]
     
     const [artData, setArtData] = useState({name: "", 
                                             size_price_list: [], 
@@ -374,8 +382,11 @@ export function ArtDetail({nTags, id}) {
                                             });
     
     const currentSize = state.rooms.map(r => r.art.filter(x=>x.artId === artData.artId)[0]?.size).filter(x => x ? true : false)[0]
+    const currentColor = state.rooms.map(r => r.art.filter(x=>x.artId === artData.artId)[0]?.frameColor).filter(x => x ? true : false)[0]
 
     const [selectedSize, setSelectedSize] = useState(currentSize ? currentSize : 'medium')
+    const [selectedColor, setSelectedColor] = useState(currentColor ? currentColor : 'black')
+
 
     useArtData(id, setArtData, handleScrollClick)
 
@@ -431,6 +442,17 @@ export function ArtDetail({nTags, id}) {
         }
     }
 
+    const handleUpdateFrameColor = (event) =>
+    {
+        setSelectedColor(event.target.value);
+
+        if (inRoom()) {
+            let selectedRoomId = (state?.artBrowseSeed?.id) ? state?.artBrowseSeed?.id : state?.rooms[0]?.id
+            dispatch({type: 'SET_ART_FRAME_COLOR', color: event.target.value, id: artData.artId, roomId: selectedRoomId})
+            navigate('/walls')
+        }
+    }
+
 return (
     <div className="fullpage-detail-container">
     <div className="detail-container">
@@ -476,6 +498,23 @@ return (
                 >
                     {artData.size_price_list.map(x => {
                     return <MenuItem key={'menu-select'+x.price} value={x.type.trim()}>{`$${x.price}  ${x.size}`}</MenuItem>
+                    })}
+            
+                </Select>
+            </FormControl>
+
+            <FormControl variant="outlined" style={{width: '90%', marginTop: '15px'}}>
+                <InputLabel id="frame-color-selection-label">Frame Color:</InputLabel>
+                <Select
+                labelId="frame-color-selection-label"
+                id="frame-outlined"
+                value={currentColor ? currentColor : '#222'}
+                onChange={handleUpdateFrameColor}
+                label="Frame color"
+                style={{fontSize: '0.7em'}}
+                >
+                    {colorList.map(x => {
+                    return <MenuItem key={'menu-select'+x.name} value={x.code}>{x.name}</MenuItem>
                     })}
             
                 </Select>

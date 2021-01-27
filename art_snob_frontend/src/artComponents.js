@@ -19,15 +19,31 @@ import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import {DndContext} from '@dnd-kit/core';
 import {Draggable, scaleByZoom} from './dragAndDrop.js';
-import { useScreenshot } from './screenshots.js'
 import * as htmlToImage from 'html-to-image';
-import { toPng, toJpeg, toBlob, toPixelData, toSvg } from 'html-to-image';
+import {
+  EmailShareButton,
+  FacebookShareButton,
+  PinterestShareButton,
+  RedditShareButton,
+  TumblrShareButton,
+  TwitterShareButton
+} from "react-share";
+
+import {
+  EmailIcon,
+  FacebookIcon,
+  PinterestIcon,
+  RedditIcon,
+  TumblrIcon,
+  TwitterIcon
+} from "react-share";
 // import { useScreenshot } from 'use-react-screenshot'
 
 import {
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
+  PointerSensor, 
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -73,7 +89,8 @@ export const useArrangementData = (nWorks, priceFilter, setArrangeData) => {
 }
 
 
-export const ArtWork = React.forwardRef( ({ppi, artMargin, size, showprice, artImage, roomId, roomArtId, artId, nullFrame, passThroughClick, selectMenu=false, draggable=false}, ref) => {
+export const ArtWork = React.forwardRef( ({ppi, artMargin, size, showprice, artImage, roomId, roomArtId, 
+  artId, nullFrame, passThroughClick, isDrag, setIsDrag, frameColor='#222', selectMenu=false, draggable=false}, ref) => {
 
     const globalState = useContext(store);
     const { state, dispatch } = globalState;
@@ -85,6 +102,8 @@ export const ArtWork = React.forwardRef( ({ppi, artMargin, size, showprice, artI
     
     const width = state.priceRange[size].artSize[0]*PPI
     const height = state.priceRange[size].artSize[1]*PPI
+
+    console.log(frameColor)
 
     let nullFrameStyle = {
       width: round(width)+'px',
@@ -100,6 +119,7 @@ export const ArtWork = React.forwardRef( ({ppi, artMargin, size, showprice, artI
           width: round(width)+'px',
           height: round(height)+'px',
           overflow: "hidden",
+          touchAction: 'none',
           backgroundColor: "#F8F9FA",
           border: round(1*PPI) + "px dashed #222",
           padding: showprice ? 0 : round(2*PPI) + "px",
@@ -122,7 +142,7 @@ export const ArtWork = React.forwardRef( ({ppi, artMargin, size, showprice, artI
 
     if (artImage) {
         frame = {...frame,
-                border: round(1*PPI) + "px solid #222"}
+                border: round(1*PPI) + `px solid ${frameColor}`}
         
         imagePaper = {...imagePaper,
             backgroundImage: "url(https://storage.googleapis.com/artsnob-image-scrape/" + artImage + ")",
@@ -207,11 +227,14 @@ export const ArtWork = React.forwardRef( ({ppi, artMargin, size, showprice, artI
   }
 
     const clickAction = (aid) => {
-      // if (((isDrag.x !== 0 || isDrag.y !== 0))){
-      //   dispatch({type: 'SET_ART_XY', artId: artId, roomId: roomId, x: isDrag.x, y:isDrag.y})
-      //   setIsDrag({x: 0, y: 0})
-      //   return null
-      // }
+
+      if (((isDrag?.x !== 0 || isDrag?.y !== 0))){
+        // this checks if it's just been dragged
+        if (setIsDrag) {
+          setIsDrag({'x': 0, 'y': 0})
+        }
+        return null
+      }
 
       if (passThroughClick){
         passThroughClick()
@@ -282,7 +305,7 @@ export const ArtWork = React.forwardRef( ({ppi, artMargin, size, showprice, artI
   )
 
 
-const RowArrangement = ({art, ppi, id, showPrices, passThroughClick}) => {
+const RowArrangement = ({art, ppi, id, showPrices, passThroughClick, isDrag, setIsDrag, xScale=1, yScale=1}) => {
     const artRef = useRef(new Array(art.length));
 
     return (<>{art.map((a,index) => {
@@ -291,6 +314,8 @@ const RowArrangement = ({art, ppi, id, showPrices, passThroughClick}) => {
       key={a.artId+'-key-draggable'+(index).toString()}
       x={a.x}
       y={a.y}
+      scaleX={xScale}
+      scaleY={yScale}
       roomId={id}
       roomArtId={a.id}
       artRef={artRef}
@@ -308,6 +333,9 @@ const RowArrangement = ({art, ppi, id, showPrices, passThroughClick}) => {
                                    passThroughClick={passThroughClick}
                                    ref={el => artRef.current[index] = el} 
                                    draggable={true}
+                                   isDrag={isDrag}
+                                   setIsDrag={setIsDrag}
+                                   frameColor={(a?.frameColor)? a?.frameColor : '#222'}
                                    > </ArtWork>
       </Draggable>)
     })
@@ -377,7 +405,7 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices, passThroughClic
   }
 
   
-  function ArtArrangement({arrangement, art, ppi, artHeight, id, showPrices, passThroughClick}) {
+  function ArtArrangement({arrangement, art, ppi, artHeight, id, showPrices, passThroughClick, isDrag, setIsDrag, xScale=1, yScale=1}) {
   // get the arrangement from the props data structure
   // at the root, each node name is the size to dictate the node
   // deal with the side effect of querying art data
@@ -394,7 +422,10 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices, passThroughClic
   }
 
   return (
-  <div style={arrangementStyle}>{<RowArrangement arrangement={arrangement} art={art} ppi={ppi} id={id} showPrices={showPrices} passThroughClick={passThroughClick}/>}</div>
+  <div style={arrangementStyle}>{<RowArrangement arrangement={arrangement} art={art} ppi={ppi} id={id} 
+  showPrices={showPrices} passThroughClick={passThroughClick} isDrag={isDrag} setIsDrag={setIsDrag}
+    xScale={xScale} yScale={yScale}
+  />}</div>
   )
   }
 
@@ -425,9 +456,7 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices, passThroughClic
     }
 
     function handleDragEnd(event) {
-        if (!(event.delta.x === 0 && event.delta.y === 0)){
-          setDragAmount({x: event.delta.x, y: event.delta.y});
-        }
+      setDragAmount({x: event.delta.x, y: event.delta.y});
         if (state.dragging) {
           dispatch({type: "SET_DRAGGING", dragging: false})
       }
@@ -439,8 +468,9 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices, passThroughClic
     }, [ref.current]);
 
     //TODO: include key for each PPI across each image
-    const ZOOM = 1.0
-
+    const ZOOM = (dimensions.width >= 479) ? 1.0 * 500 / 350 : 1.0;
+    const xScale = (dimensions.width >= 479) ? 500 / 350 : 1.0
+    const yScale = (dimensions.width >= 479) ? 500 / 350 : 1.0
     const PPI = {'living_room': (2486.0/104.0 * (dimensions.width / 3991.0) * ZOOM),
                  'blank': (4.0*ZOOM)}
 
@@ -454,10 +484,9 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices, passThroughClic
 
     const roomBackground = {
       width: "100%",
-      maxWidth: "500px",
+      maxWidth: "1000px",
       height: 296,
       overflow: "visible",
-      // backgroundImage: "url(" +roomImage[room.roomType] + ")",
       backgroundSize: "cover",
       backgroundRepeat: "no-repeat",
       backgroundPosition: "center",
@@ -467,10 +496,10 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices, passThroughClic
     return (
       <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart} sensors={sensors} modifiers={[scaleByZoom(ZOOM)]}>
         <div className="roomview" style={{...blurring, ...backgroundGrid}} ref={screenshotRef}>
-              <div style={{width: '100%', height: '15px', 'position': 'absolute', marginLeft: '15px'}}>
+              <div style={{width: (dimensions.width>=1000)?'1000px':'100%', height: '15px', 'position': 'absolute', marginLeft: '15px'}}>
                 <Ruler type='horizontal' textColor='white' backgroundColor='white' direction='start' zoom={PPI[room.roomType]} longLineSize={10} shortLineSize={0.1} unit={12}/>
               </div>
-              <div style={{width: '15px', height: '285px', 'position': 'absolute', marginTop: '15px'}}>
+              <div className='leftRuler'>
                 <Ruler type='vertical' textColor='white' backgroundColor='white' direction='start' zoom={PPI[room.roomType]} longLineSize={10} shortLineSize={0.1} unit={12}/>
               </div>
               <div ref={ref} style={roomBackground}>
@@ -481,6 +510,8 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices, passThroughClic
                 passThroughClick={passThroughClick}
                 isDrag={dragAmount}
                 setIsDrag={setDragAmount}
+                xScale={xScale}
+                yScale={yScale}
                 />
           </div>
         </div>
@@ -496,6 +527,29 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices, passThroughClic
 
     const [open, setOpen] = React.useState(false);
     const [anchorEl, setAnchorEl] = React.useState(null);
+
+    const [nameAnchorEl, setNameAnchorEl] = React.useState(null);
+    const [showName, setShowName] = React.useState(name);
+
+    // added for name change
+    const handleClick = (event) => {
+      setNameAnchorEl(event.currentTarget);
+    };
+  
+    const handleNameClose = () => {
+      setNameAnchorEl(null);
+    };
+  
+    const keyPress = (e) => {
+      if(e.keyCode === 13){
+        setNameAnchorEl(null);
+      }
+   }
+  
+    const handleNameChange = (event) => {
+      setShowName(event.target.value);
+      dispatch({type: 'NAME_ROOM', id: room.id, name: event.target.value})
+    };
     
     const handleAddWorkClick = (event) => {
       setAnchorEl(event.currentTarget);
@@ -506,7 +560,10 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices, passThroughClic
     };
 
     const addWorkOpen = Boolean(anchorEl);
-    const popoverId = open ? 'simple-popover' : undefined;
+    const popoverId = addWorkOpen ? 'simple-popover' : undefined;
+
+    const openName = Boolean(nameAnchorEl);
+    const namePopoverId = openName ? 'simple-popover' : undefined;
 
         const handleClickOpen = () => {
           setOpen(true);
@@ -668,6 +725,24 @@ function recursiveArrange(arrangement, art, ppi, id, showPrices, passThroughClic
         <div className="room-title">
           <div className="room-name">
             {(sharedScreen)?'Shared: '+name:name}
+            {(!sharedScreen) && <>
+            <span className="material-icons md-18" onClick={handleClick}>edit</span>
+            <Popover 
+              id={namePopoverId}
+              open={openName}
+              anchorEl={nameAnchorEl}
+              onClose={handleNameClose}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+          >
+          <TextField id="standard-name" label="Name" value={name} onChange={handleNameChange} onKeyDown={keyPress}/>
+          </Popover></>}
           </div>
           <div className="room-works">
             {(state.deletingArt)? 
@@ -714,8 +789,6 @@ const RoomMenu = React.forwardRef( ({art, room}, screenshotRef) => {
 
   const globalState = useContext(store);
   const { dispatch, state } = globalState;
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const [name, setName] = React.useState(room.name);
   const [screenshot, setScreenshot] = useState(null);
   
   const [shareOpen, setShareOpen] = React.useState(false);
@@ -742,27 +815,7 @@ const RoomMenu = React.forwardRef( ({art, room}, screenshotRef) => {
     setShareOpen(true);
   }
 
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
 
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const keyPress = (e) => {
-    if(e.keyCode === 13){
-      setAnchorEl(null);
-    }
- }
-
-  const handleNameChange = (event) => {
-    setName(event.target.value);
-    dispatch({type: 'NAME_ROOM', id: room.id, name: event.target.value})
-  };
-
-  const open = Boolean(anchorEl);
-  const popoverId = open ? 'simple-popover' : undefined;
 
 return (<div className="menu-box">
           <div className="room-menu-single-item"> 
@@ -796,10 +849,9 @@ return (<div className="menu-box">
               navigate('/purchase/'+room.id)
               }}>Purchase wall...</div>
           </div>
-          <div className="room-menu-single-item"> 
-            <span className="material-icons md-36" onClick={handleClick}>title</span>
-            <div className="room-menu-text" onClick={handleClick}>Rename...</div>
-          </div>
+          {/* <div className="room-menu-single-item">  */}
+            {/* <div className="room-menu-text" onClick={handleClick}>Rename...</div> */}
+          {/* </div> */}
           <div className="room-menu-single-item"> 
             <span className="material-icons md-36" onClick={() => dispatch({type: "DELETE_ROOM", room: room})}>delete_outline</span>
             <div className="room-menu-text"  onClick={() => dispatch({type: "DELETE_ROOM", room: room})}>Delete wall...</div>
@@ -808,22 +860,6 @@ return (<div className="menu-box">
             <span className="material-icons md-36" onClick={getScreenshot}>share</span>
             <div className="room-menu-text"  onClick={getScreenshot}>Save/Share wall...</div>
           </div>
-          <Popover 
-              id={popoverId}
-              open={open}
-              anchorEl={anchorEl}
-              onClose={handleClose}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'left',
-            }}
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'left',
-            }}
-          >
-          <TextField id="standard-name" label="Name" value={name} onChange={handleNameChange} onKeyDown={keyPress}/>
-          </Popover>
           <Dialog
               open={shareOpen}
               onClose={handleShareClose}
@@ -832,6 +868,8 @@ return (<div className="menu-box">
             >
             <DialogTitle id="alert-dialog-title">{"Save or share options"}</DialogTitle>
             <DialogActions>
+            <div className='share-options'>
+            <div>
             <TextField id="email-save" label="Send to my email..." value={shareEmail} onChange={handleSaveEmail}/>
             <Button onClick={() => {
                 handleShareClose();
@@ -842,13 +880,58 @@ return (<div className="menu-box">
               }} color="primary">
                 Send
               </Button>
-              <Button onClick={() => {
+              </div>
+              <Button 
+              variant='outlined'
+              onClick={() => {
                 handleShareClose();
                 postData('/share/', {app_state: state, 
                                      image: '', 
                                      room_id: room.id,
                                      email: ''})
                 navigator.clipboard.writeText(process.env.REACT_APP_PROD_DOMAIN+'/shared/'+state.sessionId+'/'+room.id)}}>Copy Link</Button>
+                <div>
+                <EmailShareButton url={process.env.REACT_APP_PROD_DOMAIN+'/shared/'+state.sessionId+'/'+room.id}
+                  beforeOnClick={() => { handleShareClose();
+                postData('/share/', {app_state: state, 
+                                     image: '', 
+                                     room_id: room.id,
+                                     email: ''})}}
+                  subject="My Deco art wall"
+                  body="Check out the art wall I created:">
+                  <EmailIcon/>
+                </EmailShareButton>
+                <RedditShareButton url={process.env.REACT_APP_PROD_DOMAIN+'/shared/'+state.sessionId+'/'+room.id}
+                  beforeOnClick={() => { handleShareClose();
+                postData('/share/', {app_state: state, 
+                                     image: '', 
+                                     room_id: room.id,
+                                     email: ''})}}
+                                     title={'I created my own art wall.'}>
+                  <RedditIcon/>
+                </RedditShareButton>
+                <FacebookShareButton url={process.env.REACT_APP_PROD_DOMAIN+'/shared/'+state.sessionId+'/'+room.id}
+                  beforeOnClick={() => { handleShareClose();
+                postData('/share/', {app_state: state, 
+                                     image: '', 
+                                     room_id: room.id,
+                                     email: ''})}}
+                                     quote={'I created my own art wall.'}>
+                  <FacebookIcon/>
+                </FacebookShareButton>
+                <PinterestShareButton url={process.env.REACT_APP_PROD_DOMAIN+'/shared/'+state.sessionId+'/'+room.id}
+                  beforeOnClick={() => { handleShareClose();
+                postData('/share/', {app_state: state, 
+                                     image: screenshot?.slice('data:image/png;base64,'.length), 
+                                     room_id: room.id,
+                                     email: 'pinterest@pinterest.pinterest'})}}
+                                     description={'I created my own art wall on Deco.'}
+                                     media={`https://storage.googleapis.com/deco-user-images/${state.sessionId}%7C${room.id}.png`}
+                                     >
+                  <PinterestIcon/>
+                </PinterestShareButton>
+                </div>
+                </div>
             </DialogActions>
           </Dialog>
         </div>

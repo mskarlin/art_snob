@@ -25,10 +25,7 @@ export async function postData(url = '', data = {}, token=null, headerOverride=n
 
     return response.json(); // parses JSON response into native JavaScript objects
   }
-  
-    // .then(data => {
-    //   console.log(data); // JSON data parsed by `data.json()` call
-    // });
+
 
   String.prototype.hashCode = function(){
       var hash = 0;
@@ -57,7 +54,6 @@ export async function logIn(email, sessionId, state, dispatch, token) {
         defaultAnalytics.logEvent('login')
         dispatch({type: 'TOGGLE_LOG_STATE', state: true})
       }
-    // console.log('Pulled session', maybeSession.sessionId);
     dispatch({type: 'ASSIGN_STATE', state: maybeSession})
   }
   else{
@@ -75,7 +71,15 @@ const initialFeed = [{name: '', images: '', id: null}, {name: '', images: '', id
 {name: '', images: '', id: null}, {name: '', images: '', id: null}, {name: '', images: '', id: null}, {name: '', images: '', id: null}, {name: '', images: '', id: null},                     
 {name: '', images: '', id: null}]
 
-const blankRoom= {reload: true, feed: initialFeed, feedCursor: null, roomType: 'blank', 'name': 'My new wall', 'showingMenu': false, focusArtId: null, art: [{id:1, size: 'medium', artId: null}], arrangement: {rows:[1]}, arrangementSize: 1, clusterData:{likes:[], dislikes:[], skipped:[], skipN:0, startN:0, nActions:0}, vibes: [], 'seedTags': [], 'seedArt': []}
+const blankRoom= {reload: true, feed: initialFeed, feedCursor: null, roomType: 'blank', 'name': 'My new wall', 'showingMenu': false, 
+focusArtId: null, 
+art: [{id:1, size: 'medium', artId: null}], 
+arrangement: {rows:[1]}, 
+arrangementSize: 1, 
+clusterData:{likes:[], dislikes:[], skipped:[], skipN:0, startN:0, nActions:0}, 
+vibes: [], 
+'seedTags': [], 
+'seedArt': []}
 
 
 export const initialState = {
@@ -227,6 +231,26 @@ const StateProvider = ( { children } ) => {
           }
           })
         return {...state, rooms: newXYRooms}
+      case 'SET_ART_FRAME_COLOR':
+          let colorFrameArt = state.rooms.map(r => 
+            {
+              if (r.id === action.roomId) {
+                let tmpArt = r.art.map(a => {
+                if (a.artId === action.id){ 
+                  return {...a, frameColor: action.color}
+                }
+                else {
+                  return a
+                }
+              }
+                )
+                return {...r, art: tmpArt}
+            }
+            else {
+              return r
+            }
+            })
+          return {...state, rooms: colorFrameArt}
 
       case 'REMOVE_ART':
         let newRooms = state.rooms.map(r => 

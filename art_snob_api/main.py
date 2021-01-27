@@ -454,6 +454,7 @@ class RoomArt(Art):
     artist: Optional[str]
     size_price_list: Optional[List[PriceSize]]
     page_url: Optional[str]
+    frameColor: Optional[str]
 
 class Room(BaseModel):
     name: str
@@ -537,19 +538,20 @@ def share(app_state: AppState,
 
             art_affiliate_links = ''.join(art_affiliate_links)
 
-            message = Mail(from_email='mike@decoart.io',
-                        to_emails=email,
-                        subject=f'Shared art-wall: {room.name}',
-                        html_content=f"""{wall_image}{wall_link}{art_affiliate_links}""")
+            if 'pinterest@' not in email:
+                message = Mail(from_email='mike@decoart.io',
+                            to_emails=email,
+                            subject=f'Shared art-wall: {room.name}',
+                            html_content=f"""{wall_image}{wall_link}{art_affiliate_links}""")
 
-            try:
-                sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
-                response = sg.send(message)
-                print(response.status_code)
-                print(response.body)
-                print(response.headers)
-            except Exception as e:
-                print(e.message)
+                try:
+                    sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+                    response = sg.send(message)
+                    print(response.status_code)
+                    print(response.body)
+                    print(response.headers)
+                except Exception as e:
+                    print(e.message)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
