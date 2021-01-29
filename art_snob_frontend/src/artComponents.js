@@ -103,8 +103,6 @@ export const ArtWork = React.forwardRef( ({ppi, artMargin, size, showprice, artI
     const width = state.priceRange[size].artSize[0]*PPI
     const height = state.priceRange[size].artSize[1]*PPI
 
-    console.log(frameColor)
-
     let nullFrameStyle = {
       width: round(width)+'px',
       height: round(height)+'px',

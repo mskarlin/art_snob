@@ -124,8 +124,8 @@ const StateProvider = ( { children } ) => {
 
   const [state, dispatch] = useReducer(
       (state, action) => {
-    console.log('StateProvider:ACTION', action)
-    console.log('StateProvider:STATE', state)
+    // console.log('StateProvider:ACTION', action)
+    // console.log('StateProvider:STATE', state)
     let newState={}
     let newHistory={}
     let newXYRooms={}
