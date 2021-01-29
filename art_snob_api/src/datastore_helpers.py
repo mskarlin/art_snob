@@ -2,6 +2,7 @@ import random, datetime
 from google.cloud import datastore
 import os
 from src.ordered_set import OrderedSet
+from collections import Counter
 from typing import List
 import itertools
 import sys
@@ -35,7 +36,7 @@ class FriendlyDataStore():
     TAG_SCORES = '11122020-tag-scores'
     VIBES = '12302020-vibes'
     TAG_REVERSE_INDEX = '11202020-tag_reverse_index'
-    CLUSTER_REVERSE_INDEX = '11292020-inverse-cluster-index'
+    CLUSTER_REVERSE_INDEX = '01272021-inverse-cluster-index'
     CLUSTER_INDEX = '12122020-cluster-index'
     STATE_KIND = '12202020-state'
     STATE_LOGIN = '12202020-login'
@@ -176,23 +177,34 @@ class FriendlyDataStore():
         return self.dsi.read(ids=idx_to_request[start:(start+n_records)], kind=self.INFO_KIND)
 
     @staticmethod
-    def score(i, pos, neg):
+    def score(i, pos, neg, exposed):
+        """Weight the positive actions equally at 1, the negative equally at -1 and exposures as -1/3 per"""
+        ranking = 0
+
+        if i in exposed:
+            ranking+=-(0.5)*exposed[i]
+
         if i in pos:
-            return 1.0
+            ranking+=1.0
+
         elif i in neg:
-            return -1.0
-        else:
-            return 0.0
+            ranking+=-1.0
+        
+        return ranking
 
 
-    def member_neighbor_sets(self, session_id):
+    def member_neighbor_sets(self, session_id, n_considered_neighbors=25):
         # first we pull the session_id and likes for this user
         results, cursor = self.dsi.query_nocache(kind=self.ACTION_KIND,
                                      query_filters=[('session', '=', session_id)],
                                      n_records=100,
                                      tolist=True
                                      )
-
+        # filter for exposure items (for downranking)
+        exposure_count = {}
+        exposed_items = [[int(i) for i in r['item'].split('|')] for r in results if (r['action'] == 'reco_exposed')]
+        exposed_counter=Counter([item for sublist in exposed_items for item in sublist])
+        
         # filter for just the liked, approved or added to rooms
         positive_ids_to_neighbor = [int(r['item']) for r in results if (r['action']=='action' or 'addtoroom' in r['action'] or r['action'] == 'reco_approve')]
         negative_ids_to_neighbor = [int(r['item']) for r in results if (r['action'] == 'reco_disapprove')]
@@ -208,27 +220,28 @@ class FriendlyDataStore():
         pos_to_flatten = self.dsi.read(ids=positive_ids_to_neighbor, kind=self.NEIGHBOR_KIND, filter_keys=['neighbors'])
         neg_to_flatten = self.dsi.read(ids=negative_ids_to_neighbor, kind=self.NEIGHBOR_KIND, filter_keys=['neighbors'])
         
-        pos_neighbors = [neighbor_list['neighbors'][:25] for neighbor_list in pos_to_flatten.values()]
+        pos_neighbors = [neighbor_list['neighbors'][:n_considered_neighbors] for neighbor_list in pos_to_flatten.values()]
         pos_neighbors = set([item for sublist in pos_neighbors for item in sublist])
 
-        neg_neighbors = [neighbor_list['neighbors'][:25] for neighbor_list in neg_to_flatten.values()]
+        neg_neighbors = [neighbor_list['neighbors'][:n_considered_neighbors] for neighbor_list in neg_to_flatten.values()]
         neg_neighbors = set([item for sublist in neg_neighbors for item in sublist])
 
-        return pos_neighbors, neg_neighbors
+        return pos_neighbors, neg_neighbors, exposed_counter
 
-    def rerank_from_like_and_approvals(self, pos_neighbors, neg_neighbors, id_list_to_rank):
+    def rerank_from_like_and_approvals(self, pos_neighbors, neg_neighbors, exposed_counter, id_list_to_rank):
 
         if len(pos_neighbors) == 0 and len(neg_neighbors) == 0:
             return id_list_to_rank
 
-        indexed_id_list_to_rank = [(i,self.score(i, pos_neighbors, neg_neighbors)) for i in id_list_to_rank]
+        indexed_id_list_to_rank = [(i,self.score(i, pos_neighbors, neg_neighbors, exposed_counter)) for i in id_list_to_rank]
 
         # remove what was below the threshold prior (that's all seen...)
-
         return [t[0] for t in sorted(indexed_id_list_to_rank, key=lambda x: x[1], reverse=True)]
 
-    def clusters(self, clusters: List, seed=814, cursor:str='', n_records:int=26, session_id=None):
-        
+    def clusters(self, clusters: List, seed=814, cursor:str='', n_records:int=26, session_id=None, from_center=False, include_description=False):
+        """Get recommendation results, sorted contextually. Can also get descriptions for clusters (only when ranked from center)
+            TODO: much of the optional logic for include_description and from_center may be unecessary..
+        """
         if cursor:
             rseed, start = cursor.split('_')
             rseed = int(rseed)
@@ -241,14 +254,22 @@ class FriendlyDataStore():
         cluster_keys = self.dsi.read(ids=clusters, kind=self.CLUSTER_REVERSE_INDEX, sorted_list=True)
 
         idx_to_request = []
+        description = None
 
         for keys in cluster_keys:
-            tmp_cluster_ids = list(set([int(k) for k in keys['idx']]))
-            random.Random(rseed).shuffle(tmp_cluster_ids)
             
-            if session_id:
-                pos_neighbors, neg_neighbors = self.member_neighbor_sets(session_id)
-                tmp_cluster_ids = self.rerank_from_like_and_approvals(pos_neighbors, neg_neighbors, tmp_cluster_ids)[start:]
+            if not from_center: # only do the re-ranking if we're not looking to get stuff from the center
+                tmp_cluster_ids = list(set([int(k) for k in keys['idx']]))
+                random.Random(rseed).shuffle(tmp_cluster_ids)
+            
+                if session_id:
+                    pos_neighbors, neg_neighbors, exposed_counter = self.member_neighbor_sets(session_id)
+                    tmp_cluster_ids = self.rerank_from_like_and_approvals(pos_neighbors, neg_neighbors, exposed_counter, tmp_cluster_ids)[start:]
+            else:
+                # no set-reranking here
+                tmp_cluster_ids = [int(k) for k in keys['idx']]
+                if include_description:
+                    description = keys['description']
 
             idx_to_request.append(tmp_cluster_ids)
         
@@ -257,9 +278,9 @@ class FriendlyDataStore():
         idx_to_request = [item for sublist in idx_to_request for item in sublist if item is not None]
 
         if session_id:
-            return self.dsi.read(ids=idx_to_request[:n_records], kind=self.INFO_KIND)
+            return self.dsi.read(ids=idx_to_request[:n_records], kind=self.INFO_KIND), description
         else:
-            return self.dsi.read(ids=idx_to_request[start:(start+n_records)], kind=self.INFO_KIND)
+            return self.dsi.read(ids=idx_to_request[start:(start+n_records)], kind=self.INFO_KIND), description
 
     def search(self, query, get_cursor=False, start_cursor=None, n_records=25):
         """Get all search results based on tags"""

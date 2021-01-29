@@ -18,7 +18,7 @@ from pydantic import BaseModel
 
 # sys.path.insert(0, '../')
 from utilities.datastore_helpers import DataStoreInterface
-from utilities.storage_helpers import download_gcs_local, upload_gcs_file
+from utilities.storage_helpers import upload_gcs_file
 from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, Body
 
 import logging
@@ -35,27 +35,17 @@ cloud_logger = logging.getLogger('cloudLogger')
 cloud_logger.setLevel(logging.INFO) # defaults to WARN
 cloud_logger.addHandler(handler)
 
-from src.feed import PersonalizedArt, ExploreExploitClusters, DistanceClusterModel
+from src.feed import PersonalizedArt, ClusterExplore
 from src.art_configurations import ArtConfigurations
 from src.datastore_helpers import FriendlyDataStore
 from jose.exceptions import JWTError
 
-DISTANCE_CLUSTER_MODEL = os.environ.get('DISTANCE_CLUSTER_MODEL', '12012020-distance-cluster-model.pkl')
-DCM_ALPHA = os.environ.get('DCM_ALPHA', '1.0')
-DCM_MIN_DIST = os.environ.get('DCM_MIN_DIST', '6.0')
-DCM_EXPLOIT_PCT = os.environ.get('DCM_EXPLOIT_PCT', '0.1')
+NUM_CLUSTERS=os.environ.get('NUM_CLUSTERS', 100)
 
 dsi = DataStoreInterface(os.environ.get('GOOGLE_CLOUD_PROJECT'))
 data = FriendlyDataStore(dsi)
-download_gcs_local('artsnob-models', 'clusters/'+DISTANCE_CLUSTER_MODEL, DISTANCE_CLUSTER_MODEL)
 
-dcm = DistanceClusterModel()
-dcm.load(DISTANCE_CLUSTER_MODEL)
-eec = ExploreExploitClusters(dcm, 
-                            alpha=float(DCM_ALPHA), 
-                            min_dist=float(DCM_MIN_DIST), 
-                            exp_exl=float(DCM_EXPLOIT_PCT))
-
+eec = ClusterExplore(data)
 app = FastAPI(title='deco-api', version="0.4.5")
 
 origins = ["*", "http://localhost:8000/"]
@@ -68,18 +58,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-ac = ArtConfigurations(fileloc=os.environ.get('ART_CONFIG_FILE', 'art_configurations.csv'))
-
 # the below function won't actually catch... 
 def get_current_user():
     try:
         return FirebaseCurrentUser()
     except:
         raise HTTPException(status_code=400)
-
-@app.on_event("startup")
-async def startup_event():
-    ac.expand_all_templates()
 
 # TODO: move the images URL appendage client side
 def list_and_add_image_prefix(artdata: Dict, hydration_dict = None) -> List:  
@@ -225,7 +209,7 @@ def tags(tag: str, start_cursor: str = None, n_records: int = 10, session_id=Non
     return {'art': works, 'cursor': f'{seed}_{start+n_records}'}
 
 @app.get('/recommended/{session_id}')
-def recommended(session_id=None, likes:str='', dislikes:str='', start_cursor=None, n_return=26):
+def recommended(session_id=None, likes:str='', dislikes:str='', start_cursor=None, n_return=26, reseed_at_start=True):
     if not session_id:
         session_id = str(uuid.uuid4())
 
@@ -235,7 +219,7 @@ def recommended(session_id=None, likes:str='', dislikes:str='', start_cursor=Non
 
     # sub in some randoms if we've got no likes
     if len(likes) == 0:
-        likes = [rand.randint(0,99) for i in range(3)]
+        likes = [rand.randint(0,NUM_CLUSTERS-1) for i in range(3)]
 
     # seed = rand.randint(0,10000)
     seed = abs(hash(session_id)) % (10 ** 5)
@@ -246,12 +230,19 @@ def recommended(session_id=None, likes:str='', dislikes:str='', start_cursor=Non
         seed = int(seed)
         start = int(start)
 
+    # if we are starting at 0, let's re-seed it!, it implies the request is coming from a new context
+    if start == 0 and reseed_at_start:
+        seed+=rand.randint(0,1000)
+
     works = []
-    cdata = data.clusters(likes, seed=seed, cursor=start_cursor, n_records=int(n_return), session_id=session_id)
+    cdata, _ = data.clusters(likes, seed=seed, cursor=start_cursor, n_records=int(n_return), session_id=session_id)
     work_list = list_and_add_image_prefix({'art': cdata})
 
     log_exposure(work_list, session_id, how=f"exposure:recommended:{likes}|{dislikes}")
-    
+
+    # write exposure to ds, more highly accessible db, so that we can limit the n exposures
+    data.write_action(Action(session=session_id, action='reco_exposed', item='|'.join([str(w['id']) for w in work_list])))
+
     return {'art': work_list, 'cursor': f'{seed}_{start+int(n_return)}'}
 
 
@@ -317,13 +308,15 @@ def explore(session_id=None, likes:str='', dislikes:str='', skipped:str='', skip
     
     if not session_id:
         session_id = str(uuid.uuid4())
+    
+    seed = abs(hash(session_id)) % (10 ** 5)
 
     likes = [int(l) for l in likes.split(',') if l]
     dislikes = [int(d) for d in dislikes.split(',') if d]
     skipped = [int(d) for d in skipped.split(',') if d]
 
     next_cluster, next_items = eec.predict_next(likes=likes, dislikes=dislikes, skipped=skipped, 
-    skip_n=int(skip_n), n_ids=int(n_return), n_start=int(n_start))
+    skip_n=int(skip_n), n_ids=int(n_return), n_start=int(n_start), seed=seed)
     next_items = [int(ni) for ni in next_items]
 
     # hydrate the items
@@ -343,9 +336,12 @@ def clusters(cluster_id, session_id=None, n_return=4, from_center=False):
     if not session_id:
         session_id = str(uuid.uuid4())
 
-    work_ids = eec.cluster_center_art(int(cluster_id), n_ids=int(n_return))
-    works = dsi.read(ids=work_ids, kind=data.INFO_KIND, sorted_list=True)
-    work_list = add_image_prefix(works, ids=work_ids)
+    # work_ids = eec.cluster_center_art(int(cluster_id), n_ids=int(n_return))
+    # works = dsi.read(ids=work_ids, kind=data.INFO_KIND, sorted_list=True)
+    # work_list = add_image_prefix(works, ids=work_ids)
+
+    works, _ = data.clusters([cluster_id], n_records=n_return, from_center=True)
+    work_list = list_and_add_image_prefix({'cluster': works})
 
     log_exposure(work_list, session_id, how=f"exposure:clusters:{cluster_id}")
 
@@ -376,8 +372,9 @@ def art(art_id: int, session_id=None, max_tags=5, return_clusters=True):
     if return_clusters: 
         cluster_info = dsi.read(ids=[art_id], kind=data.CLUSTER_INDEX, sorted_list=False)
         if art_id in cluster_info:
+            description = dsi.read(ids=[cluster_info[art_id]['cluster_id']+1], kind=data.CLUSTER_REVERSE_INDEX, sorted_list=True)[0]['description']
             work['metadata'] = cluster_info[art_id]
-            work['metadata'].update({'cluster_desc': eec.art_cluster_def[cluster_info[art_id]['cluster_id']]})
+            work['metadata'].update({'cluster_desc': description})
         else:
             work['metadata'] = {'cluster_id': -1}
 
@@ -402,19 +399,6 @@ def similar_works(art_id: int, start_cursor:int = 0, limit:int = 10, session_id=
     works = list_and_add_image_prefix({art_id: works})
     log_exposure(works, session_id, how=f"exposure:similar:{art_id}")
     return {'art': works, 'cursor': start_cursor+limit}
-
-@app.get('/art_configurations/{nworks}')
-def art_configurations(nworks:int=2, minprice:int=0, maxprice:int=999999, session_id=None, defaults=False):
-    if not session_id:
-        session_id = str(uuid.uuid4())
-    
-    if not defaults:
-        eligible_works = ac.art_configurations(nworks)
-        sorted_elig_works = sorted([e for e in eligible_works if e['minprice'] >= minprice and e['minprice'] <= maxprice], key=lambda x: x['minprice'])
-        log_exposure(sorted_elig_works, session_id, how=f"exposure:configuration:{nworks}:{minprice}:{maxprice}")
-        return {'art_configuration': sorted_elig_works}
-    else:
-        return {'art_configuration': ac.defaults()}
 
 class Action(BaseModel):
     session: str
