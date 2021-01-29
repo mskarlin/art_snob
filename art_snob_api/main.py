@@ -46,7 +46,7 @@ dsi = DataStoreInterface(os.environ.get('GOOGLE_CLOUD_PROJECT'))
 data = FriendlyDataStore(dsi)
 
 eec = ClusterExplore(data)
-app = FastAPI(title='deco-api', version="0.4.5")
+app = FastAPI(title='deco-api', version="0.5.0")
 
 origins = ["*", "http://localhost:8000/"]
 
