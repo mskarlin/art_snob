@@ -15,7 +15,7 @@ function HistoryCard({history, dispatch}) {
                         'reco_disapprove': 'Disapproved recommendation: ', 
                         'likeArt': 'Favorited: ', 
                         'viewArt': 'Viewed: ',
-                        'addArt': 'Added to room: '}
+                        'addArt': 'Added to wall: '}
     
     if (history.with.id === null) {
         return <></>

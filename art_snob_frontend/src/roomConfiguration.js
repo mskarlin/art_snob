@@ -67,7 +67,7 @@ function SingleArtSelect(show) {
                             id: state.newRoomShow.selectionRoom.id, 
                             roomType: state.newRoomShow.selectionRoom.roomType, 
                             showingMenu: false})
-                            navigate('/rooms')
+                            navigate('/walls')
                             }} key={size+name}>
                             {(currentSizeLabel(size)==='selected')?<span className="material-icons md-36" style={{'position': 'absolute',
                             'top': '5px', 'left': '5px', 'color': '#018E42', zIndex: 2}}>check_circle_outline</span>:<></>}
@@ -127,7 +127,7 @@ function SingleArtSelect(show) {
             arrangement: room.arrangement, arrangementSize: room.arrangementSize,
             showingMenu: false
             });
-            navigate('/rooms')
+            navigate('/walls')
         }
         )
        }
@@ -168,4 +168,70 @@ function SingleArtSelect(show) {
       return <></>
     }
   
+  }
+
+
+ export function SingleArtSelectMenu({show, roomId, inputCallback}) {
+    const globalState = useContext(store);
+    const { dispatch, state } = globalState;
+  
+    const includeShowPrice = (selectionType) => {if (['p_large', 'l_large'].includes(selectionType)) {return true} else {return false}}
+  
+    if (show){
+      return (
+        <>
+        <div className="collection-heading">
+              <div className="stacked-descriptors">
+                <div className="collection-text "> 
+                  Choose a size
+                </div>
+                <div className="collection-text-sub">
+                 Prices include frames
+                </div>
+              </div>
+              <div className="price-text">
+                $40-$200
+              </div>
+            </div>
+            <div className='single-work-art-sizes'>
+                <div className='single-work-art-stack'>
+                {Object.entries(state.priceRange).map(([size, {price, name, sizeDesc}], index)=>{
+                    return (<div className={'single-work-view '} 
+                    onClick={() => {dispatch({type: "ADD_BLANK_ROOM",
+                            size: size,
+                            id: roomId, 
+                           })
+                            inputCallback()
+                            }} key={size+name}>
+                              <div className="work-desc-text">{name}</div>
+                              <ArtWork key={'single-price-sample'+index.toString()}
+                                                size={size} 
+                                                PPI={3.0} 
+                                                artId={null}
+                                                artImage={null}
+                                                artDispatch={null}
+                                                potentialArt={null}
+                                                roomId={'room-single'+index.toString()}
+                                                roomArtId={null}
+                                                showprice={includeShowPrice(size)}
+                                                selectMenu={true}
+                                                > 
+                                                </ArtWork>
+                              {(!includeShowPrice(size)) ?(
+                              <div className="work-desc-text" style={{'height': '40px'}}>{sizeDesc}<br/>
+                              <span style={{"color": "#56876D", "fontWeight": 900}}>{price}</span>
+                              </div>
+                              ): null
+                              }
+                            </div>)
+                }
+                )}
+                </div>
+              </div>
+          </>
+      )
+    }
+    else {
+      return <></>
+    }
   }

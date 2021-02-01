@@ -224,7 +224,7 @@ function VibeView({vibe}) {
                       likes: vibe.Clusters}}
                 dispatch({type: 'ADD_ROOM', 'room': vibeRoom});
                 dispatch({type: 'TOGGLE_VIBE_SELECT'});
-                navigate('/rooms');
+                navigate('/walls');
                 }}
                 >Select!</Button>
             </CardActions>
@@ -354,7 +354,7 @@ export function TasteFinder() {
                             <Button size="small" variant="outlined" color="secondary"
                             onClick={() => {let tmpRoom = maybeNewRoomCreate(true, true)
                                 dispatch({type: 'ADD_ROOM', 'room': tmpRoom});
-                                navigate('/rooms');
+                                navigate('/walls');
                             }}
                             >Continue</Button>
                             <Button size="small" variant="outlined"

@@ -4,9 +4,9 @@ import { auth, defaultAnalytics } from "./firebase.js";
 import { useCookies } from 'react-cookie';
 
 
-async function postData(url = '', data = {}, token=null) {
+export async function postData(url = '', data = {}, token=null, headerOverride=null) {
     // Default options are marked with *
-    let myHeaders = {'Content-Type': 'application/json'}
+    let myHeaders = (headerOverride)?headerOverride:{'Content-Type': 'application/json'}
 
     if (token) {
       myHeaders['Authorization'] = `Bearer ${token}`;
@@ -25,10 +25,7 @@ async function postData(url = '', data = {}, token=null) {
 
     return response.json(); // parses JSON response into native JavaScript objects
   }
-  
-    // .then(data => {
-    //   console.log(data); // JSON data parsed by `data.json()` call
-    // });
+
 
   String.prototype.hashCode = function(){
       var hash = 0;
@@ -57,7 +54,6 @@ export async function logIn(email, sessionId, state, dispatch, token) {
         defaultAnalytics.logEvent('login')
         dispatch({type: 'TOGGLE_LOG_STATE', state: true})
       }
-    // console.log('Pulled session', maybeSession.sessionId);
     dispatch({type: 'ASSIGN_STATE', state: maybeSession})
   }
   else{
@@ -75,7 +71,15 @@ const initialFeed = [{name: '', images: '', id: null}, {name: '', images: '', id
 {name: '', images: '', id: null}, {name: '', images: '', id: null}, {name: '', images: '', id: null}, {name: '', images: '', id: null}, {name: '', images: '', id: null},                     
 {name: '', images: '', id: null}]
 
-const blankRoom= {reload: true, feed: initialFeed, feedCursor: null, roomType: 'blank', 'name': 'My new room', 'showingMenu': false, focusArtId: null, art: [{id:1, size: 'medium', artId: null}], arrangement: {rows:1}, arrangementSize: 1, clusterData:{likes:[], dislikes:[], skipped:[], skipN:0, startN:0, nActions:0}, vibes: [], 'seedTags': [], 'seedArt': []}
+const blankRoom= {reload: true, feed: initialFeed, feedCursor: null, roomType: 'blank', 'name': 'My new wall', 'showingMenu': false, 
+focusArtId: null, 
+art: [{id:1, size: 'medium', artId: null}], 
+arrangement: {rows:[1]}, 
+arrangementSize: 1, 
+clusterData:{likes:[], dislikes:[], skipped:[], skipN:0, startN:0, nActions:0}, 
+vibes: [], 
+'seedTags': [], 
+'seedArt': []}
 
 
 export const initialState = {
@@ -84,12 +88,14 @@ export const initialState = {
     'potentialArt': null,
     'blankRoom': blankRoom,
     'artBrowseSeed': null, 
+    'dragging': false,
     'loggedIn': false,
     'purchaseList': null,
     'history': [], // (changable) cluster like / dislike
     'vibeSelect': false,
     'searchTagSet': '',
     'searchTagNames': [],
+    'deletingArt': false,
     'likedArt': [],
     'recommendationApprovals': {approvals: [], disapprovals: []},
     'priceRange': {'p_xsmall': {'price': '$40-60', 'name': 'Extra Small', 'sizeDesc': '12" x 14"', artSize: [12, 14], 'priceTextSize': '10px'},
@@ -103,7 +109,7 @@ export const initialState = {
                         'p_large': {'price': '$150-200', 'name': 'Large', 'sizeDesc': '28" x 40"', artSize: [28, 40], 'priceTextSize': '14px'},
                         'l_large': {'price': '$150-200', 'name': 'Large', 'sizeDesc': '40" x 28"', artSize: [40, 28], 'priceTextSize': '14px'}
   },
-    'newRoomShow': {show: true, currentName: 'My new room', selectionRoom: blankRoom},
+    'newRoomShow': {show: true, currentName: 'My new wall', selectionRoom: blankRoom},
     'rooms': []
 };
 
@@ -122,6 +128,7 @@ const StateProvider = ( { children } ) => {
     // console.log('StateProvider:STATE', state)
     let newState={}
     let newHistory={}
+    let newXYRooms={}
     switch(action.type){
       case 'ASSIGN_STATE':
         // need to fill in some non-backend stored state variables, fill with the blank room stuff
@@ -139,6 +146,8 @@ const StateProvider = ( { children } ) => {
           newRoomShow: {...state.newRoomShow, show: false}}
       case 'TOGGLE_LOG_STATE':
         return {...state, loggedIn: action.state}
+      case 'TOGGLE_DELETING_ART':
+        return {...state, deletingArt: action.deletingArt}
       case 'ADD_ROOM':
         if (state.rooms.map(r=>r.id).includes(action.room.id)) {
             newState = {...state, 
@@ -168,6 +177,81 @@ const StateProvider = ( { children } ) => {
             }
             return newState
         }
+      case 'SET_DRAGGING':
+        return {...state, dragging: action.dragging}
+      case 'SET_SNAP':
+        newXYRooms = state.rooms.map(r => 
+          {
+            if (r.id === action.roomId) {
+              let tmpArt = r.art.map(a => {
+              if (a.id === action.roomArtId){ 
+                let snapObject = {x: null, y: null}
+                if (action.snap === 'x') {
+                  snapObject.x = action.x
+                }
+                else if (action.snap === 'y') {
+                  snapObject.y = action.y
+                }
+                return {...a, snap: snapObject}
+              }
+              else {
+                return a
+              }
+            }
+              )
+              return {...r, art: tmpArt}
+          }
+          else {
+            return r
+          }
+          })
+        return {...state, rooms: newXYRooms}
+      case 'SET_ART_XY':
+        newXYRooms = state.rooms.map(r => 
+          {
+            if (r.id === action.roomId) {
+              let tmpArt = r.art.map(a => {
+              if (a.id === action.roomArtId){ 
+                if (!a.originX && !a.originY){
+                  return {...a, x: action.x, y: action.y, originX: action.originX, originY: action.originY}
+                }
+                else {
+                  return {...a, x: action.x, y: action.y}
+                }
+              }
+              else {
+                return a
+              }
+            }
+              )
+              return {...r, art: tmpArt}
+          }
+          else {
+            return r
+          }
+          })
+        return {...state, rooms: newXYRooms}
+      case 'SET_ART_FRAME_COLOR':
+          let colorFrameArt = state.rooms.map(r => 
+            {
+              if (r.id === action.roomId) {
+                let tmpArt = r.art.map(a => {
+                if (a.artId === action.id){ 
+                  return {...a, frameColor: action.color}
+                }
+                else {
+                  return a
+                }
+              }
+                )
+                return {...r, art: tmpArt}
+            }
+            else {
+              return r
+            }
+            })
+          return {...state, rooms: colorFrameArt}
+
       case 'REMOVE_ART':
         let newRooms = state.rooms.map(r => 
           {
@@ -410,7 +494,7 @@ const StateProvider = ( { children } ) => {
                 return {...room, 
                   showingMenu: false
                 }
-          })}    
+          })}            
       case 'ADD_ARRANGEMENT':
         const popArt =  JSON.parse(JSON.stringify(state.newRoomShow.selectionRoom.art));
         const artRenumbered = action.art.map((a, _) => {
@@ -464,6 +548,47 @@ const StateProvider = ( { children } ) => {
           postData('/state/', newState, cookies.fbToken)
         }
         return newState
+      case 'ADD_BLANK_ROOM':
+        newState={...state,
+            rooms: state.rooms.map(r => {
+              if (r.id === action.id) {
+                  const maxArtNum = Math.max(...r.art.map(x=> x.id))+1
+                  return {...r, 
+                    art: r.art.concat({id: maxArtNum, size: action.size, artId: null}), 
+                    arrangement: {rows: r.arrangement.rows.concat(maxArtNum)}, // hard coded "rows" for now
+                    arrangementSize: r.art.length, 
+                    showingMenu: false}
+              }
+              else {
+                  return r
+              }
+
+            })
+            }
+        if (state.loggedIn){
+          postData('/state/', newState, cookies.fbToken)
+        }
+        return newState
+      case 'DELETE_ART_FRAME':
+          newState={...state,
+              rooms: state.rooms.map(r => {
+                if (r.id === action.id) {
+                    return {...r, 
+                      art: r.art.filter(x=>x.id !== action.roomArtId), 
+                      arrangement: {rows: r.arrangement.rows.filter(x=> x !== action.roomArtId)}, // hard coded "rows" for now
+                      arrangementSize: r.art.length-1, 
+                      showingMenu: false}
+                }
+                else {
+                    return r
+                }
+  
+              })
+              }
+          if (state.loggedIn){
+            postData('/state/', newState, cookies.fbToken)
+          }
+          return newState
       case 'ADD_ROOMTYPE':
         // TODO: this implementatino is bugged... need to include whole state in return
         return state.rooms.map((room, _) => {
@@ -558,7 +683,76 @@ const StateProvider = ( { children } ) => {
             }
             return {...newState, history: newHistory}
         }
-        
+      case 'CHANGE_ART_SIZE':
+        newState = {...state, 
+          rooms: state.rooms.map((room, _) => {
+          const {id} = room
+          if (id === action.roomId) {
+
+              const resizedArtwork = room.art.map( a => { 
+                if (a.artId === action.id) {
+                return {...a, size: action.size}
+              }
+              else {
+                return a
+              }
+            })
+               return {...room, art: resizedArtwork}
+              }
+              else {
+                return room
+              }
+            })}
+           
+        if (state.loggedIn){
+          postData('/state/', newState, cookies.fbToken)
+        }
+        return newState
+
+      case 'ADD_NEW_FRAME_AND_ART':
+        postData('/actions/', { session: state.sessionId, action: 'addtoroom:'+action.roomId, item: action.artId})
+        defaultAnalytics.logEvent('add_to_cart', {'items': [{id: action.artId, name: action.name, 
+          category: action?.metadata?.cluster_id
+        }]})
+
+        newHistory = {id: uuidv4(), what: 'addArt', to: action.roomId, with: {id: action.artId, image: action.images, name: action.name}}
+
+        newState = {...state, 
+          history: state.history.concat(newHistory),
+          rooms: state.rooms.map((room, _) => {
+          const {id} = room
+          if (id === action.roomId) {
+              let currentMaxArtNum = Math.max(...room.art.map(x=> x.id))+1
+
+              const updatedArtwork = room.art.concat(
+                      {   id: currentMaxArtNum + 1,
+                          size: action.size,
+                          artId: action.artId,
+                          page_url: action.page_url,
+                          standard_tags: action.standard_tags,
+                          name: action.name.substring(0, action.name.length - 17),
+                          sizes: action.sizes,
+                          images: action.images,
+                          price: action.price,
+                          size_price_list: action.size_price_list
+                        }
+                        )
+               return {...room, art: updatedArtwork, 
+                arrangementSize: currentMaxArtNum+1,
+                arrangement: {rows: room.arrangement.rows.concat(currentMaxArtNum)}, // hard coded "rows" for now
+              }
+              }
+              else {
+                return room
+              }
+
+            })}
+           
+        if (state.loggedIn){
+          postData('/state/', newState, cookies.fbToken)
+        }
+        return newState
+
         
       case 'ADD_ART':
         postData('/actions/', { session: state.sessionId, action: 'addtoroom:'+action.roomId, item: action.artId})

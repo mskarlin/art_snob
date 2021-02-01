@@ -13,6 +13,11 @@ import ButtonGroup from '@material-ui/core/ButtonGroup';
 import Popper from '@material-ui/core/Popper';
 import ThumbUpAltOutlinedIcon from '@material-ui/icons/ThumbUpAltOutlined';
 import ThumbDownAltOutlinedIcon from '@material-ui/icons/ThumbDownAltOutlined';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
 
 export const openInNewTab = (url) => {
     const newWindow = window.open(url, '_blank', 'noopener,noreferrer')
@@ -209,6 +214,7 @@ function ImgColumn ({art}) {
   }
 
 const useArtColumnFetch = (loadMore, dispatch, endpoint, formatEndpoint, show) => {
+
     useEffect(() => {
         if (formatEndpoint && loadMore) {
             fetch(process.env.REACT_APP_PROD_API_DOMAIN+formatEndpoint)
@@ -349,6 +355,23 @@ export function ArtDetail({nTags, id}) {
     const handleScrollClick = () => {
         window.scrollTo(0, 0)
     }
+
+    const [ nativeImageSize, setNativeImageSize] = useState({width: 1, height: 1})
+
+    const replaceWithLandscape = (nativeImageSize.width / nativeImageSize.height > 1.1) ? true : false;
+
+
+    const onImgLoad = ({target:img}) => {
+      setNativeImageSize({height:img.offsetHeight, width:img.offsetWidth});
+    }
+
+    const colorList = [{name: 'black', code: '#222'}, 
+                        {name: 'white', code: '#FDFEFE'}, 
+                        {'name': 'natural wood', code: '#E6BF83'},
+                        {'name': 'walnut wood', code: '#502900'},
+                        {'name': 'pecan wood', code: '#5A330A'},
+                        {'name': 'red', code: '#7C0A02'},
+                    ]
     
     const [artData, setArtData] = useState({name: "", 
                                             size_price_list: [], 
@@ -357,6 +380,13 @@ export function ArtDetail({nTags, id}) {
                                             images: "",
                                             metadata: {"cluster_id": -1, "cluster_desc": ""}    
                                             });
+    
+    const currentSize = state.rooms.map(r => r.art.filter(x=>x.artId === artData.artId)[0]?.size).filter(x => x ? true : false)[0]
+    const currentColor = state.rooms.map(r => r.art.filter(x=>x.artId === artData.artId)[0]?.frameColor).filter(x => x ? true : false)[0]
+
+    const [selectedSize, setSelectedSize] = useState(currentSize ? currentSize : 'medium')
+    const [selectedColor, setSelectedColor] = useState(currentColor ? currentColor : 'black')
+
 
     useArtData(id, setArtData, handleScrollClick)
 
@@ -400,6 +430,29 @@ export function ArtDetail({nTags, id}) {
     
     dispatch({...artData, type: 'VIEW_ART'})
 
+    const handleUpdateArtSize = (event) =>
+    {
+        setSelectedSize(event.target.value);
+
+        if (inRoom()) {
+            let selectedRoomId = (state?.artBrowseSeed?.id) ? state?.artBrowseSeed?.id : state?.rooms[0]?.id
+            let newSize = (replaceWithLandscape && event.target.value.slice(0,2) === 'p_') ? 'l_'+event.target.value.slice(2) : event.target.value
+            dispatch({type: 'CHANGE_ART_SIZE', size: newSize, id: artData.artId, roomId: selectedRoomId})
+            navigate('/walls')
+        }
+    }
+
+    const handleUpdateFrameColor = (event) =>
+    {
+        setSelectedColor(event.target.value);
+
+        if (inRoom()) {
+            let selectedRoomId = (state?.artBrowseSeed?.id) ? state?.artBrowseSeed?.id : state?.rooms[0]?.id
+            dispatch({type: 'SET_ART_FRAME_COLOR', color: event.target.value, id: artData.artId, roomId: selectedRoomId})
+            navigate('/walls')
+        }
+    }
+
 return (
     <div className="fullpage-detail-container">
     <div className="detail-container">
@@ -413,6 +466,7 @@ return (
         </div>
         <div className="large-image">
         <img
+            onLoad={onImgLoad}
             alt={artData.artist}
             data-src={'https://storage.googleapis.com/artsnob-image-scrape/'+artData.images}
             className="large-image img"
@@ -431,28 +485,47 @@ return (
             </ButtonGroup>
         </div>
         <div className="price-size-action-container">
-            <div className="price-size">
-            <ul style={{"listStyleType":"none", "padding": "0px"}}>
-            <li className="pricing">Sizes:</li>
-            {artData.size_price_list.map(x => {
-                return <li className="pricing" key={'size_'+x.size}>{x.size}</li>
-            })}
-            </ul>
-            </div>
-            <div className="price-size" style={{'width': "15%"}}>
-            <ul style={{"listStyleType":"none", "padding": "0px"}}>
-            <li className="pricing">Prices:</li>
-            {artData.size_price_list.map(x => {
-                return <li className="pricing" key={'price_'+x.price}>{x.price}</li>
-            })}
-            </ul>
+            <div className="prize-size-buttons">
+            <FormControl variant="outlined" style={{width: '90%'}}>
+                <InputLabel id="price-and-size-selection-label">Price/size:</InputLabel>
+                <Select
+                labelId="price-and-size-selection-label"
+                id="price-and-size-outlined"
+                value={currentSize ? currentSize : 'medium'}
+                onChange={handleUpdateArtSize}
+                label="Price and size"
+                style={{fontSize: '0.7em'}}
+                >
+                    {artData.size_price_list.map(x => {
+                    return <MenuItem key={'menu-select'+x.price} value={x.type.trim()}>{`$${x.price}  ${x.size}`}</MenuItem>
+                    })}
+            
+                </Select>
+            </FormControl>
+
+            <FormControl variant="outlined" style={{width: '90%', marginTop: '15px'}}>
+                <InputLabel id="frame-color-selection-label">Frame Color:</InputLabel>
+                <Select
+                labelId="frame-color-selection-label"
+                id="frame-outlined"
+                value={currentColor ? currentColor : '#222'}
+                onChange={handleUpdateFrameColor}
+                label="Frame color"
+                style={{fontSize: '0.7em'}}
+                >
+                    {colorList.map(x => {
+                    return <MenuItem key={'menu-select'+x.name} value={x.code}>{x.name}</MenuItem>
+                    })}
+            
+                </Select>
+            </FormControl>
             </div>
             <div className="detail-purchase-buttons">
             {inRoom() ? 
                 <Button variant="contained" color="secondary" 
             style={{width: "150px"}}
             onClick={()=>{dispatch({'type': 'REMOVE_ART', 'artId': artData.artId})}}>
-            Remove from room
+            Remove from wall
             </Button> 
             :
             <Button variant="contained" color="secondary" 
@@ -467,23 +540,27 @@ return (
                             dispatch({...artData, type: 'ADD_ART', roomId: state.artBrowseSeed.id, roomArtId: 1})
                             dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
                             dispatch({'type': 'CLOSE_ALL_MENUS'})
-                            navigate('/rooms')}
-                    
+                            navigate('/walls')}
+
                 else if (focusArtId > 0) {
                     dispatch({...artData, type: 'ADD_ART', roomId: state.artBrowseSeed.id, roomArtId: focusArtId})
                     dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
                     dispatch({'type': 'CLOSE_ALL_MENUS'})
-                    navigate('/rooms')
+                    navigate('/walls')
                 }
-                
+
                 else {
-                    dispatch({'type': 'POTENTIAL_ART', 'artData': artData});
+                    let selectedRoomId = (state?.artBrowseSeed?.id) ? state?.artBrowseSeed?.id : state?.rooms[0]?.id
+                    dispatch({'type': 'ADD_NEW_FRAME_AND_ART', ...artData, 
+                    size: (replaceWithLandscape && selectedSize.slice(0,2) === 'p_') ? 'l_'+selectedSize.slice(2) : selectedSize, 
+                    roomId: selectedRoomId});
                     dispatch({'type': 'ART_BROWSE_SEED', 'artBrowseSeed': null})
                     dispatch({'type': 'CLOSE_ALL_MENUS'})
-                    navigate('/rooms')
+                    navigate('/walls')
                 }
+                
                 }}>
-            Add to room
+            Add to wall
             </Button> 
             }           
             <Button variant="contained" style={{width: "150px", marginTop: "15px"}}

@@ -19,6 +19,19 @@ const useStyles = makeStyles({
   }
 });
 
+const orientationFlip = (size) => {
+
+  const size_prefix = size.slice(0,2)
+  
+  if (size_prefix === 'p_') {
+    return 'l_'+size.slice(2)
+  }
+  else if (size_prefix === 'l_') {
+    return 'p_'+size.slice(2)
+  }
+  else {return null}
+
+}
 
 function RoomSummary({art}){
 
@@ -31,7 +44,7 @@ function RoomSummary({art}){
     // TODO: memoize this function
     const artMatchExtractor = (art, value) => {
       if ("size_price_list" in art) {
-        let typeMatch = art.size_price_list.filter( a => a.type.trim() === art.size)
+        let typeMatch = art.size_price_list.filter( a => (a.type.trim() === art.size) || (orientationFlip(a.type.trim()) === art.size))
         if (typeMatch.length > 0) {
           return typeMatch[0][value]
         }
@@ -99,7 +112,7 @@ function RoomSummary({art}){
     let roomStyle = {}
 
     if (!(state.rooms.map(x => x.id).includes(id))) {
-      navigate('/rooms')
+      navigate('/walls')
     }
 
     const extractPurchaseArt = () => {
@@ -122,7 +135,7 @@ function RoomSummary({art}){
         return (
             <>
               <div className="explain-menu" style={{top: '78px'}}>
-                  <span className="material-icons md-28" onClick={() => {navigate('/rooms')}}>arrow_back_ios</span>
+                  <span className="material-icons md-28" onClick={() => {navigate('/walls')}}>arrow_back_ios</span>
                   <div className="explain-text">Purchase your art at the source...</div>
               </div>
               <div className="explain-menu" style={{top: '119px'}}>

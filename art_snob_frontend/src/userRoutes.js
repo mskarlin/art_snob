@@ -46,7 +46,7 @@ export const SignIn = () => {
           setCookie('fbToken', token, { path: '/', maxAge: 3600*24})
 
           const sess = await logIn(userInfo.user.email, state.sessionId, state, dispatch, token)
-          navigate('/rooms')
+          navigate('/walls')
         }
         }
         catch (error) { 
@@ -69,7 +69,7 @@ export const SignIn = () => {
             setCookie('fbToken', token, { path: '/', maxAge: 3600*24})
 
             logIn(user.email, state.sessionId, state, dispatch, token)
-            navigate('/rooms')
+            navigate('/walls')
           }
         }
         catch(error) {
@@ -144,7 +144,7 @@ export const SignUp = () => {
             setCookie('fbToken', token, { path: '/', maxAge: 3600*24})
 
             logIn(user.email, state.sessionId, state, dispatch, token)
-            navigate('/rooms')
+            navigate('/walls')
           }
         
         }
@@ -171,7 +171,7 @@ export const SignUp = () => {
           setCookie('fbToken', token, { path: '/', maxAge: 3600*24})
 
           logIn(user.email, state.sessionId, state, dispatch, token)
-          navigate('/rooms')
+          navigate('/walls')
         }
       }
       catch(error) {

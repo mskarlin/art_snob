@@ -11,3 +11,4 @@ notebooks/*.csv
 cloud_functions/resize_images/node_modules/*
 build_deploy/build/*
 *.DS_Store
+art_snob_api/app.yaml

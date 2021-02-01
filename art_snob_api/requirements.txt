@@ -50,12 +50,14 @@ Pygments==2.6.1
 PyJWT==1.7.1
 python-dateutil==2.8.1
 python-jose==3.2.0
+python-multipart==0.0.5
 pytz==2020.1
 requests==2.24.0
 rsa==4.6
 scikit-learn==0.23.2
 scipy==1.5.4
 six==1.15.0
+sendgrid==6.5.0
 starlette==0.13.6
 threadpoolctl==2.1.0
 traitlets==4.3.3
