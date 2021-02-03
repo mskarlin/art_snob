@@ -895,7 +895,7 @@ return (<div className="menu-box">
                                      image: '', 
                                      room_id: room.id,
                                      email: ''})}}
-                  subject="My Deco art wall"
+                  subject="My Art Snob art wall"
                   body="Check out the art wall I created:">
                   <EmailIcon/>
                 </EmailShareButton>
@@ -923,7 +923,7 @@ return (<div className="menu-box">
                                      image: screenshot?.slice('data:image/png;base64,'.length), 
                                      room_id: room.id,
                                      email: 'pinterest@pinterest.pinterest'})}}
-                                     description={'I created my own art wall on Deco.'}
+                                     description={'I created my own art wall on Art Snob.'}
                                      media={`https://storage.googleapis.com/deco-user-images/${state.sessionId}%7C${room.id}.png`}
                                      >
                   <PinterestIcon/>
