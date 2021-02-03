@@ -34,7 +34,7 @@ export function Terms() {
         <p><strong>Third-party Social Media Service</strong> means any services or content (including data, information, products or services) provided by a third-party that may be displayed, included or made available by the Service.</p>
         </li>
         <li>
-        <p><strong>Website</strong> refers to Deco, accessible from <a href="decoart.io" rel="external nofollow noopener" target="_blank">decoart.io</a></p>
+        <p><strong>Website</strong> refers to Art Snob, accessible from <a href="artsnob.io" rel="external nofollow noopener" target="_blank">artsnob.io</a></p>
         </li>
         <li>
         <p><strong>You</strong> means the individual accessing or using the Service, or the company, or other legal entity on behalf of which such individual is accessing or using the Service, as applicable.</p>

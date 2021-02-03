@@ -174,7 +174,7 @@ function Footer() {
        <Link to="privacy" style={{fontFamily: `"Noto Sans JP", sans-serif`}}>Privacy Policy</Link>
        <Link to="about" style={{fontFamily: `"Noto Sans JP", sans-serif`}}>About Us</Link>
        </div>
-       <Typography variant="body1" style={{fontFamily: `"Noto Sans JP", sans-serif`}}>ArtSnob, LLC is doing business as Deco</Typography>
+       <Typography variant="body1" style={{fontFamily: `"Noto Sans JP", sans-serif`}}>ArtSnob, LLC</Typography>
     </div>
   )
 }
@@ -236,7 +236,7 @@ function WelcomeMessage() {
   }
 return (
         <div style={welcomeMessage}>
-          <Typography variant="h4" align="left" paragraph={true} style={{fontFamily: ["Poiret One", "serif"], color: "#FFFFFF"}}>Welcome to Deco</Typography>
+          <Typography variant="h4" align="left" paragraph={true} style={{fontFamily: ["Poiret One", "serif"], color: "#FFFFFF"}}>Welcome to Art Snob</Typography>
           <Typography variant="subtitle1"  align="left" paragraph={true} style={{color: "#FFFFFF"}}>Find art that matches your taste.</Typography>
           <Button variant="contained" color="primary" onClick={() => dispatch({type: "TOGGLE_LANDING"})}>Get Started!</Button>
           <Typography variant="body2"  align="left" paragraph={true} style={{color: "#FFFFFF", marginTop: "15px"}}><i>Note that we use cookies for analytics and recommendations between sessions.</i></Typography>
@@ -366,7 +366,7 @@ function MainHeader() {
   return (
     <div style={header}>
       <div style={headerStack}>
-      <div className="deco-header" onClick={() => navigate('/')}>Deco</div>
+      <div className="deco-header" onClick={() => navigate('/')}>Art Snob</div>
       <span className="material-icons md-36" style={{color: 'black'}} onClick={toggleDrawer(true)}>menu</span>
       <TopMenuDrawer drawerOpen={drawerOpen} setDrawerOpen={setDrawerOpen} toggleDrawer={toggleDrawer}/>
       </div>
