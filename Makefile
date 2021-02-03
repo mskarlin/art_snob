@@ -74,6 +74,7 @@ create-neo4j-db:
 		neo4j:latest
 
 deploy-frontend:
+	rm -rf ./build_deploy/build
 	cd art_snob_frontend ; npm run build
 	cp -r art_snob_frontend/build ./build_deploy/build/
 	cd build_deploy ; gcloud app deploy
