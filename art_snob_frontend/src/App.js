@@ -32,6 +32,7 @@ import HelpIcon from '@material-ui/icons/Help';
 import NewReleasesIcon from '@material-ui/icons/NewReleases';
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import HomeIcon from '@material-ui/icons/Home';
+import { Helmet } from "react-helmet";
 
 
 const fontTheme = createMuiTheme({
@@ -130,6 +131,11 @@ function LandingPage() {
   if (baseMatch) {
   return (
   <div style={{marginTop: "77px"}}>
+  <Helmet>
+        <title>Art Snob: the art taste finder</title>
+        <meta name="description" 
+    content="Quickly find and build an affordable wall art that matches your taste with our art finder app."/>
+  </Helmet>
   <ArtCarousel endpoints={['/random/']} showTitle={false} imgSize={'large'}/>
   <div className='welcome-banner'>
     <Typography variant="h5" align="center" style={{fontWeight: 800, paddingBottom: "15px"}}>Find art that matches your taste</Typography>
@@ -153,6 +159,7 @@ function LandingPage() {
 
 function LandingCopy() {
   return (
+    <>
     <div className="landing-copy">
       <Typography variant="h6" align="center" paragraph={true} style={{ fontWeight: 600}}>
        Bring your home to life with the perfect wall art
@@ -162,8 +169,28 @@ function LandingCopy() {
       Using our advanced, proprietary recommendation algorithms, we find art you will love and arrange it into optimal configurations for your walls.
       </Typography>
     </div>
+
+    <div className="landing-copy">
+      <div className="tutorial-steps">
+        <div className="centered-tutorial-image">
+          <img src="/find_art.png" height="150px" width="101px" style={{"maxWidth":"100%"}}></img>
+          <Typography variant="subtitle1" align="center" paragraph={true} style={{ fontWeight: 600}}>
+          1. Use the taste finder to discover art.
+          </Typography>
+        </div>
+        <div className="centered-tutorial-image">
+          <img src="/happy_art.png" height="150px" width="150px" style={{"maxWidth":"100%"}}></img>
+          <Typography variant="subtitle1" align="center" paragraph={true} style={{ fontWeight: 600}}>
+          2. Build your personal art wall.
+          </Typography>
+        </div>
+      </div>
+    </div>
+    </>
   )
 }
+
+
 
 
 function Footer() {

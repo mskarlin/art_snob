@@ -15,7 +15,7 @@ import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
 
 import Typography from '@material-ui/core/Typography';
-
+import { Helmet } from "react-helmet";
 
 import { store } from './store.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -393,6 +393,11 @@ export function TasteFinder() {
     return(
     <div className="room-main">
         <div className="room-feed" style={roomStyle}>
+        <Helmet>
+        <title>Art Snob: art taste finder</title>
+        <meta name="description" 
+              content="Find your art taste by completing our dynamic quiz, then get the perfect recommendations from over 100,000 affordable wall art works."></meta>
+        </Helmet>
         {
           roomFeed()
         }
