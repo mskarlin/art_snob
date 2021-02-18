@@ -1,6 +1,8 @@
 import React, { useState, useRef, useContext } from 'react';
 
 import { store } from './store.js';
+import { v4 as uuidv4 } from 'uuid';
+
 import { ArtColumns, LikesColumns } from './detailView'
 import { tag_suggestions } from './tag_suggestions'
 import Autocomplete from '@material-ui/lab/Autocomplete';
@@ -35,38 +37,81 @@ const useStyles = makeStyles((theme) => ({
     },
   }));
 
-export function ArtBrowse({children, navigate}) {
+export function Search({query, navigate, children}) {
+    // pre-loads a new room (if it doesn't exist)
+    // this way, even a new entry can add to room without a tastefinder
+    const globalState = useContext(store);
+    const { dispatch, state } = globalState;
+    if (state.rooms.length === 0){
+        let tmpRoom = {...state.blankRoom, id: uuidv4()}
+        dispatch({type: 'ADD_ROOM', 'room': tmpRoom});
+        dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: tmpRoom});
+        dispatch({type: 'TOGGLE_NEW_ROOM_SHOW', show: true});
+    }
+    else if (!('id' in state.artBrowseSeed)){
+        dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: state.rooms[0]});
+    }
+
+    return (
+        <ArtBrowse initialSearchTerm={query} navigate={navigate}/>
+    )
+}
+
+export function ArtBrowse({children, navigate, initialSearchTerm=''}) {
     const globalState = useContext(store);
     const { dispatch, state } = globalState;
     const classes = useStyles();
     const autoCompleteBox = useRef(null);
     const [selectBrowseType, setSelectBrowseType] = useState(0)
+    const [valueSetByURL, setValueSetByURL] = useState(initialSearchTerm!=='')
     // const [tagSeedBrowse, setTagSeedBrowse] = useState('')
-
+    // find if the inital search term should be applied or not
+    if (initialSearchTerm !== state.searchTagNames){
+        if (valueSetByURL) {
+            dispatch({type: 'CLEAR_FEED_IMAGES'})
+            dispatch({type: 'CHANGE_SEARCH_TAG_SET', 
+                    searchTagSet: '/search/'+encodeURIComponent(initialSearchTerm)+`?session_id=${state.sessionId}`, 
+                    searchTagNames: initialSearchTerm})
+            dispatch({type:'RELOAD_FEED', reload: true})
+        }
+    }
     
     const handleChange = (event, newValue) => {
         setSelectBrowseType(newValue);
       };
 
-    const tagSetter = (e, v) => {
-        if (e) {
-            if (v.length > 0) {
+
+    const searchKeyPress = (e) => {
+        if(e.keyCode == 13){
+            dispatch({type:'RELOAD_FEED', reload: true})
+            // put the login here
+         }
+    }
+
+    // set the search state with each keystroke, but only search on enter
+    const tagSetter = (event) => {
+        if (event) {
+
+            setValueSetByURL(false)
+
+            if (event.target.value.length > 0) {
                 dispatch({type: 'CLEAR_FEED_IMAGES'})
-                dispatch({type: 'CHANGE_SEARCH_TAG_SET', searchTagSet: '/tags/'+v.join('|'), searchTagNames: v})
-                dispatch({type:'RELOAD_FEED', reload: true})
+                dispatch({type: 'CHANGE_SEARCH_TAG_SET', 
+                searchTagSet: '/search/'+encodeURIComponent(event.target.value)+`?session_id=${state.sessionId}`, 
+                searchTagNames: event.target.value})
             }
             else {
                 dispatch({type: 'CLEAR_FEED_IMAGES'})
                 dispatch({type:'RELOAD_FEED', reload: true})
-                dispatch({type: 'CHANGE_SEARCH_TAG_SET', searchTagSet: '', searchTagNames: []})
+                dispatch({type: 'CHANGE_SEARCH_TAG_SET', searchTagSet: '', searchTagNames: ''})
             }
         }
     }
 
     const recommendedEndpoints = () => {
         // get seed art ids to send to the backend
-        const likes = state.artBrowseSeed.clusterData.likes.join(',')
-        const dislikes = state.artBrowseSeed.clusterData.dislikes.join(',')
+        const likes = state.artBrowseSeed?.clusterData.likes.join(',')
+        const dislikes = state.artBrowseSeed?.clusterData.dislikes.join(',')
 
         return '/recommended/' + state.sessionId
         + '?likes='+encodeURIComponent(likes)
@@ -82,6 +127,7 @@ export function ArtBrowse({children, navigate}) {
     }
 
     const browser = () => {
+
         if(state.artBrowseSeed){
             return(
             <>
@@ -108,22 +154,14 @@ export function ArtBrowse({children, navigate}) {
                         </Tabs>
                         <div className='auto-complete' ref={autoCompleteBox}>
                             <div className='auto-complete-background'>
-                                    <Autocomplete
-                                        multiple
-                                        id="tags-standard"
-                                        classes={classes}
-                                        options={tag_suggestions}
-                                        // defaultValue={state.searchTagNames}
-                                        value={state.searchTagNames}
+                                    <TextField
+                                        style={{width: '33%', minWidth: '250px', maxWidth: '500px'}}
                                         onChange={tagSetter}
-                                        renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            variant="standard"
-                                            label="Search tags"
-                                            placeholder="Type for tags..."
-                                        />
-                                        )}
+                                        onKeyDown={searchKeyPress}
+                                        value={state.searchTagNames}
+                                        variant="standard"
+                                        label="Search for art..."
+                                        placeholder="try green trees or impressionism"
                                     />
                             </div>
                         </div>
@@ -141,8 +179,7 @@ export function ArtBrowse({children, navigate}) {
             )
         }
         else {
-            navigate('/taste')
-            return <div/>
+            return <></>
         }
     }
 

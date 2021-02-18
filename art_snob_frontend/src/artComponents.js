@@ -847,13 +847,10 @@ return (<div className="menu-box">
               navigate('/purchase/'+room.id)
               }}>Purchase wall...</div>
           </div>
-          {/* <div className="room-menu-single-item">  */}
-            {/* <div className="room-menu-text" onClick={handleClick}>Rename...</div> */}
-          {/* </div> */}
-          <div className="room-menu-single-item"> 
+          {(state.rooms.length>1)?<div className="room-menu-single-item"> 
             <span className="material-icons md-36" onClick={() => dispatch({type: "DELETE_ROOM", room: room})}>delete_outline</span>
             <div className="room-menu-text"  onClick={() => dispatch({type: "DELETE_ROOM", room: room})}>Delete wall...</div>
-          </div>
+          </div>:<></>}
           <div className="room-menu-single-item"> 
             <span className="material-icons md-36" onClick={getScreenshot}>share</span>
             <div className="room-menu-text"  onClick={getScreenshot}>Save/Share wall...</div>
