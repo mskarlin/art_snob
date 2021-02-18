@@ -172,6 +172,28 @@ def random(session_id=None, cursor='0_25', curated=True):
     # recommendations.update({'session_id': session_id})
     return {'art': work_list, 'cursor': f"{start+n_items}_{n_items}"}
 
+@app.get('/search/{query}')
+def search(query: str, start_cursor: str = None, n_records: int = 26, session_id=None):
+    if not session_id:
+        session_id = str(uuid.uuid4())
+    
+    seed = rand.randint(0,10000)
+    start = 0
+
+    if start_cursor:
+        seed, start = start_cursor.split('_')
+        seed = int(seed)
+        start = int(start)  
+    
+    works = data.search_api(query, start=start, n_records=n_records)
+
+    work_list = list_and_add_image_prefix({'art': works}, hydration_dict=None)
+
+    log_exposure(work_list, session_id, how=f"exposure:search:{query}")
+    data.write_action(Action(session=session_id, action='search', item=query))
+
+    return {'art': work_list, 'cursor': f'{seed}_{start+n_records}'}
+
 @app.get('/tags/{tag}')
 def tags(tag: str, start_cursor: str = None, n_records: int = 10, session_id=None, return_clusters=False):
     if not session_id:
@@ -235,7 +257,7 @@ def recommended(session_id=None, likes:str='', dislikes:str='', start_cursor=Non
         seed+=rand.randint(0,1000)
 
     works = []
-    cdata, _ = data.clusters(likes, seed=seed, cursor=start_cursor, n_records=int(n_return), session_id=session_id)
+    cdata, _ = data.clusters(likes, seed=seed, cursor=start_cursor, n_records=int(n_return), session_id=session_id, include_search=True)
     work_list = list_and_add_image_prefix({'art': cdata})
 
     log_exposure(work_list, session_id, how=f"exposure:recommended:{likes}|{dislikes}")

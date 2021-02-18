@@ -3,7 +3,12 @@ from google.cloud import datastore
 import os
 from src.ordered_set import OrderedSet
 from collections import Counter
+import cachetools
 from typing import List
+import requests
+from threading import RLock
+from cachetools.keys import hashkey
+
 import itertools
 import sys
 
@@ -26,6 +31,11 @@ def roundrobin(*iterables):
             num_active -= 1
             nexts = itertools.cycle(itertools.islice(nexts, num_active))
 
+def search_key(*args, **kwargs):
+    """custom hashkey builder for caching"""
+    key = hashkey(*args, **kwargs)
+    return key
+
 
 class FriendlyDataStore():
     ACTION_KIND = 'prod-action-stream'
@@ -40,6 +50,7 @@ class FriendlyDataStore():
     CLUSTER_INDEX = '12122020-cluster-index'
     STATE_KIND = '12202020-state'
     STATE_LOGIN = '12202020-login'
+    SEARCH_API_URL = os.environ.get('SEARCH_API_URL', 'http://localhost:8001')
     # RAND_MIN = 4503653962481664  # used for scraped-image-data indices
     # RAND_MAX = 6755350696951808
     RAND_MIN = 1
@@ -47,6 +58,8 @@ class FriendlyDataStore():
 
     def __init__(self, dsi=None):
         self.dsi = dsi if dsi else DataStoreInterface(os.environ.get('GOOGLE_CLOUD_PROJECT'))
+        self.cache = cachetools.TTLCache(5000, 600) # 5000 items at 600 seconds
+        self.lock = lock = RLock()
 
     def write_action(self, action):
         write_dict = {}
@@ -238,7 +251,8 @@ class FriendlyDataStore():
         # remove what was below the threshold prior (that's all seen...)
         return [t[0] for t in sorted(indexed_id_list_to_rank, key=lambda x: x[1], reverse=True)]
 
-    def clusters(self, clusters: List, seed=814, cursor:str='', n_records:int=26, session_id=None, from_center=False, include_description=False):
+    def clusters(self, clusters: List, seed=814, cursor:str='', n_records:int=26, session_id=None, 
+    from_center=False, include_description=False, include_search=False):
         """Get recommendation results, sorted contextually. Can also get descriptions for clusters (only when ranked from center)
             TODO: much of the optional logic for include_description and from_center may be unecessary..
         """
@@ -253,6 +267,23 @@ class FriendlyDataStore():
 
         cluster_keys = self.dsi.read(ids=clusters, kind=self.CLUSTER_REVERSE_INDEX, sorted_list=True)
 
+        # add in the search results as seeds too, randomly including up to 3
+        if include_search:
+            results, cursor = self.dsi.query_nocache(kind=self.ACTION_KIND,
+                                        query_filters=[('session', '=', session_id),
+                                                        ('action',  '=', 'search')
+                                                        ],
+                                        n_records=10,
+                                        tolist=True
+                                        )
+            
+            choices = {r['item'] for r in results}
+            choices = choices if len(choices) < 3 else random.sample(choices, 3)
+
+            for query in choices:
+                cluster_keys.append({'idx': self.search_api(query, start=0, n_records=200, neighbor_ids=False),
+                                     'description': 'search results'})    
+
         idx_to_request = []
         description = None
 
@@ -263,6 +294,7 @@ class FriendlyDataStore():
                 random.Random(rseed).shuffle(tmp_cluster_ids)
             
                 if session_id:
+                    #TODO: don't call this every loop iteration
                     pos_neighbors, neg_neighbors, exposed_counter = self.member_neighbor_sets(session_id)
                     tmp_cluster_ids = self.rerank_from_like_and_approvals(pos_neighbors, neg_neighbors, exposed_counter, tmp_cluster_ids)[start:]
             else:
@@ -281,7 +313,18 @@ class FriendlyDataStore():
             return self.dsi.read(ids=idx_to_request[:n_records], kind=self.INFO_KIND), description
         else:
             return self.dsi.read(ids=idx_to_request[start:(start+n_records)], kind=self.INFO_KIND), description
+    
+    @cachetools.cachedmethod(lambda self: self.cache, lock=lambda self: self.lock)
+    def search_api(self, query, start=0, n_records=25, neighbor_ids=False):
 
+        r = requests.get(f'{self.SEARCH_API_URL}/semantic_neighbors/?query={query}&n_start={start}&n_records={n_records}')
+        response_ids = r.json()['neighbors']
+
+        if neighbor_ids:
+            return response_ids[:n_records]
+        else:
+            return self.dsi.read(ids=response_ids[:n_records], kind=self.INFO_KIND)
+    
     def search(self, query, get_cursor=False, start_cursor=None, n_records=25):
         """Get all search results based on tags"""
         queries = query.lower().split(' ')

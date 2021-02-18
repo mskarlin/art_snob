@@ -12,7 +12,7 @@ import {TasteFinder} from "./tasteFinder"
 import {About} from "./about.js"
 import {ArtDetail, ArtCarousel, SingleCarousel} from "./detailView"
 import {RoomConfigurations} from "./roomConfiguration.js"
-import {ArtBrowse} from "./artBrowse"
+import {ArtBrowse, Search} from "./artBrowse"
 import {Privacy} from "./privacy.js"
 import {Terms} from "./terms.js"
 import {History} from "./history.js"
@@ -32,6 +32,8 @@ import HelpIcon from '@material-ui/icons/Help';
 import NewReleasesIcon from '@material-ui/icons/NewReleases';
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import HomeIcon from '@material-ui/icons/Home';
+import TextField from '@material-ui/core/TextField';
+
 import { Helmet } from "react-helmet";
 
 
@@ -66,6 +68,7 @@ function App() {
                 <Rooms path="/walls"/>
                 <SharedRoom path="/shared/:sessionId/:wallId"/>
                 <ArtBrowse path="/browse/:id"/>
+                <Search path="/search/:query"/>
                 <ArtDetail path="/detail/:id"/>
                 <PurchaseList path="/purchase/:id"/>
                 <History path="/history"/>
@@ -126,6 +129,19 @@ function AppParent({children}) {
 function LandingPage() {
   const globalState = useContext(store);
   const { state, dispatch } = globalState;
+  const [homeSearch, setHomeSearch] = useState('')
+
+  const handleHomeSearch = (event) => {
+    if (event){ 
+      setHomeSearch(event.target.value)
+    }
+  }
+
+  const homeSearchKeyPress = (e) => {
+    if((e.keyCode == 13) & (homeSearch != '')){
+        navigate('/search/'+homeSearch)
+     }
+}
 
   const baseMatch = useMatch('/')
   if (baseMatch) {
@@ -147,6 +163,17 @@ function LandingPage() {
                             style={{"pointerEvents": "all"}}>
      Start the taste finder
     </Button>
+    <Typography variant="subtitle1" align="center">or</Typography>
+    <TextField                          style={{'width': '199px'}}
+                                        size={'small'}
+                                        margin={'dense'}
+                                        onChange={handleHomeSearch}
+                                        value={homeSearch}
+                                        onKeyDown={homeSearchKeyPress}
+                                        variant="outlined"
+                                        label="Search for art..."
+                                        placeholder="Try abstract or beach art"
+                                    />
   </div>
   <ArtCarousel endpoints={['/random/']} showTitle={false} imgSize={'small'}/>
   <LandingCopy/>
