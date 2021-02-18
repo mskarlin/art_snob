@@ -19,6 +19,10 @@ handlers:
 # network:
 #     forwarded_ports:
 #         - 8000/tcp
+
+inbound_services:
+  - warmup
+  
 automatic_scaling:
   min_instances: 1
 

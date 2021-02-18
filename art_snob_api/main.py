@@ -46,7 +46,7 @@ dsi = DataStoreInterface(os.environ.get('GOOGLE_CLOUD_PROJECT'))
 data = FriendlyDataStore(dsi)
 
 eec = ClusterExplore(data)
-app = FastAPI(title='deco-api', version="0.5.0")
+app = FastAPI(title='artsnob-api', version="0.6.0")
 
 origins = ["*", "http://localhost:8000/"]
 
@@ -558,6 +558,10 @@ def share(app_state: AppState,
                     print(response.headers)
                 except Exception as e:
                     print(e.message)
+
+@app.get("/_ah/warmup")
+def warmup():
+    return {'status': 'warming-up'}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)

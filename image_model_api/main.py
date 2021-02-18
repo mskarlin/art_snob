@@ -64,3 +64,7 @@ def semantic_neighbors(query: str, n_start: int = 0, n_neighbors: int = 100):
     sn = (-1*semantic_products).argsort()
     
     return {'neighbors': keys[sn][n_start:n_start+n_neighbors].tolist()}
+
+@app.get("/_ah/warmup")
+def warmup():
+    return {'status': 'warming-up'}
