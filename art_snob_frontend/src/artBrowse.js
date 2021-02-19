@@ -10,6 +10,8 @@ import { makeStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
+import { Helmet } from "react-helmet";
+
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -53,7 +55,14 @@ export function Search({query, navigate, children}) {
     }
 
     return (
+        <>
+        <Helmet>
+        <title>{"Art Snob Search: " + query}</title>
+        <meta name="description" 
+        content={"Find " + query + "art recommended for you, searching across the web."}/>
+        </Helmet>
         <ArtBrowse initialSearchTerm={query} navigate={navigate}/>
+        </>
     )
 }
 
