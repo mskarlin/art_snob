@@ -33,6 +33,7 @@ import NewReleasesIcon from '@material-ui/icons/NewReleases';
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import HomeIcon from '@material-ui/icons/Home';
 import TextField from '@material-ui/core/TextField';
+import MUICookieConsent from 'material-ui-cookie-consent';
 
 import { Helmet } from "react-helmet";
 
@@ -129,19 +130,6 @@ function AppParent({children}) {
 function LandingPage() {
   const globalState = useContext(store);
   const { state, dispatch } = globalState;
-  const [homeSearch, setHomeSearch] = useState('')
-
-  const handleHomeSearch = (event) => {
-    if (event){ 
-      setHomeSearch(event.target.value)
-    }
-  }
-
-  const homeSearchKeyPress = (e) => {
-    if((e.keyCode == 13) & (homeSearch != '')){
-        navigate('/search/'+homeSearch)
-     }
-}
 
   const baseMatch = useMatch('/')
   if (baseMatch) {
@@ -163,17 +151,6 @@ function LandingPage() {
                             style={{"pointerEvents": "all"}}>
      Start the taste finder
     </Button>
-    <Typography variant="subtitle1" align="center">or</Typography>
-    <TextField                          style={{'width': '199px'}}
-                                        size={'small'}
-                                        margin={'dense'}
-                                        onChange={handleHomeSearch}
-                                        value={homeSearch}
-                                        onKeyDown={homeSearchKeyPress}
-                                        variant="outlined"
-                                        label="Search for art..."
-                                        placeholder="Try abstract or beach art"
-                                    />
   </div>
   <ArtCarousel endpoints={['/random/']} showTitle={false} imgSize={'small'}/>
   <LandingCopy/>
@@ -193,7 +170,7 @@ function LandingCopy() {
       </Typography>
       <Typography variant="body1" align="center" style={{ fontSize: "0.8rem"}}>
       We partner with the largest art print sellers to provide 100,000+ gorgeous works to bring your home to life. 
-      Using our advanced, proprietary recommendation algorithms, we find art you will love and arrange it into optimal configurations for your walls.
+      Using our advanced, proprietary recommendation algorithms, we find art you will love and help arrange it into optimal configurations for your walls.
       </Typography>
     </div>
 
@@ -213,6 +190,21 @@ function LandingCopy() {
         </div>
       </div>
     </div>
+
+    <div className="landing-copy">
+      <Typography variant="h6" align="center" paragraph={true} style={{ fontWeight: 600}}>
+       State of the art search
+      </Typography>
+      <Typography variant="body1" align="center" style={{ fontSize: "0.8rem"}}>
+      Our search technology gathers art from major print providers and finds what you're searching for with advanced machine learning.
+      You can search for anything, no need for tags, try: 
+      <Link to='/search/woman%20in%20a%20hat%20on%20a%20bicycle'> woman in a hat on a bicycle, </Link> 
+      <Link to='/search/abstract%20guitar%20photos'>abstract guitar photos, </Link> or 
+      <Link to='/search/tropical%20pools%20by%20the%20beach'> tropical pools by the beach. </Link>
+      Everything you like or do will update your recommended art feed, which you can find by visiting your <Link to='walls'> art walls.</Link>
+      </Typography>
+    </div>
+
     </>
   )
 }
@@ -239,63 +231,16 @@ function SplashPage() {
   // NOTE THIS IS BEING CALLED MANY TIMES SO FOR EACH IMAGE LOAD OF THE ABOVE..
   // THIS IS RE-RUN SO WE NEED AN EFFECT AT THE HIGHER LEVEL!!!
   const { state } = useContext(store);
-
-  var landingModalOver = {
-    width: "100%",
-    height: "100%",
-    overflow: "hidden",
-    backgroundColor: "rgba(33, 37, 41, 0.98)",
-    top: 0,
-    position: "absolute",
-    zIndex: 6
-  }
-  
-  function loadLandingPage() {
-    if (state.landingState.open) {
-      landingModalOver['display'] = 'block'
-      return landingModalOver
-    }
-    else {
-      landingModalOver['display'] = 'none'
-      return landingModalOver
-    }}
   
   return (
-      <div style={loadLandingPage()}>
-      <WelcomeMessage></WelcomeMessage>
+      <div>
+        <MUICookieConsent 
+        cookieName="ArtSnobCookieConsent"
+        componentType="Snackbar" // default value is Snackbar
+        message="Note that we use cookies for analytics and recommendations between sessions."
+        />
       </div>
   )
-
-}
-
-function WelcomeMessage() {
-
-  const globalState = useContext(store);
-  const { dispatch } = globalState;
-
-  const welcomeMessage = {
-    width: "75vw",
-    height: "100vh",
-    margin: "auto",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "start",
-    overflow: "hidden",
-    flexShrink: 0,
-    background: "none",
-    padding: "0px",
-    overflow: "hidden",
-    transform: "none"
-  }
-return (
-        <div style={welcomeMessage}>
-          <Typography variant="h4" align="left" paragraph={true} style={{fontFamily: ["Poiret One", "serif"], color: "#FFFFFF"}}>Welcome to Art Snob</Typography>
-          <Typography variant="subtitle1"  align="left" paragraph={true} style={{color: "#FFFFFF"}}>Find art that matches your taste.</Typography>
-          <Button variant="contained" color="primary" onClick={() => dispatch({type: "TOGGLE_LANDING"})}>Get Started!</Button>
-          <Typography variant="body2"  align="left" paragraph={true} style={{color: "#FFFFFF", marginTop: "15px"}}><i>Note that we use cookies for analytics and recommendations between sessions.</i></Typography>
-        </div>
-      )
 
 }
 
@@ -383,6 +328,28 @@ function TopMenuDrawer({drawerOpen, setDrawerOpen, toggleDrawer}) {
 function MainHeader() {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [homeSearch, setHomeSearch] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const toggleSearchOpen = (event) => {
+    if (event) {
+      setSearchOpen(!searchOpen)
+    }
+  }
+
+
+  const handleHomeSearch = (event) => {
+    if (event){ 
+      setHomeSearch(event.target.value)
+    }
+  }
+
+  const homeSearchKeyPress = (e) => {
+    if((e.keyCode == 13) & (homeSearch != '')){
+        navigate('/search/'+homeSearch)
+        setSearchOpen(false)
+     }
+}
 
   const toggleDrawer = (open) => (event) => {
     if (event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) {
@@ -417,15 +384,56 @@ function MainHeader() {
     overflow: "visible",
   }
 
+  const searchBorder = () => {
+    if (searchOpen) {
+      return (
+        {borderStyle: "double",
+        borderColor: "#222",
+        borderTopWidth: 0,
+        borderBottomWidth: 1,
+        borderLeftWidth: 0,
+        borderRightWidth: 0}
+      )
+    }
+    else {
+      return {}
+    }
+   
+  }
+
   return (
+    <div className='flex-header-menu' style={searchBorder()}>
     <div style={header}>
       <div style={headerStack}>
-      <div className="deco-header" onClick={() => navigate('/')}>Art Snob</div>
+      <div style={{'display': 'flex', 'flexDirection': 'row'}}>
+        <div className="deco-header" onClick={() => navigate('/')}>Art Snob</div>
+        <span className="material-icons md-24" 
+        style={{'marginTop': 'auto', 'marginBottom': 'auto', 'cursor': 'pointer', 'pointerEvents': 'all'}} 
+        onClick={toggleSearchOpen}>search</span>
+      </div>
       <span className="material-icons md-36" style={{color: 'black'}} onClick={toggleDrawer(true)}>menu</span>
       <TopMenuDrawer drawerOpen={drawerOpen} setDrawerOpen={setDrawerOpen} toggleDrawer={toggleDrawer}/>
       </div>
     </div>
+    <div>
+    {(searchOpen) &&
+    (<div style={{'display': 'flex', 'flexDirection': 'row', 'justifyContent': 'center'}}>
+      <TextField                        style={{'minWidth': '250px', 'maxWidth': '600px', width: '100%', 'marginBottom': '5px'}}
+                                        size={'medium'}
+                                        margin={'none'}
+                                        onChange={handleHomeSearch}
+                                        value={homeSearch}
+                                        onKeyDown={homeSearchKeyPress}
+                                        label={<span className="material-icons md-18">search</span>}
+                                        placeholder="Try abstract or beach art"
+                                    />
+    <span className="material-icons md-28" style={{'marginTop': 'auto', 'marginBottom': 'auto'}} onClick={toggleSearchOpen}>clear</span>
+    </div>
+    )
+    }
 
+    </div>
+  </div>
   )
 }
 
