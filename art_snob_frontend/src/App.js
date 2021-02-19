@@ -190,6 +190,7 @@ function LandingCopy() {
         </div>
       </div>
     </div>
+    
 
     <div className="landing-copy">
       <Typography variant="h6" align="center" paragraph={true} style={{ fontWeight: 600}}>
