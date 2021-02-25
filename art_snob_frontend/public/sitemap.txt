@@ -1,5 +1,8 @@
 https://artsnob.io/
 https://artsnob.io/taste
+https://artsnob.io/bloghub
+https://artsnob.io/blog/Architecture%20behind%20scalable%2C%20dynamic%20art%20recommendations%20pt%201
+https://artsnob.io/blog/Data%20Science%20isn't%20a%20job
 https://artsnob.io/about
 https://artsnob.io/search/woman%20in%20a%20hat%20on%20a%20bicycle
 https://artsnob.io/search/abstract%20guitar%20photos
