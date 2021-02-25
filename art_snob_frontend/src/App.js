@@ -16,6 +16,7 @@ import {ArtBrowse, Search} from "./artBrowse"
 import {Privacy} from "./privacy.js"
 import {Terms} from "./terms.js"
 import {History} from "./history.js"
+import {Blog, BlogHub} from "./blog.js"
 import {SharedRoom} from "./sharedWalls.js"
 import { StateProvider, store, UserProvider, initialState } from './store.js';
 import {SignIn, SignUp, PasswordReset} from './userRoutes.js'
@@ -70,6 +71,8 @@ function App() {
                 <SharedRoom path="/shared/:sessionId/:wallId"/>
                 <ArtBrowse path="/browse/:id"/>
                 <Search path="/search/:query"/>
+                <Blog path="/blog/:name"/>
+                <BlogHub path="/bloghub"/>
                 <ArtDetail path="/detail/:id"/>
                 <PurchaseList path="/purchase/:id"/>
                 <History path="/history"/>
