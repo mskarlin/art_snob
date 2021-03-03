@@ -225,8 +225,7 @@ class DataStoreInterface(object):
             (dict) keyed to record id or sorted list by input ids
 
         """
-
-        keys = [self.ds.key(kind, idx) for idx in ids]
+        keys = [self.ds.key(kind, idx) for idx in ids if idx != '']
         results = self.ds.get_multi(keys)
 
         if results: 
