@@ -22,16 +22,16 @@ import { navigate } from "@reach/router"
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
+import { Helmet } from "react-helmet";
 
 
 const useBlogFetch = (formatEndpoint, dispatch) => {
-    console.log(formatEndpoint)
+
     useEffect(() => {
         if (formatEndpoint) {
             fetch(process.env.REACT_APP_PROD_API_DOMAIN+formatEndpoint)
             .then(data => data.json())
             .then(json => {
-                console.log(json)
                 dispatch({ type: 'ADD_BLOG_CONTENT', content: json})
             })
             .catch(e => {
@@ -57,7 +57,6 @@ const blogParser = (contentStub, references) => {
                 
                 const end = c.search('}')
                 const referenceNum = parseInt(c.slice(0, end)) - 1
-                console.log(c, c.slice(0, end), end, referenceNum, c.slice(end))
 
                 if (end !== -1 & references.length > referenceNum){
                     if (c.length>end) {
@@ -172,6 +171,11 @@ export function BlogHub() {
     
     return (
         <div style={{'marginTop': '87px', 'marginLeft': 'auto', 'marginRight': 'auto', 'paddingLeft': '25px', 'paddingRight': '25px', 'maxWidth': '550px'}}>
+            <Helmet>
+            <title>{"Art Snob Blog"}</title>
+            <meta name="description" 
+            content={"Find the newest art and data science info from the Art Snob team."}/>
+            </Helmet>
             <h1>Art Snob Blog</h1>
             {useableContent.map(x => <BlogCard blog={x}/>)}
         </div>
@@ -213,6 +217,11 @@ export function Blog({name}) {
 
     return (
         <div style={{'marginTop': '87px', 'marginLeft': 'auto', 'marginRight': 'auto', 'paddingLeft': '25px', 'paddingRight': '25px', 'maxWidth': '550px'}}>
+        <Helmet>
+            <title>{useableContent.title}</title>
+            <meta name="description" 
+            content={useableContent.text[0]}/>
+            </Helmet>
         <Button onClick={() => {
             navigate('/bloghub')
             }} color="primary">

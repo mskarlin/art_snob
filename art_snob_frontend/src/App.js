@@ -32,6 +32,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import HelpIcon from '@material-ui/icons/Help';
 import NewReleasesIcon from '@material-ui/icons/NewReleases';
 import AssignmentIcon from '@material-ui/icons/Assignment';
+import BookIcon from '@material-ui/icons/Book'; 
 import HomeIcon from '@material-ui/icons/Home';
 import TextField from '@material-ui/core/TextField';
 import MUICookieConsent from 'material-ui-cookie-consent';
@@ -310,6 +311,10 @@ function TopMenuDrawer({drawerOpen, setDrawerOpen, toggleDrawer}) {
           <ListItem button key='About' onClick={() => navigate('/about')}>
             <ListItemIcon>{<HelpIcon style={{'color': 'black'}}/>}</ListItemIcon>
             <ListItemText primary='About' />
+          </ListItem>
+          <ListItem button key='Blog' onClick={() => navigate('/bloghub')}>
+            <ListItemIcon>{<BookIcon style={{'color': 'black'}}/>}</ListItemIcon>
+            <ListItemText primary='Blog' />
           </ListItem>
   
       </List>

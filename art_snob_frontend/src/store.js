@@ -2,7 +2,7 @@ import React, {Component, createContext, useReducer, useEffect} from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { auth, defaultAnalytics } from "./firebase.js";
 import { useCookies } from 'react-cookie';
-
+import ReactGA from 'react-ga';
 
 export async function postData(url = '', data = {}, token=null, headerOverride=null) {
     // Default options are marked with *
@@ -855,7 +855,12 @@ const StateProvider = ( { children } ) => {
   useEffect(() => {
     localStorage.setItem("deco-state", JSON.stringify(state));
     }, [state]);
-
+  
+    // set ads state for the user
+    ReactGA.set({
+      userId: state.sessionId,
+    })
+  
   return <Provider value={{ state, dispatch }}>{children}</Provider>;
 };
 
@@ -917,7 +922,6 @@ export class UserProvider extends Component {
       this.setState({ user: userAuth});
     });
   };
-
 
   render() {
     return (
