@@ -143,9 +143,7 @@ main {
 }
 
 .deco-header {
-  width: 150px;
   cursor: pointer;
-  user-select: all;
   pointer-events: all;
   height: 43px;
   overflow: hidden;
@@ -157,6 +155,7 @@ main {
   font-weight: 900;
   font-style: normal;
   text-align: left;
+  margin-right: 10px;
   padding-left: 10px;
 }
 
@@ -1398,7 +1397,7 @@ main {
   .tutorial-steps {
     display: flex;
     flex-direction: row;
-    height: 300px;
+    height: 250px;
     max-width: 560px;
     margin: auto;
   }
@@ -1408,7 +1407,7 @@ main {
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    height: 300px;
+    height: 250px;
     width: 50%;
   }
 
@@ -1476,4 +1475,10 @@ main {
     display: flex;
     flex-direction: column;
     align-items: center;
+  }
+
+  .flex-header-menu {
+    display: flex;
+    flex-direction: column;
+    background-color: white;
   }

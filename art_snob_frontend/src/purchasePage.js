@@ -11,7 +11,7 @@ import CardContent from '@material-ui/core/CardContent';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
-
+import ReactGA from 'react-ga';
 
 const useStyles = makeStyles({
   root: {
@@ -96,6 +96,11 @@ function RoomSummary({art}){
                               variant: artMatchExtractor(art, 'size')
                               }]
                               })
+                              ReactGA.event({
+                                category: "Purchase",
+                                action: "purchase art "+art.artId,
+                                value:  Number(artMatchExtractor(art, 'price'))*0.1,    
+                              });
                               openInNewTab(art.page_url+'?curator=mskarlin')
                               }
                               }>Artist page link</Button>

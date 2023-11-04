@@ -78,3 +78,9 @@ deploy-frontend:
 	cd art_snob_frontend ; npm run build
 	cp -r art_snob_frontend/build ./build_deploy/build/
 	cd build_deploy ; gcloud app deploy
+
+deploy-backend:
+	cd art_snob_api ; gcloud app deploy
+
+deploy-image-api:
+	cd image_model_api ; gcloud beta app deploy --no-cache

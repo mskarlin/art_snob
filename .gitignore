@@ -8,6 +8,7 @@ notebooks/*.csv
 *.xml
 *.pkl
 *.npy
+image_model_api/models/*.txt
 cloud_functions/resize_images/node_modules/*
 build_deploy/build/*
 *.DS_Store

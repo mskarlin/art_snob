@@ -151,8 +151,17 @@ function TasteBrowse() {
                 defaultAnalytics.logEvent('screen_view', {
                   screen_name: 'Finished Taste Finder'
                 })
-                dispatch({type: 'ADD_ROOM', 'room': state.newRoomShow.selectionRoom});
-                dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: state.newRoomShow.selectionRoom});
+                if (state.rooms.length > 0){
+                  dispatch({type: 'OVERWRITE_ROOM_KEEP_ART', room: state.newRoomShow.selectionRoom,
+                  replaceId: state.rooms[0].id})
+                  // NULL artBrowseSeed will return null
+                  dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: null});
+                }
+                else {
+                  dispatch({type: 'ADD_ROOM', 'room': state.newRoomShow.selectionRoom});
+                  dispatch({type: 'ART_BROWSE_SEED', artBrowseSeed: state.newRoomShow.selectionRoom});
+                }
+              
                 dispatch({type: 'TOGGLE_NEW_ROOM_SHOW', show: false});
                 navigate('/browse/'+state.newRoomShow.selectionRoom.id);
               }

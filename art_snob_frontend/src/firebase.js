@@ -1,7 +1,11 @@
 import firebase from "firebase/app";
 import "firebase/auth";
 import 'firebase/analytics'
- 
+import ReactGA from 'react-ga';
+
+const trackingId = "UA-133877558-1"; // GA Id for ads
+ReactGA.initialize(trackingId);
+
  
   // Your web app's Firebase configuration
   // For Firebase JS SDK v7.20.0 and later, measurementId is optional
