@@ -7,7 +7,7 @@ const os = require('os');
 
 //destination bucket
 const bucketName = {
-    dst: 'deco-images'
+    dst: '<MY BUCKETNAME>'
  };
 
 const storage = new Storage();

@@ -86,10 +86,6 @@ def similar_images(file: UploadFile = File(...), n_images: int = 10):
 
     pca_embeddings = pca_transformer.transform([embeddings])
 
-
-
     neighbors = annoy_transformer.index.get_nns_by_vector(pca_embeddings[0], n_images, include_distances=False)
-
-    # import ipdb; ipdb.set_trace()
 
     return {"neighbors": [annoy_transformer.names[0][n] for n in neighbors]}

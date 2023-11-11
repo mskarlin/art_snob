@@ -1,3 +1,5 @@
+import os
+
 # -*- coding: utf-8 -*-
 
 # Scrapy settings for imagemetadata project
@@ -69,10 +71,10 @@ ITEM_PIPELINES = {
     'imagemetadata.pipelines.ImagesPipeline': 1,
     'imagemetadata.pipelines.ArtworkPipeline': 2
 }
-IMAGES_STORE = 'gs://artsnob-image-scrape/'
-GCS_PROJECT_ID = 'artsnob-1'
-GCS_PROJECT = 'artsnob-1'
-DATASTORE_KIND = 'frames-scraped-image-data'
+IMAGES_STORE = os.environ.get('IMAGE_BUCKET_LOCATION', 'gs://artsnob-image-scrape/')
+GCS_PROJECT_ID = os.environ.get('GCS_PROJECT_ID', 'artsnob-1')
+GCS_PROJECT = os.environ.get('GCS_PROJECT', 'artsnob-1')
+DATASTORE_KIND = os.environ.get('DATASTORE_KIND', 'frames-scraped-image-data')
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
