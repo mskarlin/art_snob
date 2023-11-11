@@ -71,3 +71,4 @@ https://artsnob.io/search/farmhouse
 https://artsnob.io/search/elephant
 https://artsnob.io/search/horse
 https://artsnob.io/search/house
+https://artsnob.io/about

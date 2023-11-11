@@ -134,6 +134,19 @@ function AppParent({children}) {
 function LandingPage() {
   const globalState = useContext(store);
   const { state, dispatch } = globalState;
+  const [homeSearch, setHomeSearch] = useState('')
+
+  const handleHomeSearch = (event) => {
+    if (event){ 
+      setHomeSearch(event.target.value)
+    }
+  }
+
+  const homeSearchKeyPress = (e) => {
+    if((e.keyCode == 13) & (homeSearch != '')){
+        navigate('/search/'+homeSearch)
+     }
+}
 
   const baseMatch = useMatch('/')
   if (baseMatch) {
@@ -155,6 +168,17 @@ function LandingPage() {
                             style={{"pointerEvents": "all"}}>
      Start the taste finder
     </Button>
+    <Typography variant="subtitle1" align="center">or</Typography>
+    <TextField                          style={{'width': '199px'}}
+                                        size={'small'}
+                                        margin={'dense'}
+                                        onChange={handleHomeSearch}
+                                        value={homeSearch}
+                                        onKeyDown={homeSearchKeyPress}
+                                        variant="outlined"
+                                        label="Search for art..."
+                                        placeholder="Try abstract or beach art"
+                                    />
   </div>
   <ArtCarousel endpoints={['/random/']} showTitle={false} imgSize={'small'}/>
   <LandingCopy/>
