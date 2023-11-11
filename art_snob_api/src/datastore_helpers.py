@@ -51,6 +51,7 @@ class FriendlyDataStore():
     STATE_KIND = '12202020-state'
     STATE_LOGIN = '12202020-login'
     SEARCH_API_URL = os.environ.get('SEARCH_API_URL', 'http://localhost:8001')
+    BLOG='artsnob-blog-articles'
     # RAND_MIN = 4503653962481664  # used for scraped-image-data indices
     # RAND_MAX = 6755350696951808
     RAND_MIN = 1

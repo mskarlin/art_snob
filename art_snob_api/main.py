@@ -46,7 +46,7 @@ dsi = DataStoreInterface(os.environ.get('GOOGLE_CLOUD_PROJECT'))
 data = FriendlyDataStore(dsi)
 
 eec = ClusterExplore(data)
-app = FastAPI(title='deco-api', version="0.5.0")
+app = FastAPI(title='artsnob-api', version="0.6.0")
 
 origins = ["*", "http://localhost:8000/"]
 
@@ -558,6 +558,37 @@ def share(app_state: AppState,
                     print(response.headers)
                 except Exception as e:
                     print(e.message)
+
+@app.get("/_ah/warmup")
+def warmup():
+    return {'status': 'warming-up'}
+
+@app.get('/blog/{blog_name}')
+def blog(blog_name: str, session_id=None):
+    
+    if not session_id:
+        session_id = str(uuid.uuid4())
+
+    blog_name = blog_name.lower().replace('%2c', ',').replace('\'', '').replace(' ','_')
+    article = dsi.read_nocache(ids=[blog_name], kind=data.BLOG, sorted_list=True)
+
+    if article:
+        return {'blog': article[0]}
+    else:
+        return {'blog': None}
+
+@app.get('/list_blogs/')
+def list_blogs(session_id=None):
+    
+    if not session_id:
+        session_id = str(uuid.uuid4())
+
+    articles = dsi.query(kind = data.BLOG, n_records = 100, tolist = True)
+    
+    # extract and sort by pub date
+    articles = [articles[0] for ak in articles]
+
+    return {'articles': articles[0]}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)

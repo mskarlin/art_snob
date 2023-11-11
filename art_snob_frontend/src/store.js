@@ -2,7 +2,7 @@ import React, {Component, createContext, useReducer, useEffect} from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { auth, defaultAnalytics } from "./firebase.js";
 import { useCookies } from 'react-cookie';
-
+import ReactGA from 'react-ga';
 
 export async function postData(url = '', data = {}, token=null, headerOverride=null) {
     // Default options are marked with *
@@ -269,6 +269,9 @@ const StateProvider = ( { children } ) => {
         return {...state, rooms: newRooms}
 
       case 'DELETE_ROOM':
+        if (state.rooms.length === 1) {
+          return state
+        }
         if (state.rooms.map(r=>r.id).includes(action.room.id)) {
           newState = {...state, 
             newRoomShow: {currentName: '', selectionRoom: state.blankRoom, show: state.newRoomShow.show},
@@ -281,6 +284,22 @@ const StateProvider = ( { children } ) => {
         else {
           return state
           }
+      case 'OVERWRITE_ROOM_KEEP_ART':
+        newState= {...state, rooms: state.rooms.map(r => {
+          if (r.id === action.replaceId) {
+            return {...r, id: action.room.id, clusterData: action.room.clusterData}
+          }
+          else{
+            return r
+          }
+          })}
+
+        if (state.loggedIn){
+          postData('/state/', newState, cookies.fbToken)
+        }
+
+        return newState
+
       case 'CLUSTER_LIKE':
         
         if (state.newRoomShow.selectionRoom.clusterData.likes.includes(action.like)) {
@@ -466,6 +485,9 @@ const StateProvider = ( { children } ) => {
         // right now, the order should be art->vibe->tag but this ranking can be optimized too
         // each exposure combo can be written to the backend where we get a chance to rank it
         // could also take the features for the art, and rank by those (on the front-end...)
+        if (!action.artBrowseSeed) {
+          return {...state, artBrowseSeed: state.rooms[0]}
+        }
         if ('focusArtId' in action){
         return {...state, artBrowseSeed: {...action.artBrowseSeed, focusArtId: action.focusArtId}}
         }
@@ -473,7 +495,7 @@ const StateProvider = ( { children } ) => {
           return {...state, artBrowseSeed: action.artBrowseSeed}
         }
       case 'CHANGE_SEARCH_TAG_SET':
-          defaultAnalytics.logEvent('search', {'search_term': action.searchTagNames.join(',')})
+          defaultAnalytics.logEvent('search', {'search_term': action.searchTagNames})
           return {...state, searchTagSet: action.searchTagSet, searchTagNames: action.searchTagNames}
       case 'CHANGE_MENU':
         // filter for arrangement in the room equal to action.id
@@ -833,7 +855,12 @@ const StateProvider = ( { children } ) => {
   useEffect(() => {
     localStorage.setItem("deco-state", JSON.stringify(state));
     }, [state]);
-
+  
+    // set ads state for the user
+    ReactGA.set({
+      userId: state.sessionId,
+    })
+  
   return <Provider value={{ state, dispatch }}>{children}</Provider>;
 };
 
@@ -895,7 +922,6 @@ export class UserProvider extends Component {
       this.setState({ user: userAuth});
     });
   };
-
 
   render() {
     return (
