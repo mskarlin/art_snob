@@ -64,7 +64,7 @@ make deploy-backend
 
 ```
 make deploy-image-api
-``
+```
 
 7. Finally the web-app front end, a React app, can be deployed
 ```
