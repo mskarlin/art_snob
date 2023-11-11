@@ -1,5 +1,0 @@
-cron:
-    - description: "get updated vaccines openings"
-      url: /new_appointments/
-      schedule: every 15 mins
-      target: vaccine-api

@@ -1,8 +1,8 @@
 SCRAPERNAME=scraper
 PRIMROSENAME=primrose
-CONTAINERLOC=gcr.io/artsnob-1/
+CONTAINERLOC=gcr.io/$(PROJECT)/
 JOBNAME=custom_container_job_$(shell date +%Y%m%d_%H%M%S)
-REGION=us-east1
+REGION=$(GCP_REGION)
 
 build-scrape:
 	docker build -f art_snob_scrape/Dockerfile -t $(SCRAPERNAME) .
@@ -20,7 +20,7 @@ submit-embed-job:
 		--master-image-uri $(CONTAINERLOC)$(PRIMROSENAME) \
 		--region $(REGION) \
 		--scale-tier CUSTOM \
-		-- python run_primrose.py --config_loc config/image_embeddings_etl.yaml --use_stackdriver_logging False --project artsnob-1
+		-- python run_primrose.py --config_loc config/image_embeddings_etl.yaml --use_stackdriver_logging False --project $(PROJECT)
 
 submit-random-job:
 	gcloud ai-platform jobs submit training $(JOBNAME) \
@@ -28,7 +28,7 @@ submit-random-job:
 		--master-image-uri $(CONTAINERLOC)$(PRIMROSENAME) \
 		--region $(REGION) \
 		--scale-tier CUSTOM \
-		-- python run_primrose.py --config_loc config/create_random_selections.yaml --use_stackdriver_logging False --project artsnob-1
+		-- python run_primrose.py --config_loc config/create_random_selections.yaml --use_stackdriver_logging False --project $(PROJECT)
 
 submit-reverse-index-job:
 	gcloud ai-platform jobs submit training $(JOBNAME) \
@@ -36,7 +36,7 @@ submit-reverse-index-job:
 		--master-image-uri $(CONTAINERLOC)$(PRIMROSENAME) \
 		--region $(REGION) \
 		--scale-tier CUSTOM \
-		-- python run_primrose.py --config_loc config/create_tags_reverse_index.yaml --use_stackdriver_logging False --project artsnob-1
+		-- python run_primrose.py --config_loc config/create_tags_reverse_index.yaml --use_stackdriver_logging False --project $(PROJECT)
 
 submit-neighbor-job:
 	gcloud ai-platform jobs submit training $(JOBNAME) \
@@ -44,7 +44,7 @@ submit-neighbor-job:
 		--master-image-uri $(CONTAINERLOC)$(PRIMROSENAME) \
 		--region $(REGION) \
 		--scale-tier CUSTOM \
-		-- python run_primrose.py --config_loc config/image_embedding_pca_index.yaml --use_stackdriver_logging False --project artsnob-1
+		-- python run_primrose.py --config_loc config/image_embedding_pca_index.yaml --use_stackdriver_logging False --project $(PROJECT)
 
 submit-object-job:
 	gcloud ai-platform jobs submit training $(JOBNAME) \
@@ -52,12 +52,12 @@ submit-object-job:
 		--master-image-uri $(CONTAINERLOC)$(PRIMROSENAME) \
 		--region $(REGION) \
 		--scale-tier CUSTOM \
-		-- python run_primrose.py --config_loc config/image_embeddings_get_objects.yaml --use_stackdriver_logging False --project artsnob-1
+		-- python run_primrose.py --config_loc config/image_embeddings_get_objects.yaml --use_stackdriver_logging False --project $(PROJECT)
 
 submit-scrape-job:
 	gcloud ai-platform jobs submit training $(JOBNAME) \
 		--master-machine-type n1-standard-4 \
-		--master-image-uri gcr.io/artsnob-1/scraper \
+		--master-image-uri gcr.io/$(PROJECT)/scraper \
 		--region $(REGION) \
 		--scale-tier CUSTOM
 
