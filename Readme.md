@@ -1,6 +1,6 @@
 # Art Snob infrastructure
 
-Infrastructure to support an art search engine, including:
+[Infrastructure](https://medium.com/@michael.skarlinski/architecture-behind-scalable-dynamic-art-recommendations-316a2d886cf0) to support an art search engine, including:
 * Web scraping (`/art_snob_scrape`)
 * Offline feature engineering + storage (`/art_snob_primrose`)
 * Backend to serve index+ranking based feeds (`/art_snob_api`)
